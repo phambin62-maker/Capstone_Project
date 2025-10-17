@@ -1,6 +1,6 @@
-﻿using BE_Capstone_Project.DTOs;
+﻿using BE_Capstone_Project.Application.Report.DTOs;
 
-namespace BE_Capstone_Project.Services.Interfaces
+namespace BE_Capstone_Project.Application.Report.Services.Interfaces
 {
     public interface IReportService
     {

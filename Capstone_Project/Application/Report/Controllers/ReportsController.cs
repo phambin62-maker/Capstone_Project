@@ -1,9 +1,9 @@
-﻿using BE_Capstone_Project.Services.Interfaces;
+﻿using BE_Capstone_Project.Application.Report.Services.Interfaces;
 using DocumentFormat.OpenXml.Drawing.Charts;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BE_Capstone_Project.Controllers
+namespace BE_Capstone_Project.Application.Report.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]

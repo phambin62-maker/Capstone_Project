@@ -1,4 +1,4 @@
-﻿namespace BE_Capstone_Project.DTOs
+﻿namespace BE_Capstone_Project.Application.Report.DTOs
 {
     public class RevenueOverviewDto
     {

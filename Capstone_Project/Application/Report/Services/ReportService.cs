@@ -1,12 +1,12 @@
-﻿using BE_Capstone_Project.DTOs;
-using BE_Capstone_Project.Models;
-using Microsoft.AspNetCore.Http.HttpResults;
+﻿using BE_Capstone_Project.Infrastructure;
+using BE_Capstone_Project.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 using ClosedXML.Excel;
-using BE_Capstone_Project.Services.Interfaces;
+using BE_Capstone_Project.Application.Report.Services.Interfaces;
+using BE_Capstone_Project.Application.Report.DTOs;
 
-namespace BE_Capstone_Project.Services
+namespace BE_Capstone_Project.Application.Report.Services
 {
     public class ReportService : IReportService
     {
