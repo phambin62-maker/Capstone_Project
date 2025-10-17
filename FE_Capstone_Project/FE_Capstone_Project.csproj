@@ -6,4 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Capstone_Project\BE_Capstone_Project.csproj" />
+  </ItemGroup>
+
 </Project>
