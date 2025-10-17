@@ -4,8 +4,9 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 using ClosedXML.Excel;
+using BE_Capstone_Project.Services.Interfaces;
 
-namespace BE_Capstone_Project.Services.Interfaces
+namespace BE_Capstone_Project.Services
 {
     public class ReportService : IReportService
     {
@@ -22,7 +23,7 @@ namespace BE_Capstone_Project.Services.Interfaces
             Console.WriteLine($"The total number of bookings: {paid.Count()}");
 
             var totalBookings = await paid.CountAsync();
-            var totalRevenue = await paid.SumAsync(b => (decimal?)b.TotalPrice) ?? 0m;
+            var totalRevenue = await paid.SumAsync(b => b.TotalPrice) ?? 0m;
             var uniqueUsers = await paid.Select(b => b.UserId).Distinct().CountAsync();
 
             var bookingIds = await paid.Select(b => b.Id).ToListAsync();
@@ -127,7 +128,7 @@ namespace BE_Capstone_Project.Services.Interfaces
         {
             var q = _context.Bookings
                 .Where(b => b.PaymentStatus == 1
-                && (b.PaymentDate != null && b.PaymentDate.Value.Year == year))
+                && b.PaymentDate != null && b.PaymentDate.Value.Year == year)
                 .Select(b => new
                 {
                     Date = b.PaymentDate.Value,
@@ -217,7 +218,7 @@ namespace BE_Capstone_Project.Services.Interfaces
         private IQueryable<Booking> PaidBookingsInRange(DateOnly from, DateOnly to)
         {
             return _context.Bookings.Where(b => b.PaymentStatus == 1 &&
-                 (b.PaymentDate != null && b.PaymentDate >= from && b.PaymentDate <= to)
+                 b.PaymentDate != null && b.PaymentDate >= from && b.PaymentDate <= to
              );
         }
     }
