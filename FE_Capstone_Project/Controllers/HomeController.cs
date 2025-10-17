@@ -15,6 +15,7 @@ namespace FE_Capstone_Project.Controllers
 
         public IActionResult Index()
         {
+            ViewData["HideHeader"] = true;
             return View();
         }
 

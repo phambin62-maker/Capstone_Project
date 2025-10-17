@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using BE_Capstone_Project.Domain.Enums;
 
 namespace BE_Capstone_Project.Domain.Models;
 
@@ -37,7 +38,7 @@ public partial class Booking
 
     public DateTime? BookingDate { get; set; }
 
-    public byte? BookingStatus { get; set; }
+    public  BookingStatus? BookingStatus { get; set; }
 
     public virtual ICollection<BookingCustomer> BookingCustomers { get; set; } = new List<BookingCustomer>();
 

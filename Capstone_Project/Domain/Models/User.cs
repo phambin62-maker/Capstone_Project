@@ -24,6 +24,8 @@ public partial class User
     public int RoleId { get; set; }
 
     public byte? UserStatus { get; set; }
+    public string? PasswordResetTokenHash { get; set; } // hash của token
+    public DateTime? PasswordResetExpires { get; set; }
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 

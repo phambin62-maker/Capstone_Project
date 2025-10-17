@@ -1,7 +1,12 @@
-var builder = WebApplication.CreateBuilder(args);
 
+using BE_Capstone_Project.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+
+var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddDbContext<OtmsdbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
 
