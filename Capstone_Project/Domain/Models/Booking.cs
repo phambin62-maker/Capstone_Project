@@ -12,7 +12,7 @@ public partial class Booking
 
     public int TourScheduleId { get; set; }
 
-    public byte? PaymentStatus { get; set; }
+    public PaymentStatus? PaymentStatus { get; set; }
 
     public DateOnly? RefundDate { get; set; }
 
@@ -38,7 +38,7 @@ public partial class Booking
 
     public DateTime? BookingDate { get; set; }
 
-    public  BookingStatus? BookingStatus { get; set; }
+    public BookingStatus? BookingStatus { get; set; }
 
     public virtual ICollection<BookingCustomer> BookingCustomers { get; set; } = new List<BookingCustomer>();
 
