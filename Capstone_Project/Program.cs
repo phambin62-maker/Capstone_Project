@@ -1,6 +1,8 @@
 using BE_Capstone_Project.Application.Auth.Services;
 using BE_Capstone_Project.Application.Report.Services;
 using BE_Capstone_Project.Application.Report.Services.Interfaces;
+using BE_Capstone_Project.Application.TourManagement.Services;
+using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
 using BE_Capstone_Project.DAO;
 using BE_Capstone_Project.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -15,6 +17,8 @@ builder.Services.AddDbContext<OtmsdbContext>(options =>
 // Add services to the container.
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<ITourService, TourService>();
+builder.Services.AddScoped<ITourImageService, TourImageService>();
 
 //DAO
 builder.Services.AddScoped<BookingCustomerDAO>();
