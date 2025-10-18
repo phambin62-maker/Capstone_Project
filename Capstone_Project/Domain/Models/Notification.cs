@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BE_Capstone_Project.Domain.Enums;
+using System;
 using System.Collections.Generic;
 
 namespace BE_Capstone_Project.Domain.Models;
@@ -15,7 +16,7 @@ public partial class Notification
 
     public DateTime? CreatedDate { get; set; }
 
-    public byte? NotificationType { get; set; }
+    public NotificationType? NotificationType { get; set; }
 
     public virtual User User { get; set; } = null!;
 }

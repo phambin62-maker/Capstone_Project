@@ -9,6 +9,7 @@ using System;
 using System.Security.Cryptography;
 using System.Text;
 using static BE_Capstone_Project.Application.Auth.DTOs.UserDTOs;
+using BE_Capstone_Project.Domain.Enums;
 
 namespace BE_Capstone_Project.Application.Auth.Controllers
 {
@@ -36,7 +37,7 @@ namespace BE_Capstone_Project.Application.Auth.Controllers
                 Email = request.Email,
                 PasswordHash = HashPassword(request.Password),
                 RoleId = 3,
-                UserStatus = 1
+                UserStatus = UserStatus.Active
             };
 
             _context.Users.Add(user);

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BE_Capstone_Project.Domain.Enums;
+using System;
 using System.Collections.Generic;
 
 namespace BE_Capstone_Project.Domain.Models;
@@ -23,7 +24,7 @@ public partial class User
 
     public int RoleId { get; set; }
 
-    public byte? UserStatus { get; set; }
+    public UserStatus? UserStatus { get; set; }
     public string? PasswordResetTokenHash { get; set; } // hash của token
     public DateTime? PasswordResetExpires { get; set; }
 

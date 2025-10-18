@@ -6,9 +6,5 @@
         Completed = 1,   // hoàn thành
         Pending = 2,        // chờ xác nhận 
         Confirmed = 3,   // đã xác nhận
-        
     }
-   
-
-
 }
