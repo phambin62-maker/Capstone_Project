@@ -7,7 +7,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace BE_Capstone_Project.Application.Services
+namespace BE_Capstone_Project.Application.Auth.Services
 {
     public class AuthService
     {

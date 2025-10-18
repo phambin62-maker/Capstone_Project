@@ -1,5 +1,5 @@
 ﻿
-using BE_Capstone_Project.Application.Services;
+using BE_Capstone_Project.Application.Auth.Services;
 using BE_Capstone_Project.Domain.Models;
 using BE_Capstone_Project.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
@@ -9,6 +9,7 @@ using System;
 using System.Security.Cryptography;
 using System.Text;
 using static BE_Capstone_Project.Application.Auth.DTOs.UserDTOs;
+using BE_Capstone_Project.Domain.Enums;
 
 namespace BE_Capstone_Project.Application.Auth.Controllers
 {
@@ -35,8 +36,8 @@ namespace BE_Capstone_Project.Application.Auth.Controllers
                 Username = request.Username,
                 Email = request.Email,
                 PasswordHash = HashPassword(request.Password),
-                RoleId =3 ,
-                UserStatus = 1
+                RoleId = 3,
+                UserStatus = UserStatus.Active
             };
 
             _context.Users.Add(user);
