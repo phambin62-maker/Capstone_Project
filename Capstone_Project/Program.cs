@@ -1,4 +1,4 @@
-using BE_Capstone_Project.Application.Services;
+using BE_Capstone_Project.Application.Auth.Services;
 using BE_Capstone_Project.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
