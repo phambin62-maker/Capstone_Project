@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BE_Capstone_Project.Domain.Enums;
+using System;
 using System.Collections.Generic;
 
 namespace BE_Capstone_Project.Domain.Models;
@@ -19,7 +20,7 @@ public partial class BookingCustomer
 
     public string? IdentityId { get; set; }
 
-    public string? CustomerType { get; set; }
+    public CustomerType? CustomerType { get; set; }
 
     public virtual Booking Booking { get; set; } = null!;
 }

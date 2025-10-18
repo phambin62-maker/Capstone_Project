@@ -2,6 +2,7 @@
 using DocumentFormat.OpenXml.Drawing.Charts;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using BE_Capstone_Project.DAO;
 
 namespace BE_Capstone_Project.Application.Report.Controllers
 {

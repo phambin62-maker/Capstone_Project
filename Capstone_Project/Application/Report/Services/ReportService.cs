@@ -5,6 +5,7 @@ using System.Data;
 using ClosedXML.Excel;
 using BE_Capstone_Project.Application.Report.Services.Interfaces;
 using BE_Capstone_Project.Application.Report.DTOs;
+using BE_Capstone_Project.Domain.Enums;
 
 namespace BE_Capstone_Project.Application.Report.Services
 {
@@ -127,7 +128,7 @@ namespace BE_Capstone_Project.Application.Report.Services
         public async Task<List<MonthlyRevenueDto>> GetMonthlyRevenueAsync(int year)
         {
             var q = _context.Bookings
-                .Where(b => b.PaymentStatus == 1
+                .Where(b => b.PaymentStatus == PaymentStatus.Completed
                 && b.PaymentDate != null && b.PaymentDate.Value.Year == year)
                 .Select(b => new
                 {
@@ -217,7 +218,7 @@ namespace BE_Capstone_Project.Application.Report.Services
 
         private IQueryable<Booking> PaidBookingsInRange(DateOnly from, DateOnly to)
         {
-            return _context.Bookings.Where(b => b.PaymentStatus == 1 &&
+            return _context.Bookings.Where(b => b.PaymentStatus == PaymentStatus.Completed &&
                  b.PaymentDate != null && b.PaymentDate >= from && b.PaymentDate <= to
              );
         }
