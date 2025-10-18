@@ -1,5 +1,5 @@
 ﻿
-using BE_Capstone_Project.Application.Services;
+using BE_Capstone_Project.Application.Auth.Services;
 using BE_Capstone_Project.Domain.Models;
 using BE_Capstone_Project.Infrastructure;
 using Microsoft.AspNetCore.Authorization;

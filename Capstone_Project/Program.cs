@@ -1,9 +1,5 @@
-<<<<<<< Updated upstream
-using BE_Capstone_Project.Application.Services;
-=======
 using Microsoft.EntityFrameworkCore;
 using BE_Capstone_Project.Application.Auth.Services;
->>>>>>> Stashed changes
 using BE_Capstone_Project.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
