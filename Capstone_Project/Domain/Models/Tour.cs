@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BE_Capstone_Project.Domain.Enums;
+using System;
 using System.Collections.Generic;
 
 namespace BE_Capstone_Project.Domain.Models;
@@ -29,7 +30,7 @@ public partial class Tour
 
     public byte? GroupNumber { get; set; }
 
-    public bool? TourStatus { get; set; }
+    public TourStatus? TourStatus { get; set; }
 
     public short? MinSeats { get; set; }
 
