@@ -1,9 +1,16 @@
+<<<<<<< Updated upstream
 using BE_Capstone_Project.Application.Services;
+=======
+using Microsoft.EntityFrameworkCore;
+using BE_Capstone_Project.Application.Auth.Services;
+>>>>>>> Stashed changes
 using BE_Capstone_Project.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using BE_Capstone_Project.Application.Report.Services;
+using BE_Capstone_Project.Application.Report.Services.Interfaces;
+
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<OtmsdbContext>(options =>
@@ -11,6 +18,8 @@ builder.Services.AddDbContext<OtmsdbContext>(options =>
 
 // Add services to the container.
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<IReportService, ReportService>();
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
