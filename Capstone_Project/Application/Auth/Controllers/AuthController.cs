@@ -54,9 +54,8 @@ namespace BE_Capstone_Project.Application.Auth.Controllers
                 return Unauthorized("Invalid username or password");
 
             var token = _authService.GenerateJwtToken(user);
-            return Ok(new { token });
+            return Ok(new {user.FirstName,user.RoleId, token });
         }
-
         [Authorize]
         [HttpGet("profile")]
         public async Task<IActionResult> Profile()
@@ -67,7 +66,6 @@ namespace BE_Capstone_Project.Application.Auth.Controllers
 
             return Ok(new { user.Id, user.Username, user.Email });
         }
-
         // Helper
         private static string HashPassword(string password)
         {
