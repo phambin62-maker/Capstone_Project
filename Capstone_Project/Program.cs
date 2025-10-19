@@ -20,6 +20,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ITourService, TourService>();
 builder.Services.AddScoped<ITourImageService, TourImageService>();
+builder.Services.AddScoped<ITourScheduleService, TourScheduleService>();
 
 //DAO
 builder.Services.AddScoped<BookingCustomerDAO>();
