@@ -16,7 +16,7 @@
     background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
     position: fixed;
     left: 0;
-    top: 80px;
+    top: 110px;
     height: calc(100vh - 80px);
     overflow-y: auto;
     z-index: 1000;
