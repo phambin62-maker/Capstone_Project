@@ -1,4 +1,4 @@
-using FE_Capstone_Project.Models;
+﻿using FE_Capstone_Project.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
@@ -15,7 +15,11 @@ namespace FE_Capstone_Project.Controllers
 
         public IActionResult Index()
         {
+            ViewData["HideHeader"] = true;
+            var firstName = HttpContext.Session.GetString("FirstName");
+            ViewBag.FirstName = firstName;
             return View();
+           
         }
 
         public IActionResult Privacy()

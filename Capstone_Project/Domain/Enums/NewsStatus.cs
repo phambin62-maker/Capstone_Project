@@ -1,4 +1,3 @@
-﻿
 namespace BE_Capstone_Project.Domain.Enums
 {
     public enum NewsStatus : byte
