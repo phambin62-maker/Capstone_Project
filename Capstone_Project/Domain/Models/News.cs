@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BE_Capstone_Project.Domain.Enums;
+using System;
 using System.Collections.Generic;
 
 namespace BE_Capstone_Project.Domain.Models;
@@ -17,7 +18,7 @@ public partial class News
 
     public DateTime? CreatedDate { get; set; }
 
-    public byte? NewsStatus { get; set; }
+    public NewsStatus? NewsStatus { get; set; }
 
     public virtual User User { get; set; } = null!;
 }

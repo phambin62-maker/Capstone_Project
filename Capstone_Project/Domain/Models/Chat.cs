@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BE_Capstone_Project.Domain.Enums;
+using System;
 using System.Collections.Generic;
 
 namespace BE_Capstone_Project.Domain.Models;
@@ -13,7 +14,7 @@ public partial class Chat
 
     public string? Message { get; set; }
 
-    public byte? ChatType { get; set; }
+    public ChatType? ChatType { get; set; }
 
     public DateTime? SentDate { get; set; }
 

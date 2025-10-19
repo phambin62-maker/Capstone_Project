@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BE_Capstone_Project.Domain.Enums;
+using System;
 using System.Collections.Generic;
 
 namespace BE_Capstone_Project.Domain.Models;
@@ -15,7 +16,7 @@ public partial class CancelCondition
 
     public DateTime? CreatedDate { get; set; }
 
-    public bool? CancelStatus { get; set; }
+    public CancelStatus? CancelStatus { get; set; }
 
     public virtual ICollection<Tour> Tours { get; set; } = new List<Tour>();
 }
