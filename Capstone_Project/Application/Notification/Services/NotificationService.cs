@@ -14,7 +14,6 @@ namespace BE_Capstone_Project.Application.Notifications.Services
             _notificationDAO = notificationDAO;
         }
 
-        // 🔹 Lấy tất cả thông báo
         public async Task<IEnumerable<NotificationDTO>> GetAllAsync()
         {
             var list = await _notificationDAO.GetAllNotificationsAsync();
@@ -30,7 +29,6 @@ namespace BE_Capstone_Project.Application.Notifications.Services
             });
         }
 
-        // 🔹 Lấy theo ID
         public async Task<NotificationDTO?> GetByIdAsync(int id)
         {
             var n = await _notificationDAO.GetNotificationByIdAsync(id);
@@ -48,7 +46,6 @@ namespace BE_Capstone_Project.Application.Notifications.Services
             };
         }
 
-        // 🔹 Tạo mới
         public async Task<int> CreateAsync(CreateNotificationDTO dto)
         {
             var newNoti = new Notification
@@ -63,7 +60,6 @@ namespace BE_Capstone_Project.Application.Notifications.Services
             return await _notificationDAO.AddNotificationAsync(newNoti);
         }
 
-        // 🔹 Cập nhật
         public async Task<bool> UpdateAsync(int id, CreateNotificationDTO dto)
         {
             var existing = await _notificationDAO.GetNotificationByIdAsync(id);
@@ -76,13 +72,11 @@ namespace BE_Capstone_Project.Application.Notifications.Services
             return await _notificationDAO.UpdateNotificationAsync(existing);
         }
 
-        // 🔹 Xóa
         public async Task<bool> DeleteAsync(int id)
         {
             return await _notificationDAO.DeleteNotificationByIdAsync(id);
         }
 
-        // 🔹 Lọc theo UserId
         public async Task<IEnumerable<NotificationDTO>> GetByUserIdAsync(int userId)
         {
             var list = await _notificationDAO.GetNotificationsByUserIdAsync(userId);
