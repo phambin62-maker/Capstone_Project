@@ -12,6 +12,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using BE_Capstone_Project.Application.Report.Services;
 using BE_Capstone_Project.Application.Report.Services.Interfaces;
+using BE_Capstone_Project.Application.Notifications.Services;
+using BE_Capstone_Project.Application.TourPriceHistories.Services;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<OtmsdbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -22,7 +24,8 @@ builder.Services.AddScoped<ITourService, TourService>();
 builder.Services.AddScoped<ITourImageService, TourImageService>();
 builder.Services.AddScoped<ITourScheduleService, TourScheduleService>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
-
+builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<TourPriceHistoryService>();
 //DAO
 builder.Services.AddScoped<BookingCustomerDAO>();
 builder.Services.AddScoped<BookingDAO>();
