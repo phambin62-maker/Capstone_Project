@@ -1,15 +1,16 @@
 ﻿
 using BE_Capstone_Project.Application.Auth.Services;
+using BE_Capstone_Project.Domain.Enums;
 using BE_Capstone_Project.Domain.Models;
 using BE_Capstone_Project.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using static BE_Capstone_Project.Application.Auth.DTOs.UserDTOs;
-using BE_Capstone_Project.Domain.Enums;
 
 namespace BE_Capstone_Project.Application.Auth.Controllers
 {
@@ -60,12 +61,13 @@ namespace BE_Capstone_Project.Application.Auth.Controllers
         [HttpGet("profile")]
         public async Task<IActionResult> Profile()
         {
-            var username = User.FindFirst("sub")?.Value;
+            var username = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
             if (user == null) return NotFound();
 
-            return Ok(new { user.Id, user.Username, user.Email });
+            return Ok(new {user.Username, user.Email, user.FirstName,user.LastName,user.PhoneNumber,user.Image});
         }
+
         // Helper
         private static string HashPassword(string password)
         {

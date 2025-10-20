@@ -1,7 +1,8 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 @{
-            var firstname = Context.Session.GetString("FirstName");
+        var firstname = Context.Session.GetString("UserName");
+    
 }
 <body>
     @{
@@ -54,7 +55,7 @@
 
                 <nav id="navmenu" class="navmenu">
                     <ul>
-                        <li><a href="index.html" class="active">Home</a></li>
+                        <li><a href="/Home/" class="active">Home</a></li>
                         <li><a href="about.html">About</a></li>
                         <li><a href="destinations.html">Destinations</a></li>
                         <li><a href="tours.html">Tours</a></li>
@@ -65,7 +66,7 @@
                             <ul>
                                 <li><a href="destination-details.html">Destination Details</a></li>
                                 <li><a href="tour-details.html">Tour Details</a></li>
-                                <li><a href="booking.html">Booking</a></li>
+                                <li><a href="/BookingWeb/Booking">Booking</a></li>
                                 <li><a href="testimonials">Testimonials</a></li>
                                 <li><a href="faq.html">Frequently Asked Questions</a></li>
                                 <li><a href="blog-details.html">Blog Details</a></li>
@@ -100,7 +101,16 @@
                 @if (!string.IsNullOrEmpty(firstname))
                 {
 
-                    <a class="btn-getstarted" href="destiantios.html">@firstname</a>
+                    <a class="btn-getstarted" href="/AuthWeb/profile" style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+                        <span>Welcome back</span>
+                        <span>@firstname</span>
+                    </a>
+                }else
+                {
+                    <a class="btn-getstarted" href="/AuthWeb/login">
+
+                        <span>Login</span>
+                    </a>
                 }
             </div>
         </header>

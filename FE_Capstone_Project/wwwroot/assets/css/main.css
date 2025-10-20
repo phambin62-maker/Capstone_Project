@@ -63,9 +63,10 @@
 # General Styling & Shared Classes
 --------------------------------------------------------------*/
 body {
-  color: var(--default-color);
-  background-color: var(--background-color);
-  font-family: var(--default-font);
+    color: var(--default-color);
+    background-color: var(--background-color);
+    font-family: var(--default-font);
+    padding-top: 110px;
 }
 
 a {
@@ -145,7 +146,7 @@ h6 {
 # Global Header
 --------------------------------------------------------------*/
 .header {
-    --background-color: rgba(8 0 0 / 78%);
+    --background-color: rgba(8 0 0/40% );
     --default-color: #ffffff;
     --heading-color: #ffffff;
     --surface-color: rgba(0, 0, 0, 0.26);

@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using BE_Capstone_Project.Application.Auth.Services;
-using BE_Capstone_Project.Application.Auth.Services;
 using BE_Capstone_Project.Application.Report.Services;
 using BE_Capstone_Project.Application.Report.Services.Interfaces;
 using BE_Capstone_Project.Application.TourManagement.Services;
@@ -10,8 +9,6 @@ using BE_Capstone_Project.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using BE_Capstone_Project.Application.Report.Services;
-using BE_Capstone_Project.Application.Report.Services.Interfaces;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<OtmsdbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -54,6 +51,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(jwtSettings["Key"]))
         };
+    });
+builder.Services.AddAuthentication()
+    .AddGoogle(options =>
+    {
+        IConfigurationSection googleAuthNSection =
+            builder.Configuration.GetSection("Authentication:Google");
+        options.ClientId = googleAuthNSection["ClientId"];
+        options.ClientSecret = googleAuthNSection["ClientSecret"];
+    })
+    .AddFacebook(options =>
+    {
+        IConfigurationSection fbAuthNSection =
+            builder.Configuration.GetSection("Authentication:Facebook");
+        options.AppId = fbAuthNSection["AppId"];
+        options.AppSecret = fbAuthNSection["AppSecret"];
     });
 
 builder.Services.AddControllers();

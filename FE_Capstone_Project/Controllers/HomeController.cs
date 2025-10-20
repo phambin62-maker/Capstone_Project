@@ -15,7 +15,6 @@ namespace FE_Capstone_Project.Controllers
 
         public IActionResult Index()
         {
-            ViewData["HideHeader"] = true;
             var firstName = HttpContext.Session.GetString("FirstName");
             ViewBag.FirstName = firstName;
             return View();

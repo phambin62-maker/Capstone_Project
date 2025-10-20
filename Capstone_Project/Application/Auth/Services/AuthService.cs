@@ -25,8 +25,6 @@ namespace BE_Capstone_Project.Application.Auth.Services
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Username),
-                new Claim("userId", user.Id.ToString()),
-                new Claim("role", user.RoleId.ToString())
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]));
