@@ -87,7 +87,7 @@ namespace BE_Capstone_Project.Application.Newses.Services
         // 🔹 Lọc tin theo trạng thái
         public async Task<IEnumerable<NewsDTO>> GetByStatusAsync(NewsStatus status)
         {
-            var newsList = await _newsDAO.GetNewsByStatusAsync((byte)status);
+            var newsList = await _newsDAO.GetNewsByStatusAsync(status);
             return newsList.Select(n => new NewsDTO
             {
                 Id = n.Id,
