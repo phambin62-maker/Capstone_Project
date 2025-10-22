@@ -1,5 +1,4 @@
-﻿using BE_Capstone_Project.Application.Notification.DTOs;
-using BE_Capstone_Project.Application.Notifications.DTOs;
+﻿using BE_Capstone_Project.Application.Notifications.DTOs;
 using BE_Capstone_Project.Application.Notifications.Services;
 using Microsoft.AspNetCore.Mvc;
 

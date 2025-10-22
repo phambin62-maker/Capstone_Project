@@ -1,19 +1,21 @@
-using Microsoft.EntityFrameworkCore;
 using BE_Capstone_Project.Application.Auth.Services;
 using BE_Capstone_Project.Application.Auth.Services;
+using BE_Capstone_Project.Application.Newses.Services;
+using BE_Capstone_Project.Application.Notifications.Services;
 using BE_Capstone_Project.Application.Report.Services;
+using BE_Capstone_Project.Application.Report.Services;
+using BE_Capstone_Project.Application.Report.Services.Interfaces;
 using BE_Capstone_Project.Application.Report.Services.Interfaces;
 using BE_Capstone_Project.Application.TourManagement.Services;
 using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
+using BE_Capstone_Project.Application.TourPriceHistories.Services;
 using BE_Capstone_Project.DAO;
 using BE_Capstone_Project.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using BE_Capstone_Project.Application.Report.Services;
-using BE_Capstone_Project.Application.Report.Services.Interfaces;
-using BE_Capstone_Project.Application.Notifications.Services;
-using BE_Capstone_Project.Application.TourPriceHistories.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<OtmsdbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -26,6 +28,7 @@ builder.Services.AddScoped<ITourScheduleService, TourScheduleService>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<TourPriceHistoryService>();
+builder.Services.AddScoped<NewsService>();
 //DAO
 builder.Services.AddScoped<BookingCustomerDAO>();
 builder.Services.AddScoped<BookingDAO>();
@@ -60,7 +63,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 Encoding.UTF8.GetBytes(jwtSettings["Key"]))
         };
     });
+builder.Services.AddAuthorization();
 
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
