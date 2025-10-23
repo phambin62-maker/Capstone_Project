@@ -131,8 +131,10 @@ namespace FE_Capstone_Project.Controllers
         public async Task<IActionResult> Logout()
         {
             // Xóa session
-            HttpContext.Session.Remove("FirstName");
+            HttpContext.Session.Remove("UserName");
             HttpContext.Session.Remove("JwtToken");
+            HttpContext.Session.Remove("UserEmail");
+
             // Chuyển đến trang Login
             return RedirectToAction("Index", "Home");
         }
@@ -152,7 +154,7 @@ namespace FE_Capstone_Project.Controllers
             _httpClient.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", token);
             var response = await _httpClient.GetAsync($"{_baseUrl}/profile");
-
+            
             if (!response.IsSuccessStatusCode)
             {
                 ViewBag.Error = "Không thể lấy thông tin người dùng.";
