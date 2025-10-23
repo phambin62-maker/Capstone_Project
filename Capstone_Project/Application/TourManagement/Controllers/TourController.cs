@@ -191,5 +191,16 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
 
             return Ok(new { message = $"There are {tourCount} tours", tourCount });
         }
+
+        [HttpGet("GetPaginatedTours")]
+        public async Task<IActionResult> GetPaginatedTours(int page, int pageSize)
+        {
+            var tours = await _tourService.GetPaginatedTours(page, pageSize);
+
+            if (tours == null || !tours.Any())
+                return Ok(new { message = "No tours found", tours });
+
+            return Ok(new { message = $"Found {tours.Count} tours", tours });
+        }
     }
 }

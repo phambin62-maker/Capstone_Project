@@ -100,7 +100,36 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
             }
             catch (Exception ex) { return StatusCode(500, new ApiResponse<bool>(false, $"Internal server error: {ex.Message}")); }
         }
+
+        [HttpGet("GetPaginatedTourSchedules")]
+        public async Task<ActionResult<ApiResponse<bool>>> GetPaginatedTourSchedules(int page, int pageSize)
+        {
+            try
+            {
+                var schedules = await _tourScheduleService.GetPaginatedTourSchedules(page, pageSize);
+                return Ok(new ApiResponse<List<TourScheduleDTO>>(true, "Tour schedules retrieved successfully", schedules));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ApiResponse<List<TourScheduleDTO>>(false, $"Internal server error: {ex.Message}"));
+            }
+        }
+
+        [HttpGet("GetPaginatedTourSchedules/{tourId}")]
+        public async Task<ActionResult<ApiResponse<List<TourScheduleDTO>>>> GetPaginatedTourSchedulesByTourId(int tourId, int page, int pageSize)
+        {
+            try
+            {
+                var schedules = await _tourScheduleService.GetPaginatedTourSchedulesByTourId(tourId, page, pageSize);
+                return Ok(new ApiResponse<List<TourScheduleDTO>>(true, "Tour schedules retrieved successfully", schedules));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ApiResponse<List<TourScheduleDTO>>(false, $"Internal server error: {ex.Message}"));
+            }
+        }
     }
+
     public class ApiResponse<T>
     {
         public bool Success { get; set; }

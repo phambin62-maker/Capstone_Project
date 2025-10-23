@@ -1,5 +1,6 @@
-﻿using BE_Capstone_Project.Infrastructure;
-using BE_Capstone_Project.Domain.Models;
+﻿using BE_Capstone_Project.Domain.Models;
+using BE_Capstone_Project.Infrastructure;
+using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.EntityFrameworkCore;
 
 namespace BE_Capstone_Project.DAO
@@ -101,6 +102,43 @@ namespace BE_Capstone_Project.DAO
             catch (Exception ex)
             {
                 Console.WriteLine($"An error occurred while retrieving tour schedules for tour ID {tourId}: {ex.Message}");
+                return new List<TourSchedule>();
+            }
+        }
+
+        public async Task<List<TourSchedule>> GetPaginatedTourSchedules(int page, int pageSize)
+        {
+            try
+            {
+                var paginatedTourSchedules = await _context.TourSchedules
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                return paginatedTourSchedules;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while retrieving paginated tour schedules: {ex.Message}");
+                return new List<TourSchedule>();
+            }
+        }
+
+        public async Task<List<TourSchedule>> GetPaginatedTourSchedulesByTourId(int tourId, int page, int pageSize)
+        {
+            try
+            {
+                var paginatedTourSchedules = await _context.TourSchedules
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Where(ts => ts.TourId == tourId)
+                    .ToListAsync();
+
+                return paginatedTourSchedules;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while retrieving paginated tour schedules by tourId: {tourId}: {ex.Message}");
                 return new List<TourSchedule>();
             }
         }
