@@ -190,5 +190,23 @@ namespace BE_Capstone_Project.DAO
                 return 0;
             }
         }
+
+        public async Task<List<Tour>> GetPaginatedToursAsync(int page = 1, int pageSize = 10)
+        {
+            try
+            {
+                var paginatedTours = await _context.Tours
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                return paginatedTours;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while retrieving paginated tours: {ex.Message}");
+                return new List<Tour>();
+            }
+        }
     }
 }

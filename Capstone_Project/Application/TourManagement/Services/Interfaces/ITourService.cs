@@ -15,5 +15,6 @@ namespace BE_Capstone_Project.Application.TourManagement.Services.Interfaces
         Task<List<Tour>> GetToursByPriceRange(decimal minPrice, decimal maxPrice);
         Task<List<Tour>> SearchTourByName(string name);
         Task<int> GetTotalTourCount();
+        Task<List<Tour>> GetPaginatedTours(int page = 1, int pageSize = 10);
     }
 }
