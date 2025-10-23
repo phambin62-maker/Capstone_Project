@@ -66,13 +66,13 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
             return await _tourScheduleDAO.DeleteTourScheduleById(id);
         }
 
-        public async Task<List<TourScheduleDTO>> GetPaginatedTourSchedules(int page, int pageSize)
+        public async Task<List<TourScheduleDTO>> GetPaginatedTourSchedules(int page = 1, int pageSize = 5)
         {
             var tourSchedules = await _tourScheduleDAO.GetPaginatedTourSchedules(page, pageSize);
             return tourSchedules.Select(MapToDTO).ToList();
         }
 
-        public async Task<List<TourScheduleDTO>> GetPaginatedTourSchedulesByTourId(int tourId, int page, int pageSize)
+        public async Task<List<TourScheduleDTO>> GetPaginatedTourSchedulesByTourId(int tourId, int page = 1, int pageSize = 5)
         {
             var tourSchedules = await _tourScheduleDAO.GetPaginatedTourSchedulesByTourId(tourId, page, pageSize);
             return tourSchedules.Select(MapToDTO).ToList();

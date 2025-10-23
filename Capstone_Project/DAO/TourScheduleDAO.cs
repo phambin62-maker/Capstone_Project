@@ -106,7 +106,7 @@ namespace BE_Capstone_Project.DAO
             }
         }
 
-        public async Task<List<TourSchedule>> GetPaginatedTourSchedules(int page, int pageSize)
+        public async Task<List<TourSchedule>> GetPaginatedTourSchedules(int page = 1, int pageSize = 5)
         {
             try
             {
@@ -124,7 +124,7 @@ namespace BE_Capstone_Project.DAO
             }
         }
 
-        public async Task<List<TourSchedule>> GetPaginatedTourSchedulesByTourId(int tourId, int page, int pageSize)
+        public async Task<List<TourSchedule>> GetPaginatedTourSchedulesByTourId(int tourId, int page = 1, int pageSize = 5)
         {
             try
             {

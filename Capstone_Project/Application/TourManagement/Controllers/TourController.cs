@@ -193,7 +193,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpGet("GetPaginatedTours")]
-        public async Task<IActionResult> GetPaginatedTours(int page, int pageSize)
+        public async Task<IActionResult> GetPaginatedTours(int page = 1, int pageSize = 10)
         {
             var tours = await _tourService.GetPaginatedTours(page, pageSize);
 

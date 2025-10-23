@@ -10,7 +10,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Services.Interfaces
         Task<int> CreateTourSchedule(CreateTourScheduleRequest request);
         Task<bool> UpdateTourSchedule(int id, UpdateTourScheduleRequest request);
         Task<bool> DeleteTourSchedule(int id);
-        Task<List<TourScheduleDTO>> GetPaginatedTourSchedules(int page, int pageSize);
-        Task<List<TourScheduleDTO>> GetPaginatedTourSchedulesByTourId(int tourId, int page, int pageSize);
+        Task<List<TourScheduleDTO>> GetPaginatedTourSchedules(int page = 1, int pageSize = 5);
+        Task<List<TourScheduleDTO>> GetPaginatedTourSchedulesByTourId(int tourId, int page = 1, int pageSize = 5);
     }
 }

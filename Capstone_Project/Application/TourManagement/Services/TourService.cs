@@ -68,7 +68,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
             return await _tourDAO.GetTotalTourCountAsync();
         }
 
-        public async Task<List<Tour>> GetPaginatedTours(int  page, int pageSize)
+        public async Task<List<Tour>> GetPaginatedTours(int page = 1, int pageSize = 10)
         {
             return await _tourDAO.GetPaginatedToursAsync(page, pageSize);
         }

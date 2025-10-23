@@ -191,7 +191,7 @@ namespace BE_Capstone_Project.DAO
             }
         }
 
-        public async Task<List<Tour>> GetPaginatedToursAsync(int page, int pageSize)
+        public async Task<List<Tour>> GetPaginatedToursAsync(int page = 1, int pageSize = 10)
         {
             try
             {

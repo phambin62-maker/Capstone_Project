@@ -116,7 +116,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpGet("GetPaginatedTourSchedules/{tourId}")]
-        public async Task<ActionResult<ApiResponse<List<TourScheduleDTO>>>> GetPaginatedTourSchedulesByTourId(int tourId, int page, int pageSize)
+        public async Task<ActionResult<ApiResponse<List<TourScheduleDTO>>>> GetPaginatedTourSchedulesByTourId(int tourId, int page = 1, int pageSize = 5)
         {
             try
             {
