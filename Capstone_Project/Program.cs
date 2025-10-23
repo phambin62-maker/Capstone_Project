@@ -1,11 +1,10 @@
 using BE_Capstone_Project.Application.Auth.Services;
-using BE_Capstone_Project.Application.Auth.Services;
 using BE_Capstone_Project.Application.Newses.Services;
 using BE_Capstone_Project.Application.Notifications.Services;
 using BE_Capstone_Project.Application.Report.Services;
-using BE_Capstone_Project.Application.Report.Services;
 using BE_Capstone_Project.Application.Report.Services.Interfaces;
-using BE_Capstone_Project.Application.Report.Services.Interfaces;
+using BE_Capstone_Project.Application.ReviewManagement.Services;
+using BE_Capstone_Project.Application.ReviewManagement.Services.Interfaces;
 using BE_Capstone_Project.Application.TourManagement.Services;
 using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
 using BE_Capstone_Project.Application.TourPriceHistories.Services;
@@ -15,6 +14,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<OtmsdbContext>(options =>
@@ -29,6 +29,7 @@ builder.Services.AddScoped<IWishlistService, WishlistService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<TourPriceHistoryService>();
 builder.Services.AddScoped<NewsService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
 //DAO
 builder.Services.AddScoped<BookingCustomerDAO>();
 builder.Services.AddScoped<BookingDAO>();
@@ -65,7 +66,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+    options.JsonSerializerOptions.WriteIndented = true;
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

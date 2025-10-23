@@ -91,6 +91,7 @@ namespace BE_Capstone_Project.DAO
             {
                 return await _context.Reviews
                     .Where(r => r.TourId == tourId)
+                    .Include(r => r.User)
                     .ToListAsync();
             }
             catch (Exception ex)
