@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using BE_Capstone_Project.Application.Report.Services;
 using BE_Capstone_Project.Application.Report.Services.Interfaces;
+using BE_Capstone_Project.Application.Services;
 
 
 var builder = WebApplication.CreateBuilder(args);
