@@ -1,70 +1,46 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 @{
-        var firstname = Context.Session.GetString("FirstName");
-        var hideHeader = ViewData["HideHeader"] as bool? ?? false;
+            var firstname = Context.Session.GetString("FirstName");
+            var hideHeader = ViewData["HideHeader"] as bool? ?? false;
 }
 <head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>@ViewData["Title"] - Staff Panel</title>
-    <meta name="description" content="">
-    <meta name="keywords" content="">
 
-    <!-- Favicons -->
     <link href="~/assets/img/favicon.png" rel="icon">
     <link href="~/assets/img/apple-touch-icon.png" rel="apple-touch-icon">
-
-    <!-- Fonts -->
     <link href="https://fonts.googleapis.com" rel="preconnect">
     <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
-
-    <!-- Vendor CSS Files -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="~/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="~/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
     <link href="~/assets/vendor/aos/aos.css" rel="stylesheet">
     <link href="~/assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
     <link href="~/assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
-
-    <!-- Main CSS File -->
     <link href="~/assets/css/main.css" rel="stylesheet">
-
-    <!-- Staff CSS -->
     <link href="~/css/staff.css" rel="stylesheet">
-
-    <!-- =======================================================
-    * Template Name: Tour
-    * Template URL: https://bootstrapmade.com/tour-bootstrap-travel-website-template/
-    * Updated: Jul 01 2025 with Bootstrap v5.3.7
-    * Author: BootstrapMade.com
-    * License: https://bootstrapmade.com/license/
-    ======================================================== -->
 </head>
 <body class="staff-body">
-    <!-- Main Header -->
     @if (!hideHeader)
     {
         <header id="header" class="header d-flex align-items-center fixed-top">
-            <div class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-between">
+            <div class="header-container container-fluid container-xl d-flex align-items-center justify-content-between">
                 <a href="/" class="logo d-flex align-items-center me-auto me-xl-0">
                     <h1 class="sitename">Staff Panel</h1>
                 </a>
 
                 <nav id="navmenu" class="navmenu">
                     <ul>
-                        <li><a href="/">Frontend</a></li>
-                        <li><a href="/Staff/Dashboard">Bảng điều khiển</a></li>
                         <li class="dropdown">
                             <a href="#"><span>Công việc</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
                             <ul>
-                                <li><a href="/Staff/Bookings">Quản lý Đặt tour</a></li>
-                                <li><a href="/Staff/Customers">Quản lý Khách hàng</a></li>
-                                <li><a href="/Staff/Tours">Danh sách Tour</a></li>
+                                <li><a href="/Tour">Danh sách Tour</a></li>
                                 <li><a href="/Staff/Schedules">Lịch trình Tour</a></li>
                             </ul>
                         </li>
-                        <li><a href="/Staff/Tasks">Công việc của tôi</a></li>
+                        
                     </ul>
                     <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
                 </nav>
@@ -87,15 +63,11 @@
         </header>
     }
 
-    <!-- Staff Container -->
     <div class="staff-container">
-        <!-- Sidebar -->
         <div class="staff-sidebar">
             <div class="sidebar-header">
                 <div class="user-info">
-                    <div class="user-avatar">
-                        <i class="bi bi-person-circle"></i>
-                    </div>
+                    <div class="user-avatar"><i class="bi bi-person-circle"></i></div>
                     <div class="user-details">
                         <h6>@firstname</h6>
                         <small>Nhân viên</small>
@@ -103,129 +75,50 @@
                 </div>
             </div>
             <nav class="sidebar-nav">
-                <ul class="nav flex-column">
+                <ul class="nav flex-column">                    
+                    
                     <li class="nav-item">
-                        <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Dashboard" ? "active" : "")"
-                           href="/Staff/Dashboard">
-                            <i class="bi bi-speedometer2 me-2"></i>
-                            Bảng điều khiển
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Tour" ? "active" : "")"
+                           href="/Tour">
+                            <i class="bi bi-map me-2"></i>Quản lý Tour
                         </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Bookings" ? "active" : "")"
-                           href="/Staff/Bookings">
-                            <i class="bi bi-ticket-perforated me-2"></i>
-                            Đặt tour
-                            <span class="badge bg-primary ms-2">15</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Customers" ? "active" : "")"
-                           href="/Staff/Customers">
-                            <i class="bi bi-people me-2"></i>
-                            Khách hàng
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Tours" ? "active" : "")"
-                           href="/Staff/Tours">
-                            <i class="bi bi-map me-2"></i>
-                            Danh sách Tour
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Schedules" ? "active" : "")"
-                           href="/Staff/Schedules">
-                            <i class="bi bi-calendar-event me-2"></i>
-                            Lịch trình
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Tasks" ? "active" : "")"
-                           href="/Staff/Tasks">
-                            <i class="bi bi-list-check me-2"></i>
-                            Công việc của tôi
-                            <span class="badge bg-warning ms-2">3</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/Staff/Support">
-                            <i class="bi bi-headset me-2"></i>
-                            Hỗ trợ
-                        </a>
-                    </li>
+                    
                 </ul>
             </nav>
         </div>
 
-        <!-- Main Content -->
         <main class="staff-main">
             <div class="staff-content">
-                <!-- Breadcrumb -->
                 <nav aria-label="breadcrumb" class="breadcrumb-nav">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="/Staff/Dashboard">Staff</a></li>
+                    <ol class="breadcrumb">                    
+                        @if (ViewContext.RouteData.Values["controller"]?.ToString() == "Tour")
+                        {
+                            <li class="breadcrumb-item"><a href="/Tour">Quản lý Tour</a></li>
+                        }
                         <li class="breadcrumb-item active">@ViewData["Title"]</li>
                     </ol>
                 </nav>
 
-                <!-- Quick Stats -->
-                <div class="quick-stats mb-4">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="stat-card">
-                                <div class="stat-icon">
-                                    <i class="bi bi-ticket-perforated"></i>
-                                </div>
-                                <div class="stat-info">
-                                    <h4>15</h4>
-                                    <span>Đặt tour mới</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="stat-card">
-                                <div class="stat-icon">
-                                    <i class="bi bi-people"></i>
-                                </div>
-                                <div class="stat-info">
-                                    <h4>8</h4>
-                                    <span>Khách chờ xử lý</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="stat-card">
-                                <div class="stat-icon">
-                                    <i class="bi bi-calendar-check"></i>
-                                </div>
-                                <div class="stat-info">
-                                    <h4>3</h4>
-                                    <span>Tour hôm nay</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="stat-card">
-                                <div class="stat-icon">
-                                    <i class="bi bi-list-check"></i>
-                                </div>
-                                <div class="stat-info">
-                                    <h4>5</h4>
-                                    <span>Công việc tồn</span>
-                                </div>
-                            </div>
-                        </div>
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
-                </div>
+                }
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="bi bi-check-circle me-2"></i>@TempData["Success"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
 
-                <!-- Page Content -->
                 @RenderBody()
             </div>
         </main>
     </div>
 
-    <!-- Footer -->
     @if (!hideHeader)
     {
         <footer class="staff-footer">
@@ -242,7 +135,6 @@
         </footer>
     }
 
-    <!-- Scripts -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/assets/vendor/aos/aos.js"></script>
