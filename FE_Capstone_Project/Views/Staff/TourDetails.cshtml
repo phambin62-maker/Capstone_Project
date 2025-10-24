@@ -1,0 +1,100 @@
+﻿@model FE_Capstone_Project.Models.TourViewModel
+
+@{
+    ViewData["Title"] = "Chi tiết Tour";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">@ViewData["Title"]</h1>
+        <a href="@Url.Action("Tours")" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Thông tin Tour</h5>
+        </div>
+        <div class="card-body">
+            @if (Model != null)
+            {
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-bordered">
+                            <tr>
+                                <th width="40%">ID Tour:</th>
+                                <td>@Model.Id</td>
+                            </tr>
+                            <tr>
+                                <th>Tên Tour:</th>
+                                <td><strong class="text-primary">@Model.Name</strong></td>
+                            </tr>
+                            <tr>
+                                <th>Giá:</th>
+                                <td><span class="text-success fw-bold">@Model.Price.ToString("N0") VND</span></td>
+                            </tr>
+                            <tr>
+                                <th>Thời lượng:</th>
+                                <td>@Model.Duration</td>
+                            </tr>
+                            <tr>
+                                <th>Giảm giá trẻ em:</th>
+                                <td>@(Model.ChildDiscount?.ToString("P0") ?? "0%")</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-bordered">
+                            <tr>
+                                <th width="40%">Giảm giá nhóm:</th>
+                                <td>@(Model.GroupDiscount?.ToString("P0") ?? "0%")</td>
+                            </tr>
+                            <tr>
+                                <th>Số người nhóm:</th>
+                                <td>@(Model.GroupNumber?.ToString() ?? "N/A")</td>
+                            </tr>
+                            <tr>
+                                <th>Số chỗ tối thiểu:</th>
+                                <td>@(Model.MinSeats?.ToString() ?? "N/A")</td>
+                            </tr>
+                            <tr>
+                                <th>Số chỗ tối đa:</th>
+                                <td>@(Model.MaxSeats?.ToString() ?? "N/A")</td>
+                            </tr>
+                            <tr>
+                                <th>Trạng thái:</th>
+                                <td>
+                                    <span class="badge @(Model.TourStatus ? "bg-success" : "bg-danger")">
+                                        @(Model.TourStatus ? "Hoạt động" : "Ngừng hoạt động")
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6>Mô tả:</h6>
+                        <div class="border p-3 bg-light">
+                            @if (!string.IsNullOrEmpty(Model.Description))
+                            {
+                                @Model.Description
+                            }
+                            else
+                            {
+                                <span class="text-muted">Không có mô tả</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning">
+                    Không tìm thấy thông tin tour.
+                </div>
+            }
+        </div>
+    </div>
+</div>
