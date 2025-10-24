@@ -8,10 +8,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="Views\404.cshtml" />
+    <Content Remove="Views\about.cshtml" />
+    <Content Remove="Views\blog.cshtml" />
     <Content Remove="Views\index.cshtml" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="Views\404.cshtml" />
+    <None Include="Views\Staff\about.cshtml" />
+    <None Include="Views\Staff\blog.cshtml" />
     <None Include="Views\Home\index.cshtml" />
     <None Include="wwwroot\assets\css\main.css" />
     <None Include="wwwroot\assets\img\apple-touch-icon.png" />
@@ -182,6 +188,10 @@
     <Content Update="wwwroot\css\style.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\assets\img\icon\" />
   </ItemGroup>
 
 </Project>

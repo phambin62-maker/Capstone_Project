@@ -1,20 +1,20 @@
-﻿<head>
+﻿@model FE_Capstone_Project.Models.UserProfileViewModel
+@{
+    ViewData["Title"] = "Thông tin cá nhân";
+}
+<head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>Index - Tour Bootstrap Template</title>
-    <meta name="description" content="">
-    <meta name="keywords" content="">
+    <title>Profile</title>
 
     <!-- Favicons -->
     <link href="~/assets/img/favicon.png" rel="icon">
     <link href="~/assets/img/apple-touch-icon.png" rel="apple-touch-icon">
 
-    <!-- Fonts -->
+    <!-- Fonts & CSS -->
     <link href="https://fonts.googleapis.com" rel="preconnect">
     <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
-
-    <!-- Vendor CSS Files -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="~/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="~/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
     <link href="~/assets/vendor/aos/aos.css" rel="stylesheet">
@@ -24,44 +24,112 @@
     <!-- Main CSS File -->
     <link href="~/assets/css/main.css" rel="stylesheet">
 
-    <!-- =======================================================
-    * Template Name: Tour
-    * Template URL: https://bootstrapmade.com/tour-bootstrap-travel-website-template/
-    * Updated: Jul 01 2025 with Bootstrap v5.3.7
-    * Author: BootstrapMade.com
-    * License: https://bootstrapmade.com/license/
-    ======================================================== -->
+    <style>
+        /* KHÔNG chặn cuộn toàn trang */
+        html, body {
+            height: auto;
+            margin: 0;
+            overflow: auto;
+        }
+
+        /* Giữ phần profile cố định giữa màn hình */
+        .profile-wrapper {
+            min-height: 90vh; /* đủ cao nhưng không đè footer */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .profile-card {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            padding: 30px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        input[readonly] {
+            background-color: #f9f9f9;
+            border: none;
+            cursor: pointer;
+        }
+
+        input.editable {
+            border: 1px solid #ffc107 !important;
+            background-color: #fff !important;
+        }
+
+        .profile-button {
+            background: #0d6efd;
+            border: none;
+            transition: 0.3s;
+        }
+
+            .profile-button:hover {
+                background: #0b5ed7;
+            }
+    </style>
+
+
 </head>
-<div class="container rounded bg-white mt-5 mb-5">
+
+<body>
+    <div class="profile-wrapper">
+    <div class="container rounded bg-white mt-5 mb-5 shadow">
     <div class="row">
-        <div class="col-md-3 border-right">
-            <div class="d-flex flex-column align-items-center text-center p-3 py-5"><img class="rounded-circle mt-5" width="150px" src="https://st3.depositphotos.com/15648834/17930/v/600/depositphotos_179308454-stock-illustration-unknown-person-silhouette-glasses-profile.jpg"><span class="font-weight-bold">Edogaru</span><span class="text-black-50">edogaru@mail.com.my</span><span> </span></div>
+            <!-- Avatar -->
+            <div class="col-md-3 border-end d-flex flex-column align-items-center text-center p-4">
+                <img class="rounded-circle mt-3 mb-2" width="150px"
+                     src="https://st3.depositphotos.com/15648834/17930/v/600/depositphotos_179308454-stock-illustration-unknown-person-silhouette-glasses-profile.jpg" />
+                <span class="fw-bold">@Model?.Username</span>
+                <span class="text-muted">@Model?.Email</span>
+            </div>
+
+            <!-- Form -->
+            <div class="col-md-9">
+                <div class="p-4">
+                    @if (Model != null)
+                    {
+                        <h4 class="mb-4">Profile Settings</h4>
+                        <form method="post" asp-action="Profile">
+                            <div class="row mt-2">
+                                <div class="col-md-6">
+                                    <label class="form-label">First Name</label>
+                                    <input asp-for="FirstName" type="text" class="form-control user-input" value="@Model.FirstName" readonly />
         </div>
-        <div class="col-md-5 border-right">
-            <div class="p-3 py-5">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4 class="text-right">Profile Settings</h4>
+                                <div class="col-md-6">
+                                    <label class="form-label">Last Name</label>
+                                    <input asp-for="LastName" type="text" class="form-control user-input" value="@Model.LastName" readonly />
                 </div>
                 <div class="row mt-2">
                     <div class="col-md-6"><label class="labels">Name</label><input type="text" class="form-control" placeholder="first name" value=""></div>
                     <div class="col-md-6"><label class="labels">Surname</label><input type="text" class="form-control" value="" placeholder="surname"></div>
                 </div>
+
                 <div class="row mt-3">
-                    <div class="col-md-12"><label class="labels">Mobile Number</label><input type="text" class="form-control" placeholder="enter phone number" value=""></div>
-                    <div class="col-md-12"><label class="labels">Address Line 1</label><input type="text" class="form-control" placeholder="enter address line 1" value=""></div>
-                    <div class="col-md-12"><label class="labels">Address Line 2</label><input type="text" class="form-control" placeholder="enter address line 2" value=""></div>
-                    <div class="col-md-12"><label class="labels">Postcode</label><input type="text" class="form-control" placeholder="enter address line 2" value=""></div>
-                    <div class="col-md-12"><label class="labels">State</label><input type="text" class="form-control" placeholder="enter address line 2" value=""></div>
-                    <div class="col-md-12"><label class="labels">Area</label><input type="text" class="form-control" placeholder="enter address line 2" value=""></div>
-                    <div class="col-md-12"><label class="labels">Email ID</label><input type="text" class="form-control" placeholder="enter email id" value=""></div>
-                    <div class="col-md-12"><label class="labels">Education</label><input type="text" class="form-control" placeholder="education" value=""></div>
+                                <div class="col-md-12">
+                                    <label class="form-label">Mobile Number</label>
+                                    <input asp-for="PhoneNumber" type="text" class="form-control user-input" value="@Model.PhoneNumber" readonly />
+                                </div>
+                                <div class="col-md-12 mt-2">
+                                    <label class="form-label">Email</label>
+                                    <input asp-for="Email" type="text" class="form-control user-input" value="@Model.Email" readonly />
                 </div>
                 <div class="row mt-3">
                     <div class="col-md-6"><label class="labels">Country</label><input type="text" class="form-control" placeholder="country" value=""></div>
                     <div class="col-md-6"><label class="labels">State/Region</label><input type="text" class="form-control" value="" placeholder="state"></div>
                 </div>
-                <div class="mt-5 text-center"><button class="btn btn-primary profile-button" type="button">Save Profile</button></div>
+
+                            <div class="mt-4 text-center">
+                                <button class="btn btn-primary profile-button" type="submit">💾 Save Profile</button>
             </div>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning">Không có thông tin người dùng.</div>
+                    }
         </div>
         <div class="col-md-4">
             <div class="p-3 py-5">
@@ -72,3 +140,25 @@
         </div>
     </div>
 </div>
+
+    <!-- Script cho chức năng click để sửa -->
+    <script>
+        document.querySelectorAll('.user-input').forEach(input => {
+            input.addEventListener('click', function () {
+                if (this.hasAttribute('readonly')) {
+                    this.removeAttribute('readonly');
+                    this.classList.add('editable');
+                }
+            });
+
+            input.addEventListener('blur', function () {
+                // Nếu không thay đổi thì khóa lại
+                if (!this.value.trim()) {
+                    this.setAttribute('readonly', true);
+                    this.classList.remove('editable');
+                }
+            });
+        });
+    </script>
+
+</body>
