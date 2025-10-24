@@ -1,60 +1,41 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 @{
-        var firstname = Context.Session.GetString("FirstName");
-        var hideHeader = ViewData["HideHeader"] as bool? ?? false;
+            var firstname = Context.Session.GetString("FirstName");
+            var hideHeader = ViewData["HideHeader"] as bool? ?? false;
 }
 <head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>@ViewData["Title"] - Staff Panel</title>
-    <meta name="description" content="">
-    <meta name="keywords" content="">
 
-    <!-- Favicons -->
     <link href="~/assets/img/favicon.png" rel="icon">
     <link href="~/assets/img/apple-touch-icon.png" rel="apple-touch-icon">
-
-    <!-- Fonts -->
     <link href="https://fonts.googleapis.com" rel="preconnect">
     <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
-
-    <!-- Vendor CSS Files -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="~/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="~/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
     <link href="~/assets/vendor/aos/aos.css" rel="stylesheet">
     <link href="~/assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
     <link href="~/assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
-
-    <!-- Main CSS File -->
     <link href="~/assets/css/main.css" rel="stylesheet">
-
-    <!-- Staff CSS -->
     <link href="~/css/staff.css" rel="stylesheet">
 
-    <!-- =======================================================
-    * Template Name: Tour
-    * Template URL: https://bootstrapmade.com/tour-bootstrap-travel-website-template/
-    * Updated: Jul 01 2025 with Bootstrap v5.3.7
-    * Author: BootstrapMade.com
-    * License: https://bootstrapmade.com/license/
-    ======================================================== -->
+    <!-- Thêm section Styles -->
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="staff-body">
-    <!-- Main Header -->
     @if (!hideHeader)
     {
         <header id="header" class="header d-flex align-items-center fixed-top">
-            <div class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-between">
+            <div class="header-container container-fluid container-xl d-flex align-items-center justify-content-between">
                 <a href="/" class="logo d-flex align-items-center me-auto me-xl-0">
                     <h1 class="sitename">Staff Panel</h1>
                 </a>
 
                 <nav id="navmenu" class="navmenu">
                     <ul>
-                        <li><a href="/">Frontend</a></li>
-                        <li><a href="/Staff/Dashboard">Bảng điều khiển</a></li>
                         <li class="dropdown">
                             <a href="#"><span>Công việc</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
                             <ul>
@@ -87,15 +68,11 @@
         </header>
     }
 
-    <!-- Staff Container -->
     <div class="staff-container">
-        <!-- Sidebar -->
         <div class="staff-sidebar">
             <div class="sidebar-header">
                 <div class="user-info">
-                    <div class="user-avatar">
-                        <i class="bi bi-person-circle"></i>
-                    </div>
+                    <div class="user-avatar"><i class="bi bi-person-circle"></i></div>
                     <div class="user-details">
                         <h6>@firstname</h6>
                         <small>Nhân viên</small>
@@ -103,7 +80,8 @@
                 </div>
             </div>
             <nav class="sidebar-nav">
-                <ul class="nav flex-column">
+                <ul class="nav flex-column">                    
+                    
                     <li class="nav-item">
                         <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Dashboard" ? "active" : "")"
                            href="/Staff/Dashboard">
@@ -158,10 +136,8 @@
             </nav>
         </div>
 
-        <!-- Main Content -->
         <main class="staff-main">
             <div class="staff-content">
-                <!-- Breadcrumb -->
                 <nav aria-label="breadcrumb" class="breadcrumb-nav">
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item"><a href="/Staff/Dashboard">Staff</a></li>
@@ -219,13 +195,11 @@
                     </div>
                 </div>
 
-                <!-- Page Content -->
                 @RenderBody()
             </div>
         </main>
     </div>
 
-    <!-- Footer -->
     @if (!hideHeader)
     {
         <footer class="staff-footer">
@@ -242,7 +216,6 @@
         </footer>
     }
 
-    <!-- Scripts -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/assets/vendor/aos/aos.js"></script>
@@ -250,6 +223,8 @@
     <script src="~/assets/vendor/glightbox/js/glightbox.min.js"></script>
     <script src="~/assets/js/main.js"></script>
     <script src="~/js/staff.js"></script>
+
+    <!-- Thêm section Scripts -->
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

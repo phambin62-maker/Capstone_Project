@@ -20,7 +20,6 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
 
         public async Task<WishlistResponse> AddToWishlistAsync(int userId, int tourId)
         {
-            // Check if tour exists
             var tour = await _context.Tours
                 .Include(t => t.TourImages)
                 .FirstOrDefaultAsync(t => t.Id == tourId);
@@ -28,7 +27,6 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
             if (tour == null)
                 throw new ArgumentException("Tour not found");
 
-            // Check if already in wishlist
             var existingWishlist = await _context.Wishlists
                 .FirstOrDefaultAsync(w => w.UserId == userId && w.TourId == tourId);
 
@@ -97,7 +95,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
                 TourPrice = w.Tour.Price,
                 Duration = w.Tour.Duration,
                 TourImage = w.Tour.TourImages.FirstOrDefault()?.Image,
-                AddedDate = DateTime.UtcNow // You might want to store this in database
+                AddedDate = DateTime.UtcNow
             }).ToList();
         }
 
