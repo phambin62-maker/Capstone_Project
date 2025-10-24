@@ -9,7 +9,10 @@ using BE_Capstone_Project.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using BE_Capstone_Project.Application.Services;
+using BE_Capstone_Project.Application.Report.Services;
+using BE_Capstone_Project.Application.Report.Services.Interfaces;
+
+
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<OtmsdbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

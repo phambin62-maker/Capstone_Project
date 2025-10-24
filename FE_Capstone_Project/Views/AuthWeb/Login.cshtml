@@ -76,6 +76,68 @@
                     <p id="loginMessage" style="margin-top: 10px; text-align:center; color:red;">@Model.Message</p>
                 }
             </form>
+
+            @* <script>
+                document.getElementById("loginForm").addEventListener("submit", async function (e) {
+                    e.preventDefault();
+
+                    const username = document.getElementById("username").value.trim();
+                    const password = document.getElementById("password").value.trim();
+                    const messageBox = document.getElementById("loginMessage");
+                    const btn = document.querySelector(".login-btn");
+                    const btnText = btn.querySelector(".btn-text");
+                    const btnLoader = btn.querySelector(".btn-loader");
+
+                    if (!username || !password) {
+                        messageBox.textContent = "Vui lòng nhập tên đăng nhập và mật khẩu.";
+                        return;
+                    }
+
+                    // Hiển thị loading
+                    btn.disabled = true;
+                    btnText.style.display = "none";
+                    btnLoader.style.display = "block";
+
+                    try {
+                        const response = await fetch("/auth/login", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ userName: username, password })
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            messageBox.style.color = "green";
+                            messageBox.textContent = data.message || "Đăng nhập thành công!";
+                            localStorage.setItem("jwtToken", data.token);
+                            setTimeout(() => {
+                                window.location.href = "/Home/Index";
+                            }, 1000);
+                        } else {
+                            messageBox.style.color = "red";
+                            messageBox.textContent = data.message || "Sai thông tin đăng nhập.";
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        messageBox.style.color = "red";
+                        messageBox.textContent = "Lỗi kết nối đến máy chủ.";
+                    } finally {
+                        // Ẩn loading
+                        btn.disabled = false;
+                        btnText.style.display = "inline";
+                        btnLoader.style.display = "none";
+                    }
+                });
+
+                // Toggle password visibility
+                document.getElementById("passwordToggle").addEventListener("click", () => {
+                    const passwordInput = document.getElementById("password");
+                    passwordInput.type = passwordInput.type === "password" ? "text" : "password";
+                });
+            </script> *@
+
+
             <div class="divider">
                 <span>or sign in with</span>
             </div>
