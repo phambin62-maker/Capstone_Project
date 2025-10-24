@@ -1,4 +1,5 @@
 using BE_Capstone_Project.Application.Auth.Services;
+using BE_Capstone_Project.Application.Bookings.Services;
 using BE_Capstone_Project.Application.Newses.Services;
 using BE_Capstone_Project.Application.Notifications.Services;
 using BE_Capstone_Project.Application.Report.Services;
@@ -30,6 +31,8 @@ builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<TourPriceHistoryService>();
 builder.Services.AddScoped<NewsService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<BookingService>();
+
 //DAO
 builder.Services.AddScoped<BookingCustomerDAO>();
 builder.Services.AddScoped<BookingDAO>();
