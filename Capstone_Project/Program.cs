@@ -9,6 +9,7 @@ using BE_Capstone_Project.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using BE_Capstone_Project.Application.Services;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<OtmsdbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -17,6 +18,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ITourService, TourService>();
 builder.Services.AddScoped<ITourImageService, TourImageService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 //DAO
 builder.Services.AddScoped<BookingCustomerDAO>();

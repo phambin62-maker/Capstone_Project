@@ -55,17 +55,27 @@ namespace BE_Capstone_Project.Application.Auth.Controllers
                 return Unauthorized("Invalid username or password");
 
             var token = _authService.GenerateJwtToken(user);
-            return Ok(new {user.FirstName,user.RoleId, token });
+            return Ok(new { token });
         }
         [Authorize]
         [HttpGet("profile")]
         public async Task<IActionResult> Profile()
         {
-            var username = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
-            if (user == null) return NotFound();
+            var username = User.Identity?.Name;
+            if (string.IsNullOrEmpty(username))
+                return Unauthorized("Cannot find username in token");
 
-            return Ok(new {user.Username, user.Email, user.FirstName,user.LastName,user.PhoneNumber,user.Image});
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+            if (user == null)
+                return NotFound("User not found");
+            return Ok(new
+            {
+                user.Username,
+                user.Email,
+                user.FirstName,
+                user.LastName,
+                user.PhoneNumber,
+            });
         }
 
         // Helper
@@ -75,7 +85,6 @@ namespace BE_Capstone_Project.Application.Auth.Controllers
             var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(password));
             return Convert.ToBase64String(bytes);
         }
-
         private static bool VerifyPassword(string password, string hash)
         {
             var hashOfInput = HashPassword(password);
