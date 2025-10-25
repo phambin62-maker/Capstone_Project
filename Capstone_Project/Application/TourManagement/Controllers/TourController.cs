@@ -229,5 +229,36 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
 
             return Ok(new { message = $"Found {tours.Count} tours", tours });
         }
+        // Thêm vào TourController.cs
+        [HttpPost("ToggleTourStatus")]
+        public async Task<IActionResult> ToggleTourStatus(int tourId)
+        {
+            try
+            {
+                var tour = await _tourService.GetTourById(tourId);
+                if (tour == null)
+                    return NotFound(new { message = $"Không tìm thấy tour với id {tourId}" });
+
+                // Đảo ngược trạng thái
+                tour.TourStatus = !tour.TourStatus;
+                var newStatus = tour.TourStatus;
+
+                var result = await _tourService.UpdateTour(tour);
+
+                if (!result)
+                    return BadRequest(new { message = "Thay đổi trạng thái thất bại" });
+
+                return Ok(new
+                {
+                    message = (bool)newStatus ? "Tour đã được hiển thị" : "Tour đã được ẩn",
+                    newStatus = newStatus
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Lỗi khi thay đổi trạng thái", error = ex.Message });
+            }
+        }
+
     }
 }

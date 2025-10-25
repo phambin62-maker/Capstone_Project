@@ -1,4 +1,4 @@
-using BE_Capstone_Project.Application.Auth.Services;
+﻿using BE_Capstone_Project.Application.Auth.Services;
 using BE_Capstone_Project.Application.Bookings.Services;
 using BE_Capstone_Project.Application.Newses.Services;
 using BE_Capstone_Project.Application.Notifications.Services;
@@ -72,14 +72,25 @@ builder.Services.AddAuthorization();
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
         options.JsonSerializerOptions.ReferenceHandler = null;
         options.JsonSerializerOptions.WriteIndented = true;
     });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        policy =>
+        {
+            policy.AllowAnyOrigin()      
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
 
 var app = builder.Build();
+app.UseCors("AllowAll");
 
 if (app.Environment.IsDevelopment())
 {
