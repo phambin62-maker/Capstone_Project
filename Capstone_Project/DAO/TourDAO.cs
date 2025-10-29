@@ -66,7 +66,10 @@ namespace BE_Capstone_Project.DAO
         {
             try
             {
-                return await _context.Tours.Include(t => t.TourImages).ToListAsync();
+                return await _context.Tours
+                    .Include(t => t.TourImages)
+                    .Include(t => t.Reviews)
+                    .ToListAsync();
             }
             catch (Exception ex)
             {
@@ -79,7 +82,12 @@ namespace BE_Capstone_Project.DAO
         {
             try
             {
-                return await _context.Tours.Include(t => t.TourImages).FirstOrDefaultAsync(t => t.Id == tourId);
+                return await _context.Tours
+                    .Include(t => t.TourImages)
+                    .Include(t => t.Reviews).ThenInclude(r => r.User)
+                    .Include(t => t.StartLocation)
+                    .Include(t => t.EndLocation)
+                    .FirstOrDefaultAsync(t => t.Id == tourId);
             }
             catch (Exception ex)
             {

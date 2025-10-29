@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace BE_Capstone_Project.Domain.Models;
 
@@ -11,5 +12,6 @@ public partial class TourImage
 
     public string? Image { get; set; }
 
+    [JsonIgnore]
     public virtual Tour Tour { get; set; } = null!;
 }

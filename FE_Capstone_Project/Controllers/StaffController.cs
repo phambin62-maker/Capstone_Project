@@ -40,6 +40,7 @@ namespace FE_Capstone_Project.Controllers
                         PropertyNameCaseInsensitive = true
                     });
 
+
                     var tours = result?.Tours ?? new List<TourViewModel>();
 
                     // Lấy tổng số tour - synchronous

@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using BE_Capstone_Project.Domain.Models;
+using System.Text.Json.Serialization;
 
 namespace FE_Capstone_Project.Models
 {
@@ -17,7 +18,7 @@ namespace FE_Capstone_Project.Models
         public decimal Price { get; set; }
 
         [JsonPropertyName("duration")]
-        public string Duration { get; set; } = string.Empty;
+        public byte Duration { get; set; }
 
         [JsonPropertyName("startLocationId")]
         public int StartLocationId { get; set; }
@@ -48,6 +49,18 @@ namespace FE_Capstone_Project.Models
 
         [JsonPropertyName("tourStatus")]
         public bool TourStatus { get; set; }
+
+        [JsonPropertyName("tourImages")]
+        public List<TourImage> TourImages { get; set; } = new List<TourImage>();
+
+        [JsonPropertyName("reviews")]
+        public List<Review> Reviews { get; set; } = new List<Review>();
+
+        [JsonPropertyName("startLocation")]
+        public Location StartLocation { get; set; } = new Location();
+
+        [JsonPropertyName("endLocation")]
+        public Location EndLocation { get; set; } = new Location();
     }
 
     public class TourListResponse
