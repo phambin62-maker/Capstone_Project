@@ -112,10 +112,9 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Schedules" ? "active" : "")"
-                           href="/Staff/Schedules">
-                            <i class="bi bi-calendar-event me-2"></i>
-                            Lịch trình
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "StaffSchedule" ? "active" : "")"
+                           href="/StaffSchedule/Schedules">
+                            <i class="bi bi-calendar-event me-2"></i>Lịch trình Tour
                         </a>
                     </li>
                     <li class="nav-item">
