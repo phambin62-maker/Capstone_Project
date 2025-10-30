@@ -464,5 +464,10 @@ namespace FE_Capstone_Project.Controllers
 
             return RedirectToAction("Tours");
         }
+        public IActionResult Blog()
+        {
+            ViewData["Title"] = "Hồ sơ cá nhân";
+            return View();
+        }
     }
 }
