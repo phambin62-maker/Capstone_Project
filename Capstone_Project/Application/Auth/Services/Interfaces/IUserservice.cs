@@ -8,5 +8,6 @@ namespace BE_Capstone_Project.Application.Services
     public interface IUserService
     {
         Task<bool> UpdateUserAsync(UpdateUserDto request);
+        Task<User?> GetUserByUsername(string username);
     }
 }

@@ -1,5 +1,6 @@
-﻿using DocumentFormat.OpenXml.Wordprocessing;
+﻿using FE_Capstone_Project.Helpers;
 using FE_Capstone_Project.Models;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 
@@ -7,95 +8,56 @@ namespace FE_Capstone_Project.Controllers
 {
     public class TourWebController : Controller
     {
-        private readonly HttpClient _httpClient;
-        private const string BASE_API_URL = "https://localhost:5160/api/";
+        private readonly ApiHelper _apiHelper;
 
-        public TourWebController(IHttpClientFactory httpClientFactory)
+        public TourWebController(ApiHelper apiHelper)
         {
-            _httpClient = httpClientFactory.CreateClient();
-            _httpClient.BaseAddress = new Uri(BASE_API_URL);
-            _httpClient.Timeout = TimeSpan.FromSeconds(30);
+            _apiHelper = apiHelper;
         }
 
-        public IActionResult Tours()
+        public async Task<IActionResult> Tours()
         {
             try
             {
-                var response = _httpClient.GetAsync($"{BASE_API_URL}Tour/GetAllTours").Result;
+                var allToursTask = _apiHelper.GetAsync<TourListResponse>("Tour/GetAllTours");
+                var topToursTask = _apiHelper.GetAsync<TourListResponse>("Tour/GetTopToursByEachCategories");
 
-                if (response.IsSuccessStatusCode)
-                {
-                    var content = response.Content.ReadAsStringAsync().Result;
-                    var result = JsonSerializer.Deserialize<TourListResponse>(content, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
+                await Task.WhenAll(allToursTask, topToursTask);
 
-                    var tours = result?.Tours ?? new List<TourViewModel>();
+                var allToursResult = allToursTask.Result;
+                var topToursResult = topToursTask.Result;
 
-                    // Lấy tổng số tour - synchronous
-                    var countResponse = _httpClient.GetAsync($"{BASE_API_URL}Tour/GetTotalTourCount").Result;
-                    var totalCount = 0;
+                var tours = allToursResult?.Tours ?? new List<TourViewModel>();
+                var featuredTours = topToursResult?.Tours ?? new List<TourViewModel>();
 
-                    if (countResponse.IsSuccessStatusCode)
-                    {
-                        var countContent = countResponse.Content.ReadAsStringAsync().Result;
-                        var countResult = JsonSerializer.Deserialize<TourCountResponse>(countContent, new JsonSerializerOptions
-                        {
-                            PropertyNameCaseInsensitive = true
-                        });
-                        totalCount = countResult?.TourCount ?? tours.Count;
-                    }
-                    else
-                    {
-                        totalCount = tours.Count;
-                    }
-
-                    // Tính toán thông tin phân trang
-                    ViewBag.TotalCount = totalCount;
-
-                    return View(tours);
-                }
-                else
-                {
-                    ViewBag.ErrorMessage = "Tour list could not be loaded. Please try again later.";
-                    return View(new List<TourViewModel>());
-                }
+                ViewBag.FeaturedTours = featuredTours;
+                return View(tours);
             }
             catch (Exception ex)
             {
-                ViewBag.ErrorMessage = "Error connecting to server. Please check your connection again.";
+                ViewBag.ErrorMessage = $"Error connecting to server: {ex.Message}";
                 return View(new List<TourViewModel>());
             }
         }
 
-        public IActionResult TourDetails(int tourId)
+        public async Task<IActionResult> TourDetails(int tourId)
         {
             try
             {
-                var response = _httpClient.GetAsync($"{BASE_API_URL}Tour/GetTourById/{tourId}").Result;
-
-                if (response.IsSuccessStatusCode)
+                var username = HttpContext.Session.GetString("UserName");
+                var result = await _apiHelper.GetAsync<TourDetailResponse>($"Tour/GetTourById/{tourId}?username={username}");
+                if (result == null || result.Tour == null)
                 {
-                    var content = response.Content.ReadAsStringAsync().Result;
-                    var result = JsonSerializer.Deserialize<TourDetailResponse>(content, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
-
-                    var tour = result.Tour ?? new TourViewModel();
-
-                    return View(tour);
-                }
-                else
-                {
-                    ViewBag.ErrorMessage = "Tour list could not be loaded. Please try again later.";
+                    ViewBag.ErrorMessage = "Tour could not be found.";
                     return View(new TourViewModel());
                 }
+
+                ViewBag.CanComment = result.CanComment;
+                return View(result.Tour);
             }
             catch (Exception ex)
             {
-                ViewBag.ErrorMessage = "Error connecting to server. Please check your connection again.";
+                ViewBag.ErrorMessage = $"Error connecting to server: {ex.Message}";
                 return View(new TourViewModel());
             }
         }
