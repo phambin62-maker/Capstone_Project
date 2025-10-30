@@ -173,5 +173,10 @@ namespace FE_Capstone_Project.Controllers
             ViewData["Title"] = "Hồ sơ cá nhân";
             return View();
         }
+        public IActionResult Blog()
+        {
+            ViewData["Title"] = "Hồ sơ cá nhân";
+            return View();
+        }
     }
 }
