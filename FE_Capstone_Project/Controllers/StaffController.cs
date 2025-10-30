@@ -40,6 +40,7 @@ namespace FE_Capstone_Project.Controllers
                         PropertyNameCaseInsensitive = true
                     });
 
+
                     var tours = result?.Tours ?? new List<TourViewModel>();
 
                     var countResponse = _httpClient.GetAsync($"{BASE_API_URL}Tour/GetTotalTourCount").Result;

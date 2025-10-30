@@ -27,11 +27,6 @@ namespace BE_Capstone_Project.Application.Services
 
                 if (!string.IsNullOrEmpty(request.NewPassword))
                 {
-                    if (string.IsNullOrEmpty(request.OldPassword))
-                        return false; 
-
-                    if (!VerifyPassword(request.OldPassword, user.PasswordHash))
-                        return false;
                     request.NewPassword = HashPassword(request.NewPassword);
                 }
 

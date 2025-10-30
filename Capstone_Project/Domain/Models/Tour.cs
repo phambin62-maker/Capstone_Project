@@ -15,7 +15,7 @@ public partial class Tour
 
     public decimal? Price { get; set; }
 
-    public string? Duration { get; set; }
+    public byte Duration { get; set; }
 
     public int StartLocationId { get; set; }
 

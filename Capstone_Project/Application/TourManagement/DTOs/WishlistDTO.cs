@@ -19,7 +19,7 @@
         public int TourId { get; set; }
         public string TourName { get; set; }
         public decimal? TourPrice { get; set; }
-        public string Duration { get; set; }
+        public byte Duration { get; set; }
         public string TourImage { get; set; }
         public DateTime AddedDate { get; set; }
     }

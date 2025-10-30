@@ -140,7 +140,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
             return Ok(new { message = $"Found {tours.Count} tours", tours });
         }
 
-        [HttpGet("GetTourById")]
+        [HttpGet("GetTourById/{id}")]
         public async Task<IActionResult> GetTourById(int id)
         {
             var tour = await _tourService.GetTourById(id);
