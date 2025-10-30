@@ -104,201 +104,28 @@
                                 }
                             </script>
                             <div class="swiper-wrapper">
-                                <div class="swiper-slide">
-                                    <div class="featured-tour-card">
-                                        <div class="tour-image">
-                                            <img src="~/assets/img/travel/tour-15.webp" alt="Bali Adventure" class="img-fluid">
-                                            <div class="tour-badge">Best Seller</div>
-                                        </div>
-                                        <div class="tour-content">
-                                            <h4>Bali Adventure Escape</h4>
-                                            <p>Discover the mystical beauty of Bali with temple visits, volcano hiking, and pristine beaches.</p>
-                                            <div class="tour-meta">
-                                                <span class="duration"><i class="bi bi-clock"></i> 7 Days</span>
-                                                <span class="price">From $899</span>
+                                @foreach (TourViewModel featuredTour in ViewBag.FeaturedTours)
+                                {
+                                    <div class="swiper-slide">
+                                        <div class="featured-tour-card">
+                                            <div class="tour-image">
+                                                <img src="@featuredTour.TourImages.First().Image" class="img-fluid">
+                                                <div class="tour-badge">@featuredTour.Category.CategoryName</div>
                                             </div>
-                                            <a href="tour-details.html" class="btn btn-primary">View Details</a>
+                                            <div class="tour-content">
+                                                <h4>@featuredTour.Name</h4>
+                                                <p>@featuredTour.Description</p>
+                                                <div class="tour-meta">
+                                                    <span class="duration"><i class="bi bi-clock"></i> @featuredTour.Duration Day@(featuredTour.Duration == 1 ? "" : "s")</span>
+                                                    <span class="price">From @string.Format("{0:N0} VND", featuredTour.Price)</span>
+                                                </div>
+                                                <a asp-action="TourDetails" asp-route-tourId="@featuredTour.Id" class="btn btn-primary">View Details</a>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="swiper-slide">
-                                    <div class="featured-tour-card">
-                                        <div class="tour-image">
-                                            <img src="~/assets/img/travel/tour-22.webp" alt="Paris Romance" class="img-fluid">
-                                            <div class="tour-badge">Luxury</div>
-                                        </div>
-                                        <div class="tour-content">
-                                            <h4>Romantic Paris Getaway</h4>
-                                            <p>Experience the city of love with premium accommodations and exclusive dining.</p>
-                                            <div class="tour-meta">
-                                                <span class="duration"><i class="bi bi-clock"></i> 5 Days</span>
-                                                <span class="price">From $1299</span>
-                                            </div>
-                                            <a href="tour-details.html" class="btn btn-primary">View Details</a>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="swiper-slide">
-                                    <div class="featured-tour-card">
-                                        <div class="tour-image">
-                                            <img src="~/assets/img/travel/tour-8.webp" alt="Tokyo Culture" class="img-fluid">
-                                            <div class="tour-badge">New</div>
-                                        </div>
-                                        <div class="tour-content">
-                                            <h4>Tokyo Cultural Experience</h4>
-                                            <p>Immerse yourself in Japanese culture, from traditional tea ceremonies to modern city life.</p>
-                                            <div class="tour-meta">
-                                                <span class="duration"><i class="bi bi-clock"></i> 10 Days</span>
-                                                <span class="price">From $1599</span>
-                                            </div>
-                                            <a href="tour-details.html" class="btn btn-primary">View Details</a>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="swiper-slide">
-                                    <div class="featured-tour-card">
-                                        <div class="tour-image">
-                                            <img src="~/assets/img/travel/tour-14.webp" alt="Norwegian Fjords" class="img-fluid">
-                                            <div class="tour-badge">Popular</div>
-                                        </div>
-                                        <div class="tour-content">
-                                            <h4>Norwegian Fjords Cruise</h4>
-                                            <p>Sail through dramatic fjords and witness the stunning landscapes of Norway's coastline.</p>
-                                            <div class="tour-meta">
-                                                <span class="duration"><i class="bi bi-clock"></i> 9 Days</span>
-                                                <span class="price">From $1899</span>
-                                            </div>
-                                            <a href="tour-details.html" class="btn btn-primary">View Details</a>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="swiper-slide">
-                                    <div class="featured-tour-card">
-                                        <div class="tour-image">
-                                            <img src="~/assets/img/travel/tour-7.webp" alt="Egyptian Adventure" class="img-fluid">
-                                            <div class="tour-badge">Cultural</div>
-                                        </div>
-                                        <div class="tour-content">
-                                            <h4>Ancient Egypt Explorer</h4>
-                                            <p>Journey through time visiting pyramids, temples, and sailing the legendary Nile River.</p>
-                                            <div class="tour-meta">
-                                                <span class="duration"><i class="bi bi-clock"></i> 8 Days</span>
-                                                <span class="price">From $1149</span>
-                                            </div>
-                                            <a href="tour-details.html" class="btn btn-primary">View Details</a>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="swiper-slide">
-                                    <div class="featured-tour-card">
-                                        <div class="tour-image">
-                                            <img src="~/assets/img/travel/tour-19.webp" alt="Costa Rica Adventure" class="img-fluid">
-                                            <div class="tour-badge">Adventure</div>
-                                        </div>
-                                        <div class="tour-content">
-                                            <h4>Costa Rica Eco Adventure</h4>
-                                            <p>Experience rainforest canopy tours, wildlife viewing, and pristine beaches in this eco paradise.</p>
-                                            <div class="tour-meta">
-                                                <span class="duration"><i class="bi bi-clock"></i> 6 Days</span>
-                                                <span class="price">From $749</span>
-                                            </div>
-                                            <a href="tour-details.html" class="btn btn-primary">View Details</a>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="swiper-slide">
-                                    <div class="featured-tour-card">
-                                        <div class="tour-image">
-                                            <img src="~/assets/img/travel/tour-2.webp" alt="Greek Islands" class="img-fluid">
-                                            <div class="tour-badge">Summer Special</div>
-                                        </div>
-                                        <div class="tour-content">
-                                            <h4>Greek Islands Hopping</h4>
-                                            <p>Explore the stunning Greek islands, from Santorini's sunsets to Mykonos' vibrant nightlife.</p>
-                                            <div class="tour-meta">
-                                                <span class="duration"><i class="bi bi-clock"></i> 11 Days</span>
-                                                <span class="price">From $1399</span>
-                                            </div>
-                                            <a href="tour-details.html" class="btn btn-primary">View Details</a>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="swiper-slide">
-                                    <div class="featured-tour-card">
-                                        <div class="tour-image">
-                                            <img src="~/assets/img/travel/tour-25.webp" alt="Patagonia Trek" class="img-fluid">
-                                            <div class="tour-badge">Extreme</div>
-                                        </div>
-                                        <div class="tour-content">
-                                            <h4>Patagonia Wilderness Trek</h4>
-                                            <p>Challenge yourself in one of the world's last great wildernesses with glaciers and mountain peaks.</p>
-                                            <div class="tour-meta">
-                                                <span class="duration"><i class="bi bi-clock"></i> 12 Days</span>
-                                                <span class="price">From $2299</span>
-                                            </div>
-                                            <a href="tour-details.html" class="btn btn-primary">View Details</a>
-                                        </div>
-                                    </div>
-                                </div>
+                                }
                             </div>
                             <div class="swiper-pagination"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tour Categories -->
-                <div class="row mb-5" data-aos="fade-up" data-aos-delay="400">
-                    <div class="col-12">
-                        <h3 class="section-subtitle mb-4">Browse by Category</h3>
-                        <div class="row">
-                            <div class="col-lg-2 col-md-4 col-6 mb-3">
-                                <div class="category-card">
-                                    <div class="category-icon">
-                                        <i class="bi bi-compass"></i>
-                                    </div>
-                                    <h5>Adventure</h5>
-                                </div>
-                            </div>
-                            <div class="col-lg-2 col-md-4 col-6 mb-3">
-                                <div class="category-card">
-                                    <div class="category-icon">
-                                        <i class="bi bi-gem"></i>
-                                    </div>
-                                    <h5>Luxury</h5>
-                                </div>
-                            </div>
-                            <div class="col-lg-2 col-md-4 col-6 mb-3">
-                                <div class="category-card">
-                                    <div class="category-icon">
-                                        <i class="bi bi-people"></i>
-                                    </div>
-                                    <h5>Family</h5>
-                                </div>
-                            </div>
-                            <div class="col-lg-2 col-md-4 col-6 mb-3">
-                                <div class="category-card">
-                                    <div class="category-icon">
-                                        <i class="bi bi-palette"></i>
-                                    </div>
-                                    <h5>Cultural</h5>
-                                </div>
-                            </div>
-                            <div class="col-lg-2 col-md-4 col-6 mb-3">
-                                <div class="category-card">
-                                    <div class="category-icon">
-                                        <i class="bi bi-sun"></i>
-                                    </div>
-                                    <h5>Beach</h5>
-                                </div>
-                            </div>
-                            <div class="col-lg-2 col-md-4 col-6 mb-3">
-                                <div class="category-card">
-                                    <div class="category-icon">
-                                        <i class="bi bi-building"></i>
-                                    </div>
-                                    <h5>City</h5>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -321,7 +148,7 @@
                                 <div class="col-lg-4 col-md-6 mb-4">
                                     <div class="tour-card">
                                         <div class="tour-image">
-                                            <img src="@tour.TourImages.First().Image" alt="Swiss Alps" class="img-fluid">
+                                            <img src="@tour.TourImages.First().Image" class="img-fluid">
                                             <div class="tour-price">@string.Format("{0:N0} VND", tour.Price)</div>
                                         </div>
                                         <div class="tour-content">

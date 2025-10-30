@@ -1,7 +1,7 @@
-﻿
-using BE_Capstone_Project.Infrastructure;
+﻿using BE_Capstone_Project.Infrastructure;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using FE_Capstone_Project.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
@@ -13,6 +13,11 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 builder.Services.AddHttpClient();
+builder.Services.AddHttpClient<ApiHelper>(client =>
+{
+    client.BaseAddress = new Uri("https://localhost:7160/api/");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 builder.Services.AddDbContext<OtmsdbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddAuthentication(options =>

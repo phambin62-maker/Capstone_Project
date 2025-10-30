@@ -1,5 +1,6 @@
 ﻿using BE_Capstone_Project.Application.Auth.DTOs;
 using BE_Capstone_Project.DAO;
+using BE_Capstone_Project.Domain.Models;
 using System;
 using System.Security.Cryptography;
 using System.Text;
@@ -42,6 +43,11 @@ namespace BE_Capstone_Project.Application.Services
                 Console.WriteLine($"[Service] UpdateUserAsync error: {ex.Message}");
                 return false;
             }
+        }
+
+        public async Task<User?> GetUserByUsername(string username)
+        {
+            return await _userDAO.GetUserByUsername(username);
         }
 
         private static string HashPassword(string password)

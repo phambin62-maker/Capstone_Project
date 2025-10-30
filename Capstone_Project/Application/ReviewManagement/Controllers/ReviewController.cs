@@ -4,6 +4,8 @@ using BE_Capstone_Project.Domain.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using BE_Capstone_Project.Application.ReviewManagement.Services.Interfaces;
+using BE_Capstone_Project.Application.Services;
+using BE_Capstone_Project.Application.Bookings.Services;
 
 namespace BE_Capstone_Project.Application.ReviewManagement.Controllers
 {
@@ -12,19 +14,29 @@ namespace BE_Capstone_Project.Application.ReviewManagement.Controllers
     public class ReviewController : ControllerBase
     {
         private readonly IReviewService _reviewService;
-        public ReviewController(IReviewService reviewService) 
+        private readonly IUserService _userService;
+        private readonly BookingService _bookingService;
+        public ReviewController(IReviewService reviewService, IUserService userService, BookingService bookingService) 
         {
             _reviewService = reviewService;
+            _userService = userService;
+            _bookingService = bookingService;
         }
 
         [HttpPost("AddReview")]
-        public async Task<IActionResult> AddReview(ReviewDTO review)
+        public async Task<IActionResult> AddReview([FromBody] ReviewCreateDTO review)
         {
+            var user = await _userService.GetUserByUsername(review.Username);
+            if (user == null) return BadRequest(new { message = "User does not exist" });
+
+            var booking = await _bookingService.GetBookingByUserIdAndTourId(user.Id, review.TourId);
+            if (booking == null) return BadRequest(new { message = "User has not booked this tour" });
+
             var reviewToAdd = new Review()
             {
-                UserId = review.UserId,
+                UserId = user.Id,
                 TourId = review.TourId,
-                BookingId = review.BookingId,
+                BookingId = booking.Id,
                 Stars = review.Stars,
                 Comment = review.Comment,
                 CreatedDate = DateTime.Now,
@@ -39,7 +51,7 @@ namespace BE_Capstone_Project.Application.ReviewManagement.Controllers
         }
 
         [HttpPost("EditReview")]
-        public async Task<IActionResult> EditReview(ReviewDTO review)
+        public async Task<IActionResult> EditReview([FromBody] ReviewUpdateDTO review)
         {
             var reviewToUpdate = await _reviewService.GetReviewById(review.Id);
             if (reviewToUpdate == null) return BadRequest(new { message = "Failed to update review" });
@@ -54,7 +66,7 @@ namespace BE_Capstone_Project.Application.ReviewManagement.Controllers
             return Ok(new { message = "Review updated successfully" });
         }
 
-        [HttpDelete("DeleteReview")]
+        [HttpDelete("DeleteReview/{reviewId}")]
         public async Task<IActionResult> DeleteReview(int reviewId)
         {
             var result = await _reviewService.DeleteReview(reviewId);

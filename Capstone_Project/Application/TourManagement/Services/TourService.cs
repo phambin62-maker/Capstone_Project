@@ -72,5 +72,10 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
         {
             return await _tourDAO.GetPaginatedToursAsync(page, pageSize);
         }
+
+        public async Task<List<Tour>> GetTopToursByEachCategories()
+        {
+            return await _tourDAO.GetTopToursByEachCategoriesAsync();
+        }
     }
 }

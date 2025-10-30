@@ -6,6 +6,7 @@ using BE_Capstone_Project.Application.Report.Services;
 using BE_Capstone_Project.Application.Report.Services.Interfaces;
 using BE_Capstone_Project.Application.ReviewManagement.Services;
 using BE_Capstone_Project.Application.ReviewManagement.Services.Interfaces;
+using BE_Capstone_Project.Application.Services;
 using BE_Capstone_Project.Application.TourManagement.Services;
 using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
 using BE_Capstone_Project.Application.TourPriceHistories.Services;
@@ -31,6 +32,7 @@ builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<TourPriceHistoryService>();
 builder.Services.AddScoped<NewsService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<BookingService>();
 
 //DAO

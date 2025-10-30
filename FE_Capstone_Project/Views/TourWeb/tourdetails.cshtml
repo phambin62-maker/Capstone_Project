@@ -7,6 +7,8 @@
         decimal avgRating = (decimal)Model.Reviews.Average(r => r.Stars);
         avgRatingText = avgRating.ToString("0.0");
     }
+    bool isLoggedIn = !string.IsNullOrEmpty(Context.Session.GetString("UserName")); 
+    var currentUsername = Context.Session.GetString("UserName");
 }
 <body class="tour-details-page">
     <main class="main">
@@ -37,12 +39,12 @@
                             <div class="hero-content">
                                 <h1>@Model.Name</h1>
                                 <div class="hero-meta">
-                                    <span class="duration"><i class="bi bi-calendar"></i> @Model.Duration</span>
+                                    <span class="duration"><i class="bi bi-calendar"></i> @Model.Duration Day@(Model.Duration == 1 ? "" : "s")</span>
                                     <span class="destination"><i class="bi bi-geo-alt"></i> @Model.EndLocation.LocationName</span>
                                     <span class="rating"><i class="bi bi-star-fill"></i> @avgRatingText (@Model.Reviews.Count reviews)</span>
                                 </div>
                                 <p class="hero-tagline">Experience ancient wonders, pristine beaches, and vibrant cultures across three magnificent countries</p>
-                                <a href="#booking" class="btn-book">Check Availability</a>
+                                <a asp-controller="BookingWeb" asp-action="Index" class="btn-book">Book Now</a>
                             </div>
                         </div>
                     </div>
@@ -130,7 +132,7 @@
                 <div class="tour-gallery" data-aos="fade-up" data-aos-delay="700">
                     <h2>Photo Gallery</h2>
                     <div class="gallery-grid">
-                        @foreach(var images in Model.TourImages)
+                        @foreach (var images in Model.TourImages)
                         {
                             <div class="gallery-item">
                                 <a href="~/assets/img/travel/destination-1.webp" class="glightbox">
@@ -138,36 +140,6 @@
                                 </a>
                             </div>
                         }
-                        <div class="gallery-item">
-                            <a href="~/assets/img/travel/destination-1.webp" class="glightbox">
-                                <img src="~/assets/img/travel/destination-1.webp" alt="Venice Canals" class="img-fluid" loading="lazy">
-                            </a>
-                        </div>
-                        <div class="gallery-item">
-                            <a href="~/assets/img/travel/destination-2.webp" class="glightbox">
-                                <img src="~/assets/img/travel/destination-2.webp" alt="Florence Cathedral" class="img-fluid" loading="lazy">
-                            </a>
-                        </div>
-                        <div class="gallery-item">
-                            <a href="~/assets/img/travel/destination-3.webp" class="glightbox">
-                                <img src="~/assets/img/travel/destination-3.webp" alt="Roman Colosseum" class="img-fluid" loading="lazy">
-                            </a>
-                        </div>
-                        <div class="gallery-item">
-                            <a href="~/assets/img/travel/destination-4.webp" class="glightbox">
-                                <img src="~/assets/img/travel/destination-4.webp" alt="Santorini Sunset" class="img-fluid" loading="lazy">
-                            </a>
-                        </div>
-                        <div class="gallery-item">
-                            <a href="~/assets/img/travel/destination-5.webp" class="glightbox">
-                                <img src="~/assets/img/travel/destination-5.webp" alt="Hagia Sophia" class="img-fluid" loading="lazy">
-                            </a>
-                        </div>
-                        <div class="gallery-item">
-                            <a href="~/assets/img/travel/destination-6.webp" class="glightbox">
-                                <img src="~/assets/img/travel/destination-6.webp" alt="Mediterranean Cuisine" class="img-fluid" loading="lazy">
-                            </a>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -188,13 +160,13 @@
                     </div>
 
                     <div class="comments-container">
-                        @foreach(var comment in Model.Reviews)
+                        @foreach (var comment in Model.Reviews)
                         {
                             <div class="comment-thread">
                                 <div class="comment-box">
                                     <div class="comment-wrapper">
                                         <div class="avatar-wrapper">
-                                            <img src="~/assets/img/person/person-f-9.webp" alt="Avatar" loading="lazy">
+                                            <img src="@comment.User.Image" alt="Avatar" loading="lazy">
                                             <span class="status-indicator"></span>
                                         </div>
 
@@ -202,51 +174,116 @@
                                             <div class="comment-header">
                                                 <div class="user-info">
                                                     <h4>@comment.User.Username</h4>
+                                                    <div class="star-display">
+                                                        @for (int i = 1; i <= 5; i++)
+                                                        {
+                                                            if (i <= comment.Stars)
+                                                            {
+                                                                <i class="bi bi-star-fill text-warning"></i>
+                                                            }
+                                                            else
+                                                            {
+                                                                <i class="bi bi-star text-secondary"></i>
+                                                            }
+                                                        }
+                                                    </div>
                                                     <span class="time-badge">
                                                         <i class="bi bi-clock"></i>
                                                         @TimeHelper.GetTimeAgo(comment.CreatedDate.Value)
                                                     </span>
                                                 </div>
+
+                                                <div class="engagement">
+                                                    @if (comment.User.Username == currentUsername)
+                                                    {
+                                                        <div class="comment-actions d-flex gap-2">
+                                                            <button class="btn btn-light btn-sm border"
+                                                                    onclick="openEditModal(@comment.TourId, @comment.Id, @comment.Stars, '@comment.Comment')">
+                                                                <i class="bi bi-pencil"></i>
+                                                            </button>
+
+                                                            <form asp-action="DeleteComment"
+                                                                  asp-controller="Review"
+                                                                  asp-route-reviewId="@comment.Id"
+                                                                  asp-route-tourId="@comment.TourId"
+                                                                  method="post"
+                                                                  class="d-inline">
+                                                                <button type="submit" class="btn btn-light btn-sm border text-danger">
+                                                                    <i class="bi bi-trash"></i>
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    }
+                                                </div>
                                             </div>
 
-                                            <div class="comment-body">
-                                                <p>@comment.Comment</p>
+                                            <div class="comment-body" id="comment-body-@comment.Id">
+                                                <p class="comment-text">@comment.Comment</p>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         }
-                    </div>
-        </section><!-- /Blog Comments Section -->
 
+
+                    </div>
+                </div>
+            </div>
+        </section><!-- /Blog Comments Section -->
         <!-- Blog Comment Form Section -->
-        <section id="blog-comment-form" class="blog-comment-form section">
+        <section id="blog-comment-form" class="blog-comment-form section position-relative">
+
+            @* ✅ Blur Overlay if user is not logged in *@
+            @if (!ViewBag.CanComment)
+            {
+                <div id="login-overlay" class="login-overlay">
+                    <div class="overlay-content">
+                        <p>
+                            You can only leave a review after booking this tour.
+                            @if(isLoggedIn)
+                            {
+                                <a asp-controller="BookingWeb" asp-action="Index"> Book Now</a>
+                            }
+                            else
+                            {
+                                <a asp-controller="AuthWeb" asp-action="Login">Log In to Book</a>
+                            }
+                        </p>
+                    </div>
+                </div>
+            }
 
             <div class="container" data-aos="fade-up" data-aos-delay="100">
-
-                <form method="post" role="form">
-
+                <form asp-action="PostComment" asp-controller="Review" method="post" role="form">
+                    <input type="hidden" name="TourId" value="@Model.Id" />
                     <div class="section-header">
                         <h3>Share Your Thoughts</h3>
+                    </div>
+
+                    <!-- ⭐ Star Rating -->
+                    <div class="star-rating mb-3 text-center">
+                        <input type="radio" id="star5" name="Rating" value="5" /><label for="star5" title="5 stars">★</label>
+                        <input type="radio" id="star4" name="Rating" value="4" /><label for="star4" title="4 stars">★</label>
+                        <input type="radio" id="star3" name="Rating" value="3" /><label for="star3" title="3 stars">★</label>
+                        <input type="radio" id="star2" name="Rating" value="2" /><label for="star2" title="2 stars">★</label>
+                        <input type="radio" id="star1" name="Rating" value="1" /><label for="star1" title="1 star">★</label>
                     </div>
 
                     <div class="row gy-3">
                         <div class="col-12 form-group">
                             <label for="comment">Your Comment *</label>
-                            <textarea class="form-control" name="comment" id="comment" rows="5" placeholder="Write your thoughts here..." required=""></textarea>
+                            <textarea class="form-control" name="Comment" id="comment" rows="5"
+                                      placeholder="Write your thoughts here..." required></textarea>
                         </div>
 
                         <div class="col-12 text-center">
-                            <button type="submit" class="btn-submit">Post Comment</button>
+                            <button type="submit" class="btn-submit" @(isLoggedIn ? "" : "disabled")>Post Comment</button>
                         </div>
                     </div>
-
                 </form>
-
             </div>
-
-        </section><!-- /Blog Comment Form Section -->
+        </section>
 
     </main>
 
@@ -265,8 +302,62 @@
     <script src="~/assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
     <script src="~/assets/vendor/imagesloaded/imagesloaded.pkgd.min.js"></script>
     <script src="~/assets/vendor/glightbox/js/glightbox.min.js"></script>
+    <script>
+        function openEditModal(tourId, id, stars, comment) {
+          document.getElementById("tourId").value = tourId;
+          document.getElementById("editReviewId").value = id;
+          document.getElementById("editReviewComment").value = comment;
 
+          // Reset all stars
+          document.querySelectorAll('input[name="Rating"]').forEach(r => r.checked = false);
+          // Check the selected star
+          const starInput = document.querySelector(`#edit-star${stars}`);
+          if (starInput) starInput.checked = true;
+
+          var modal = new bootstrap.Modal(document.getElementById('editReviewModal'));
+          modal.show();
+        }
+    </script>
     <!-- Main JS File -->
     <script src="~/assets/js/main.js"></script>
-
 </body>
+
+<!-- Edit Review Modal -->
+<div class="modal fade" id="editReviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="EditComment" asp-controller="Review" method="post" id="editReviewForm">
+                <input type="hidden" id="tourId" name="tourId" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Your Review</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <input type="hidden" id="editReviewId" name="reviewId" />
+
+                    <div class="mb-3 text-center">
+                        <div class="star-rating">
+                            <input type="radio" id="edit-star5" name="Rating" value="5"><label for="edit-star5" title="5 stars">★</label>
+                            <input type="radio" id="edit-star4" name="Rating" value="4"><label for="edit-star4" title="4 stars">★</label>
+                            <input type="radio" id="edit-star3" name="Rating" value="3"><label for="edit-star3" title="3 stars">★</label>
+                            <input type="radio" id="edit-star2" name="Rating" value="2"><label for="edit-star2" title="2 stars">★</label>
+                            <input type="radio" id="edit-star1" name="Rating" value="1"><label for="edit-star1" title="1 star">★</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Comment</label>
+                        <textarea id="editReviewComment" name="Comment" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
