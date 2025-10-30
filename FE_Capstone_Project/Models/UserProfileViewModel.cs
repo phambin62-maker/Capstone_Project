@@ -15,5 +15,6 @@ namespace FE_Capstone_Project.Models
         public string? PhoneNumber { get; set; }
 
         public string? Image { get; set; }
+        public string? NewPassword { get; set; }
     }
 }

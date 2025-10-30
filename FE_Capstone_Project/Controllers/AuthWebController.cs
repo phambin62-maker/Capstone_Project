@@ -18,10 +18,12 @@ namespace FE_Capstone_Project.Controllers
     {
         private readonly HttpClient _httpClient;
         private readonly string _baseUrl = "https://localhost:7160/api/auth"; // backend API URL
+        private readonly ILogger<AuthWebController> _logger;
 
         public AuthWebController(IHttpClientFactory httpClientFactory)
         {
             _httpClient = httpClientFactory.CreateClient();
+           
         }
 
         [HttpGet]
@@ -157,6 +159,47 @@ namespace FE_Capstone_Project.Controllers
 
             return View(user);
         }
+        [HttpPost]
+        public async Task<IActionResult> Profile(UserProfileViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                TempData["Error"] = "Dữ liệu không hợp lệ.";
+                return View(model);
+            }
+
+            try
+            {
+                var token = HttpContext.Session.GetString("JwtToken");
+                if (string.IsNullOrEmpty(token))
+                {
+                    TempData["Error"] = "Phiên đăng nhập đã hết hạn.";
+                    return RedirectToAction("Login");
+                }
+
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                var jsonContent = new StringContent(JsonSerializer.Serialize(model), Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PutAsync($"https://localhost:7160/api/user/update-profile", jsonContent);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["Success"] = "Cập nhật thông tin thành công.";
+                    return RedirectToAction("profile");
+                }
+
+                TempData["Error"] = "Không thể cập nhật thông tin.";
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi cập nhật profile");
+                TempData["Error"] = "Đã xảy ra lỗi máy chủ.";
+                return View(model);
+            }
+        }
+
 
         private static Dictionary<string, object> DecodeJwtPayload(string token)
         {
@@ -177,9 +220,14 @@ namespace FE_Capstone_Project.Controllers
 
             return JsonSerializer.Deserialize<Dictionary<string, object>>(json);
         }
+        public IActionResult Users()
+        {
+            return View();
+        }
     }
         public class LoginResponse
         {
             public string Token { get; set; }
     }
+
 }
