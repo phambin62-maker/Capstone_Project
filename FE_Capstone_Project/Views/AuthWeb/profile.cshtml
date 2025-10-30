@@ -82,7 +82,7 @@
             <div class="col-md-3 border-end d-flex flex-column align-items-center text-center p-4">
                 <img class="rounded-circle mt-3 mb-2" width="150px"
                      src="https://st3.depositphotos.com/15648834/17930/v/600/depositphotos_179308454-stock-illustration-unknown-person-silhouette-glasses-profile.jpg" />
-                <span class="fw-bold">@Model?.Username</span>
+                <span class="fw-bold">User Name: @Model?.Username</span>
                 <span class="text-muted">@Model?.Email</span>
             </div>
 
@@ -92,7 +92,7 @@
                     @if (Model != null)
                     {
                         <h4 class="mb-4">Profile Settings</h4>
-                        <form method="post" asp-action="Profile">
+                            <form method="post" asp-controller="AuthWeb"  asp-action="Profile">
                             <div class="row mt-2">
                                 <div class="col-md-6">
                                     <label class="form-label">First Name</label>
@@ -102,24 +102,16 @@
                                     <label class="form-label">Last Name</label>
                                     <input asp-for="LastName" type="text" class="form-control user-input" value="@Model.LastName" readonly />
                 </div>
-                <div class="row mt-2">
-                    <div class="col-md-6"><label class="labels">Name</label><input type="text" class="form-control" placeholder="first name" value=""></div>
-                    <div class="col-md-6"><label class="labels">Surname</label><input type="text" class="form-control" value="" placeholder="surname"></div>
-                </div>
-
                 <div class="row mt-3">
                                 <div class="col-md-12">
                                     <label class="form-label">Mobile Number</label>
                                     <input asp-for="PhoneNumber" type="text" class="form-control user-input" value="@Model.PhoneNumber" readonly />
                                 </div>
-                                <div class="col-md-12 mt-2">
-                                    <label class="form-label">Email</label>
-                                    <input asp-for="Email" type="text" class="form-control user-input" value="@Model.Email" readonly />
-                </div>
-                <div class="row mt-3">
-                    <div class="col-md-6"><label class="labels">Country</label><input type="text" class="form-control" placeholder="country" value=""></div>
-                    <div class="col-md-6"><label class="labels">State/Region</label><input type="text" class="form-control" value="" placeholder="state"></div>
-                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label">New Password</label>
+                                     <input asp-for="NewPassword" type="text" class="form-control user-input" value="" readonly />
+                                </div>
+               
 
                             <div class="mt-4 text-center">
                                 <button class="btn btn-primary profile-button" type="submit">💾 Save Profile</button>
@@ -128,37 +120,57 @@
                     }
                     else
                     {
-                        <div class="alert alert-warning">Không có thông tin người dùng.</div>
+                        <div class="alert alert-warning">Vui lòng chỉnh sửa thông tin trên Gmail của bạn .</div>
                     }
         </div>
-        <div class="col-md-4">
-            <div class="p-3 py-5">
-                <div class="d-flex justify-content-between align-items-center experience"><span>Edit Experience</span><span class="border px-3 p-1 add-experience"><i class="fa fa-plus"></i>&nbsp;Experience</span></div><br>
-                <div class="col-md-12"><label class="labels">Experience in Designing</label><input type="text" class="form-control" placeholder="experience" value=""></div> <br>
-                <div class="col-md-12"><label class="labels">Additional Details</label><input type="text" class="form-control" placeholder="additional details" value=""></div>
-            </div>
-        </div>
+       
     </div>
 </div>
 
-    <!-- Script cho chức năng click để sửa -->
-    <script>
-        document.querySelectorAll('.user-input').forEach(input => {
-            input.addEventListener('click', function () {
-                if (this.hasAttribute('readonly')) {
-                    this.removeAttribute('readonly');
-                    this.classList.add('editable');
-                }
-            });
+            <script>
+                document.querySelectorAll('.user-input').forEach(input => {
+                    input.addEventListener('click', function () {
+                        if (this.hasAttribute('readonly')) {
+                            this.removeAttribute('readonly');
+                            this.classList.add('editable');
+                        }
+                    });
+                    input.addEventListener('input', function () {
+                        if (this.getAttribute('name') === "PhoneNumber") {
+                            this.value = this.value.replace(/\D/g, '');
 
-            input.addEventListener('blur', function () {
-                // Nếu không thay đổi thì khóa lại
-                if (!this.value.trim()) {
-                    this.setAttribute('readonly', true);
-                    this.classList.remove('editable');
-                }
-            });
-        });
-    </script>
+                            
+                            if (this.value.length > 10) {
+                                this.value = this.value.slice(0, 10);
+                            }
+                        }
+                    });
+
+                    input.addEventListener('blur', function () {
+                        if (!this.value.trim()) {
+                            this.setAttribute('readonly', true);
+                            this.classList.remove('editable');
+                            return;
+                        }
+
+                        
+                        if (this.getAttribute('name') === "PhoneNumber") {
+                            const phone = this.value.trim();
+                            if (!/^\d{10}$/.test(phone)) {
+                                alert("📱 Số điện thoại phải gồm đúng 10 chữ số!");
+
+                                
+                                setTimeout(() => {
+                                    this.focus();
+                                    this.select(); 
+                                }, 0);
+                            }
+                        }
+                    });
+                });
+            </script>
+
+
+
 
 </body>

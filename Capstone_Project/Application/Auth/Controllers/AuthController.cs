@@ -74,7 +74,7 @@ namespace BE_Capstone_Project.Application.Auth.Controllers
                 user.Email,
                 user.FirstName,
                 user.LastName,
-                user.PhoneNumber,
+                user.PhoneNumber
             });
         }
         // Helper
