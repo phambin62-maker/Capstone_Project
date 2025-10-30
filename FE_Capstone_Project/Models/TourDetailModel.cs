@@ -8,7 +8,7 @@ namespace FE_Capstone_Project.Models
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public decimal Price { get; set; }
-        public string Duration { get; set; } = string.Empty;
+        public byte Duration { get; set; }
 
         public int StartLocationId { get; set; }
         public string StartLocationName { get; set; } = string.Empty;

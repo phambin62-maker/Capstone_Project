@@ -1,8 +1,8 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 @{
-            var firstname = Context.Session.GetString("FirstName");
-            var hideHeader = ViewData["HideHeader"] as bool? ?? false;
+        var firstname = Context.Session.GetString("FirstName");
+        var hideHeader = ViewData["HideHeader"] as bool? ?? false;
 }
 <head>
     <meta charset="utf-8">
@@ -22,7 +22,6 @@
     <link href="~/assets/css/main.css" rel="stylesheet">
     <link href="~/css/staff.css" rel="stylesheet">
 
-    <!-- Thêm section Styles -->
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="staff-body">
@@ -80,35 +79,30 @@
                 </div>
             </div>
             <nav class="sidebar-nav">
-                <ul class="nav flex-column">                    
-                    
+                <ul class="nav flex-column">
                     <li class="nav-item">
                         <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Dashboard" ? "active" : "")"
                            href="/Staff/Dashboard">
-                            <i class="bi bi-speedometer2 me-2"></i>
-                            Bảng điều khiển
+                            <i class="bi bi-speedometer2 me-2"></i>Bảng điều khiển
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Bookings" ? "active" : "")"
                            href="/Staff/Bookings">
-                            <i class="bi bi-ticket-perforated me-2"></i>
-                            Đặt tour
-                            <span class="badge bg-primary ms-2">15</span>
+                            <i class="bi bi-ticket-perforated me-2"></i>Đặt tour
+                            <span class="badge bg-primary ms-2">@ViewBag.BookingCount</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Customers" ? "active" : "")"
                            href="/Staff/Customers">
-                            <i class="bi bi-people me-2"></i>
-                            Khách hàng
+                            <i class="bi bi-people me-2"></i>Khách hàng
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Tours" ? "active" : "")"
                            href="/Staff/Tours">
-                            <i class="bi bi-map me-2"></i>
-                            Danh sách Tour
+                            <i class="bi bi-map me-2"></i>Danh sách Tour
                         </a>
                     </li>
                     <li class="nav-item">
@@ -120,15 +114,13 @@
                     <li class="nav-item">
                         <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Tasks" ? "active" : "")"
                            href="/Staff/Tasks">
-                            <i class="bi bi-list-check me-2"></i>
-                            Công việc của tôi
-                            <span class="badge bg-warning ms-2">3</span>
+                            <i class="bi bi-list-check me-2"></i>Công việc của tôi
+                            <span class="badge bg-warning ms-2">@ViewBag.TaskCount</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/Staff/Support">
-                            <i class="bi bi-headset me-2"></i>
-                            Hỗ trợ
+                            <i class="bi bi-headset me-2"></i>Hỗ trợ
                         </a>
                     </li>
                 </ul>
@@ -149,44 +141,36 @@
                     <div class="row">
                         <div class="col-md-3">
                             <div class="stat-card">
-                                <div class="stat-icon">
-                                    <i class="bi bi-ticket-perforated"></i>
-                                </div>
+                                <div class="stat-icon"><i class="bi bi-ticket-perforated"></i></div>
                                 <div class="stat-info">
-                                    <h4>15</h4>
+                                    <h4>@ViewBag.NewBookings</h4>
                                     <span>Đặt tour mới</span>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="stat-card">
-                                <div class="stat-icon">
-                                    <i class="bi bi-people"></i>
-                                </div>
+                                <div class="stat-icon"><i class="bi bi-people"></i></div>
                                 <div class="stat-info">
-                                    <h4>8</h4>
+                                    <h4>@ViewBag.PendingCustomers</h4>
                                     <span>Khách chờ xử lý</span>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="stat-card">
-                                <div class="stat-icon">
-                                    <i class="bi bi-calendar-check"></i>
-                                </div>
+                                <div class="stat-icon"><i class="bi bi-calendar-check"></i></div>
                                 <div class="stat-info">
-                                    <h4>3</h4>
+                                    <h4>@ViewBag.TodayTours</h4>
                                     <span>Tour hôm nay</span>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="stat-card">
-                                <div class="stat-icon">
-                                    <i class="bi bi-list-check"></i>
-                                </div>
+                                <div class="stat-icon"><i class="bi bi-list-check"></i></div>
                                 <div class="stat-info">
-                                    <h4>5</h4>
+                                    <h4>@ViewBag.PendingTasks</h4>
                                     <span>Công việc tồn</span>
                                 </div>
                             </div>
@@ -205,7 +189,7 @@
             <div class="container-fluid">
                 <div class="row align-items-center">
                     <div class="col-md-6">
-                        <p class="mb-0">&copy; 2024 Staff Panel. Chào mừng @firstname!</p>
+                        <p class="mb-0">&copy; @DateTime.Now.Year Staff Panel. Chào mừng @firstname!</p>
                     </div>
                     <div class="col-md-6 text-end">
                         <span class="text-muted">Hôm nay: @DateTime.Now.ToString("dd/MM/yyyy")</span>
@@ -223,7 +207,6 @@
     <script src="~/assets/js/main.js"></script>
     <script src="~/js/staff.js"></script>
 
-    <!-- Thêm section Scripts -->
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

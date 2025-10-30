@@ -1,4 +1,5 @@
 ﻿using FE_Capstone_Project.Models;
+using FE_Capstone_Project.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using System.Text.Json;
@@ -80,12 +81,10 @@ namespace FE_Capstone_Project.Controllers
             }
         }
 
-        // Thêm vào StaffController
         public async Task<IActionResult> TourDetails(int id)
         {
             try
             {
-                // Lấy thông tin tour
                 var tourResponse = await _httpClient.GetAsync($"Tour/GetTourById?id={id}");
 
                 if (tourResponse.IsSuccessStatusCode)
@@ -117,10 +116,8 @@ namespace FE_Capstone_Project.Controllers
                             TourStatus = tourResult.Tour.TourStatus
                         };
 
-                        // Lấy tên địa điểm, danh mục, điều kiện hủy (cần thêm API cho các endpoint này)
                         try
                         {
-                            // Lấy tên điểm xuất phát
                             var startLocationResponse = await _httpClient.GetAsync($"Location/GetLocationById?id={tourResult.Tour.StartLocationId}");
                             if (startLocationResponse.IsSuccessStatusCode)
                             {
@@ -129,7 +126,6 @@ namespace FE_Capstone_Project.Controllers
                                 tourDetail.StartLocationName = locationResult?.GetProperty("name").GetString() ?? "Không xác định";
                             }
 
-                            // Lấy tên điểm đến
                             var endLocationResponse = await _httpClient.GetAsync($"Location/GetLocationById?id={tourResult.Tour.EndLocationId}");
                             if (endLocationResponse.IsSuccessStatusCode)
                             {
@@ -138,7 +134,6 @@ namespace FE_Capstone_Project.Controllers
                                 tourDetail.EndLocationName = locationResult?.GetProperty("name").GetString() ?? "Không xác định";
                             }
 
-                            // Lấy tên danh mục
                             var categoryResponse = await _httpClient.GetAsync($"Category/GetCategoryById?id={tourResult.Tour.CategoryId}");
                             if (categoryResponse.IsSuccessStatusCode)
                             {
@@ -147,7 +142,6 @@ namespace FE_Capstone_Project.Controllers
                                 tourDetail.CategoryName = categoryResult?.GetProperty("name").GetString() ?? "Không xác định";
                             }
 
-                            // Lấy tên điều kiện hủy
                             var cancelConditionResponse = await _httpClient.GetAsync($"CancelCondition/GetCancelConditionById?id={tourResult.Tour.CancelConditionId}");
                             if (cancelConditionResponse.IsSuccessStatusCode)
                             {
@@ -158,7 +152,6 @@ namespace FE_Capstone_Project.Controllers
                         }
                         catch (Exception ex)
                         {
-                            // Nếu không lấy được tên, sử dụng giá trị mặc định
                             tourDetail.StartLocationName = "ID: " + tourResult.Tour.StartLocationId;
                             tourDetail.EndLocationName = "ID: " + tourResult.Tour.EndLocationId;
                             tourDetail.CategoryName = "ID: " + tourResult.Tour.CategoryId;
@@ -233,7 +226,7 @@ namespace FE_Capstone_Project.Controllers
                 formData.Add(new StringContent(model.Name ?? ""), "Name");
                 formData.Add(new StringContent(model.Description ?? ""), "Description");
                 formData.Add(new StringContent(model.Price.ToString()), "Price");
-                formData.Add(new StringContent(model.Duration ?? ""), "Duration");
+                formData.Add(new StringContent(model.Duration.ToString()), "Duration");
                 formData.Add(new StringContent(model.StartLocationId.ToString()), "StartLocationId");
                 formData.Add(new StringContent(model.EndLocationId.ToString()), "EndLocationId");
                 formData.Add(new StringContent(model.CategoryId.ToString()), "CategoryId");
@@ -376,7 +369,7 @@ namespace FE_Capstone_Project.Controllers
                 formData.Add(new StringContent(model.Name ?? ""), "Name");
                 formData.Add(new StringContent(model.Description ?? ""), "Description");
                 formData.Add(new StringContent(model.Price.ToString()), "Price");
-                formData.Add(new StringContent(model.Duration ?? ""), "Duration");
+                formData.Add(new StringContent(model.Duration.ToString()), "Duration");
                 formData.Add(new StringContent(model.StartLocationId.ToString()), "StartLocationId");
                 formData.Add(new StringContent(model.EndLocationId.ToString()), "EndLocationId");
                 formData.Add(new StringContent(model.CategoryId.ToString()), "CategoryId");

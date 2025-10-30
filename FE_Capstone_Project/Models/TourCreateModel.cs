@@ -16,7 +16,7 @@ namespace FE_Capstone_Project.Models
         public decimal Price { get; set; } = 1000000;
 
         [Required(ErrorMessage = "Thời lượng là bắt buộc")]
-        public string Duration { get; set; } = "3 ngày 2 đêm";
+        public byte Duration { get; set; } = 3;
 
         [Required(ErrorMessage = "Điểm xuất phát là bắt buộc")]
         [Range(1, int.MaxValue, ErrorMessage = "Chọn điểm xuất phát")]
@@ -68,7 +68,7 @@ namespace FE_Capstone_Project.Models
         public decimal Price { get; set; }
 
         [Required(ErrorMessage = "Thời lượng là bắt buộc")]
-        public string Duration { get; set; } = string.Empty;
+        public byte Duration { get; set; }
 
         [Required(ErrorMessage = "Điểm xuất phát là bắt buộc")]
         [Range(1, int.MaxValue, ErrorMessage = "Chọn điểm xuất phát")]
