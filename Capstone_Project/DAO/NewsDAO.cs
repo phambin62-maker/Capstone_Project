@@ -1,5 +1,7 @@
-﻿using BE_Capstone_Project.Infrastructure;
+﻿using BE_Capstone_Project.Domain.Enums;
 using BE_Capstone_Project.Domain.Models;
+using BE_Capstone_Project.Infrastructure;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.EntityFrameworkCore;
 
 namespace BE_Capstone_Project.DAO
@@ -99,6 +101,21 @@ namespace BE_Capstone_Project.DAO
             catch (Exception ex)
             {
                 Console.WriteLine($"An error occurred while retrieving news for user ID {userId}: {ex.Message}");
+                return new List<News>();
+            }
+        }
+
+        public async Task<List<News>> GetNewsByStatusAsync(NewsStatus status)
+        {
+            try
+            {
+                return await _context.News
+                    .Where(n => n.NewsStatus == status)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while retrieving news for status {status}: {ex.Message}");
                 return new List<News>();
             }
         }

@@ -1,6 +1,7 @@
 ﻿using BE_Capstone_Project.Domain.Enums;
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace BE_Capstone_Project.Domain.Models;
 
@@ -20,10 +21,11 @@ public partial class Review
 
     public DateTime? CreatedDate { get; set; }
 
-    public ReviewStatus? ReviewStatus { get; set; }
+    public bool? ReviewStatus { get; set; }
 
     public virtual Booking Booking { get; set; } = null!;
 
+    [JsonIgnore]
     public virtual Tour Tour { get; set; } = null!;
 
     public virtual User User { get; set; } = null!;

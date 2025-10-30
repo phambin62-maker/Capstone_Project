@@ -9,7 +9,7 @@ using System.Text;
 
 namespace BE_Capstone_Project.Application.Auth.Services
 {
-    public class AuthService
+    public class AuthService 
     {
         private readonly IConfiguration _config;
 
@@ -23,11 +23,13 @@ namespace BE_Capstone_Project.Application.Auth.Services
             var jwtSettings = _config.GetSection("Jwt");
 
             var claims = new List<Claim>
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Username),
-                new Claim("userId", user.Id.ToString()),
-                new Claim("role", user.RoleId.ToString())
-            };
+    {
+        new Claim("UserId", user.Id.ToString()),
+        new Claim(JwtRegisteredClaimNames.UniqueName, user.Username),
+        new Claim(JwtRegisteredClaimNames.Email, user.Email ?? ""),
+        new Claim(ClaimTypes.Role, user.RoleId.ToString()),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+    };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -42,5 +44,6 @@ namespace BE_Capstone_Project.Application.Auth.Services
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
     }
 }

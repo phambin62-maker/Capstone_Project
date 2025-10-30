@@ -60,7 +60,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpPost("UpdateTour")]
-        public async Task<IActionResult> UpdateTour([FromForm] TourDTO tour)
+        public async Task<IActionResult> UpdateTour([FromForm] TourDTO tour, [FromForm] List<string?> images)
         {
             var tourToUpdate = await _tourService.GetTourById(tour.Id.Value);
             if (tourToUpdate == null) return BadRequest(new { message = "Failed to update tour" });
@@ -82,6 +82,33 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
             var result = await _tourService.UpdateTour(tourToUpdate);
 
             if (!result) return BadRequest(new { message = "Failed to update tour" });
+
+            var existingTourImages = await _tourImageService.GetTourImagesByTourId(tour.Id.Value);
+
+            if (existingTourImages != null && existingTourImages.Count > 0)
+            {
+                await _tourImageService.DeleteTourImagesByTourId(tour.Id.Value);
+            }
+
+            var newImages = new List<TourImage>();
+            if (images != null && images.Count > 0)
+            {
+                foreach (var image in images)
+                {
+                    if (!string.IsNullOrEmpty(image))
+                    {
+                        newImages.Add(new TourImage
+                        {
+                            TourId = tour.Id.Value,
+                            Image = image
+                        });
+                    }
+                }
+
+                var imgsResult = await _tourImageService.AddTourImages(newImages);
+                if (imgsResult == -1)
+                    return BadRequest(new { message = "Failed to update tour images" });
+            }
 
             return Ok(new { message = "Tour updated successfully" });
         }
@@ -113,7 +140,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
             return Ok(new { message = $"Found {tours.Count} tours", tours });
         }
 
-        [HttpGet("GetTourById")]
+        [HttpGet("GetTourById/{id}")]
         public async Task<IActionResult> GetTourById(int id)
         {
             var tour = await _tourService.GetTourById(id);
@@ -190,6 +217,17 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
             if (tourCount == 0) return Ok(new { message = $"There are no tours", tourCount });
 
             return Ok(new { message = $"There are {tourCount} tours", tourCount });
+        }
+
+        [HttpGet("GetPaginatedTours")]
+        public async Task<IActionResult> GetPaginatedTours(int page = 1, int pageSize = 10)
+        {
+            var tours = await _tourService.GetPaginatedTours(page, pageSize);
+
+            if (tours == null || !tours.Any())
+                return Ok(new { message = "No tours found", tours });
+
+            return Ok(new { message = $"Found {tours.Count} tours", tours });
         }
     }
 }

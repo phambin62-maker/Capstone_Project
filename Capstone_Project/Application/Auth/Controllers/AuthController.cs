@@ -1,15 +1,16 @@
 ﻿
 using BE_Capstone_Project.Application.Auth.Services;
+using BE_Capstone_Project.Domain.Enums;
 using BE_Capstone_Project.Domain.Models;
 using BE_Capstone_Project.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using static BE_Capstone_Project.Application.Auth.DTOs.UserDTOs;
-using BE_Capstone_Project.Domain.Enums;
 
 namespace BE_Capstone_Project.Application.Auth.Controllers
 {
@@ -54,20 +55,28 @@ namespace BE_Capstone_Project.Application.Auth.Controllers
                 return Unauthorized("Invalid username or password");
 
             var token = _authService.GenerateJwtToken(user);
-            return Ok(new { token });
+            return Ok(new {user.FirstName,user.RoleId, token });
         }
-
         [Authorize]
         [HttpGet("profile")]
         public async Task<IActionResult> Profile()
         {
-            var username = User.FindFirst("sub")?.Value;
+            var username = User.Identity?.Name;
+            if (string.IsNullOrEmpty(username))
+                return Unauthorized("Cannot find username in token");
+
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
-            if (user == null) return NotFound();
-
-            return Ok(new { user.Id, user.Username, user.Email });
+            if (user == null)
+                return NotFound("User not found");
+            return Ok(new
+            {
+                user.Username,
+                user.Email,
+                user.FirstName,
+                user.LastName,
+                user.PhoneNumber,
+            });
         }
-
         // Helper
         private static string HashPassword(string password)
         {
@@ -75,7 +84,6 @@ namespace BE_Capstone_Project.Application.Auth.Controllers
             var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(password));
             return Convert.ToBase64String(bytes);
         }
-
         private static bool VerifyPassword(string password, string hash)
         {
             var hashOfInput = HashPassword(password);

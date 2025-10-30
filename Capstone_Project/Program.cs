@@ -1,10 +1,14 @@
 using BE_Capstone_Project.Application.Auth.Services;
-<<<<<<< HEAD
-=======
+using BE_Capstone_Project.Application.Bookings.Services;
+using BE_Capstone_Project.Application.Newses.Services;
+using BE_Capstone_Project.Application.Notifications.Services;
 using BE_Capstone_Project.Application.Report.Services;
 using BE_Capstone_Project.Application.Report.Services.Interfaces;
+using BE_Capstone_Project.Application.ReviewManagement.Services;
+using BE_Capstone_Project.Application.ReviewManagement.Services.Interfaces;
 using BE_Capstone_Project.Application.TourManagement.Services;
 using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
+using BE_Capstone_Project.Application.TourPriceHistories.Services;
 using BE_Capstone_Project.DAO;
 >>>>>>> 84faab9efed93263eaf345084c2103f3bdb983fd
 using BE_Capstone_Project.Infrastructure;
@@ -12,16 +16,23 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<OtmsdbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
 // Add services to the container.
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ITourService, TourService>();
 builder.Services.AddScoped<ITourImageService, TourImageService>();
+builder.Services.AddScoped<ITourScheduleService, TourScheduleService>();
+builder.Services.AddScoped<IWishlistService, WishlistService>();
+builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<TourPriceHistoryService>();
+builder.Services.AddScoped<NewsService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<BookingService>();
 
 //DAO
 builder.Services.AddScoped<BookingCustomerDAO>();
@@ -57,9 +68,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 Encoding.UTF8.GetBytes(jwtSettings["Key"]))
         };
     });
+builder.Services.AddAuthorization();
 
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.WriteIndented = true;
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -77,5 +93,4 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
 app.Run();

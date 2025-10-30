@@ -1,7 +1,8 @@
-﻿using BE_Capstone_Project.Infrastructure;
+﻿using BE_Capstone_Project.Domain.Enums;
 using BE_Capstone_Project.Domain.Models;
+using BE_Capstone_Project.Infrastructure;
 using Microsoft.EntityFrameworkCore;
-using BE_Capstone_Project.Domain.Enums;
+using static BE_Capstone_Project.Application.Auth.DTOs.UserDTOs;
 
 namespace BE_Capstone_Project.DAO
 {
@@ -28,17 +29,32 @@ namespace BE_Capstone_Project.DAO
             }
         }
 
-        public async Task<bool> UpdateUser(User user)
+        public async Task<bool> UpdateUser(UpdateUserDto request)
         {
             try
             {
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == request.Id);
+                if (user == null)
+                    return false;
+
+                // Cập nhật các thông tin mới
+                user.FirstName = request.FirstName ?? user.FirstName;
+                user.LastName = request.LastName ?? user.LastName;
+                user.PhoneNumber = request.PhoneNumber ?? user.PhoneNumber;
+
+                if (!string.IsNullOrEmpty(request.NewPassword))
+                {
+                    user.PasswordHash = request.NewPassword;
+                }
+
                 _context.Users.Update(user);
                 await _context.SaveChangesAsync();
+
                 return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"An error occurred while updating the user with ID {user.Id}: {ex.Message}");
+                Console.WriteLine($"[DAO] UpdateUser error: {ex.Message}");
                 return false;
             }
         }

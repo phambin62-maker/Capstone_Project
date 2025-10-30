@@ -1,0 +1,272 @@
+@using FE_Capstone_Project.Helpers;
+@model TourViewModel
+@{
+    string avgRatingText = "N/A";
+    if (Model.Reviews != null && Model.Reviews.Any())
+    {
+        decimal avgRating = (decimal)Model.Reviews.Average(r => r.Stars);
+        avgRatingText = avgRating.ToString("0.0");
+    }
+}
+<body class="tour-details-page">
+    <main class="main">
+
+        <!-- Page Title -->
+        <div class="page-title dark-background" data-aos="fade" style="background-image: url(~/assets/img/travel/showcase-8.webp);">
+            <div class="container position-relative">
+                <h1>Tour Details</h1>
+                <p>Discover all the details about this adventure — from destinations and activities to prices and ratings.</p>
+                <nav class="breadcrumbs">
+                    <ol>
+                        <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                        <li class="current">Tour Details</li>
+                    </ol>
+                </nav>
+            </div>
+        </div><!-- End Page Title -->
+        <!-- Travel Tour Details Section -->
+        <section id="travel-tour-details" class="travel-tour-details section">
+
+            <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+                <!-- Hero Section -->
+                <div class="tour-hero">
+                    <div class="hero-image-wrapper">
+                        <img src="@Model.TourImages.First().Image" alt="Mediterranean Adventure Tour" class="img-fluid w-100">
+                        <div class="hero-overlay">
+                            <div class="hero-content">
+                                <h1>@Model.Name</h1>
+                                <div class="hero-meta">
+                                    <span class="duration"><i class="bi bi-calendar"></i> @Model.Duration</span>
+                                    <span class="destination"><i class="bi bi-geo-alt"></i> @Model.EndLocation.LocationName</span>
+                                    <span class="rating"><i class="bi bi-star-fill"></i> @avgRatingText (@Model.Reviews.Count reviews)</span>
+                                </div>
+                                <p class="hero-tagline">Experience ancient wonders, pristine beaches, and vibrant cultures across three magnificent countries</p>
+                                <a href="#booking" class="btn-book">Check Availability</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tour Overview -->
+                <div class="tour-overview" data-aos="fade-up" data-aos-delay="200">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <h2>Tour Overview</h2>
+                            <p>@Model.Description</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pricing -->
+                <div class="tour-pricing" data-aos="fade-up" data-aos-delay="500">
+                    <h2>Pricing &amp; Dates</h2>
+                    <div class="pricing-table">
+                        <div class="pricing-header">
+                            <div class="price-item">
+                                <h3>Starting from</h3>
+                                <div class="price-amount">$3,299</div>
+                                <p>per person (double occupancy)</p>
+                            </div>
+                        </div>
+                        <div class="pricing-details">
+                            <div class="row">
+                                <div class="col-lg-4">
+                                    <div class="price-type">
+                                        <h4>Double Occupancy</h4>
+                                        <div class="price">$3,299</div>
+                                        <p>per person</p>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="price-type">
+                                        <h4>Single Supplement</h4>
+                                        <div class="price">+$899</div>
+                                        <p>additional</p>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="price-type">
+                                        <h4>Group Discount</h4>
+                                        <div class="price">-$200</div>
+                                        <p>for 6+ people</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="available-dates">
+                            <h3>2024 Departure Dates</h3>
+                            <div class="dates-grid">
+                                <div class="date-option">
+                                    <div class="date">May 15-26</div>
+                                    <div class="availability">6 spots left</div>
+                                </div>
+                                <div class="date-option">
+                                    <div class="date">June 12-23</div>
+                                    <div class="availability">Available</div>
+                                </div>
+                                <div class="date-option">
+                                    <div class="date">July 10-21</div>
+                                    <div class="availability">Almost full</div>
+                                </div>
+                                <div class="date-option">
+                                    <div class="date">August 14-25</div>
+                                    <div class="availability">Available</div>
+                                </div>
+                                <div class="date-option">
+                                    <div class="date">September 18-29</div>
+                                    <div class="availability">Available</div>
+                                </div>
+                                <div class="date-option">
+                                    <div class="date">October 9-20</div>
+                                    <div class="availability">11 spots left</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gallery -->
+                <div class="tour-gallery" data-aos="fade-up" data-aos-delay="700">
+                    <h2>Photo Gallery</h2>
+                    <div class="gallery-grid">
+                        @foreach(var images in Model.TourImages)
+                        {
+                            <div class="gallery-item">
+                                <a href="~/assets/img/travel/destination-1.webp" class="glightbox">
+                                    <img src="@images.Image" class="img-fluid" loading="lazy">
+                                </a>
+                            </div>
+                        }
+                        <div class="gallery-item">
+                            <a href="~/assets/img/travel/destination-1.webp" class="glightbox">
+                                <img src="~/assets/img/travel/destination-1.webp" alt="Venice Canals" class="img-fluid" loading="lazy">
+                            </a>
+                        </div>
+                        <div class="gallery-item">
+                            <a href="~/assets/img/travel/destination-2.webp" class="glightbox">
+                                <img src="~/assets/img/travel/destination-2.webp" alt="Florence Cathedral" class="img-fluid" loading="lazy">
+                            </a>
+                        </div>
+                        <div class="gallery-item">
+                            <a href="~/assets/img/travel/destination-3.webp" class="glightbox">
+                                <img src="~/assets/img/travel/destination-3.webp" alt="Roman Colosseum" class="img-fluid" loading="lazy">
+                            </a>
+                        </div>
+                        <div class="gallery-item">
+                            <a href="~/assets/img/travel/destination-4.webp" class="glightbox">
+                                <img src="~/assets/img/travel/destination-4.webp" alt="Santorini Sunset" class="img-fluid" loading="lazy">
+                            </a>
+                        </div>
+                        <div class="gallery-item">
+                            <a href="~/assets/img/travel/destination-5.webp" class="glightbox">
+                                <img src="~/assets/img/travel/destination-5.webp" alt="Hagia Sophia" class="img-fluid" loading="lazy">
+                            </a>
+                        </div>
+                        <div class="gallery-item">
+                            <a href="~/assets/img/travel/destination-6.webp" class="glightbox">
+                                <img src="~/assets/img/travel/destination-6.webp" alt="Mediterranean Cuisine" class="img-fluid" loading="lazy">
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section><!-- /Travel Tour Details Section -->
+        <!-- Blog Comments Section -->
+        <section id="blog-comments" class="blog-comments section">
+
+            <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+                <div class="blog-comments-4">
+                    <div class="comments-header">
+                        <h3 class="title">Community Feedback</h3>
+                        <div class="comments-stats">
+                            <span class="count">@Model.Reviews.Count</span>
+                            <span class="label">Comment@(Model.Reviews.Count == 1 ? "" : "s")</span>
+                        </div>
+                    </div>
+
+                    <div class="comments-container">
+                        @foreach(var comment in Model.Reviews)
+                        {
+                            <div class="comment-thread">
+                                <div class="comment-box">
+                                    <div class="comment-wrapper">
+                                        <div class="avatar-wrapper">
+                                            <img src="~/assets/img/person/person-f-9.webp" alt="Avatar" loading="lazy">
+                                            <span class="status-indicator"></span>
+                                        </div>
+
+                                        <div class="comment-content">
+                                            <div class="comment-header">
+                                                <div class="user-info">
+                                                    <h4>@comment.User.Username</h4>
+                                                    <span class="time-badge">
+                                                        <i class="bi bi-clock"></i>
+                                                        @TimeHelper.GetTimeAgo(comment.CreatedDate.Value)
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div class="comment-body">
+                                                <p>@comment.Comment</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+        </section><!-- /Blog Comments Section -->
+
+        <!-- Blog Comment Form Section -->
+        <section id="blog-comment-form" class="blog-comment-form section">
+
+            <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+                <form method="post" role="form">
+
+                    <div class="section-header">
+                        <h3>Share Your Thoughts</h3>
+                    </div>
+
+                    <div class="row gy-3">
+                        <div class="col-12 form-group">
+                            <label for="comment">Your Comment *</label>
+                            <textarea class="form-control" name="comment" id="comment" rows="5" placeholder="Write your thoughts here..." required=""></textarea>
+                        </div>
+
+                        <div class="col-12 text-center">
+                            <button type="submit" class="btn-submit">Post Comment</button>
+                        </div>
+                    </div>
+
+                </form>
+
+            </div>
+
+        </section><!-- /Blog Comment Form Section -->
+
+    </main>
+
+    <!-- Scroll Top -->
+    <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
+    <!-- Preloader -->
+    <div id="preloader"></div>
+
+    <!-- Vendor JS Files -->
+    <script src="~/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/assets/vendor/php-email-form/validate.js"></script>
+    <script src="~/assets/vendor/aos/aos.js"></script>
+    <script src="~/assets/vendor/purecounter/purecounter_vanilla.js"></script>
+    <script src="~/assets/vendor/swiper/swiper-bundle.min.js"></script>
+    <script src="~/assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
+    <script src="~/assets/vendor/imagesloaded/imagesloaded.pkgd.min.js"></script>
+    <script src="~/assets/vendor/glightbox/js/glightbox.min.js"></script>
+
+    <!-- Main JS File -->
+    <script src="~/assets/js/main.js"></script>
+
+</body>

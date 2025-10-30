@@ -11,6 +11,7 @@ namespace BE_Capstone_Project.DAO
         {
             _context = context;
         }
+
         public async Task<int> AddTourImageAsync(TourImage tourImage)
         {
             try
@@ -25,6 +26,25 @@ namespace BE_Capstone_Project.DAO
                 return -1;
             }
         }
+
+        public async Task<int> AddTourImagesAsync(List<TourImage> tourImages)
+        {
+            try
+            {
+                if (tourImages == null || tourImages.Count == 0) return 0;
+
+                await _context.TourImages.AddRangeAsync(tourImages);
+                int addedCount = await _context.SaveChangesAsync();
+
+                return addedCount;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while adding tour images: {ex.Message}");
+                return -1;
+            }
+        }
+
         public async Task<bool> UpdateTourImageAsync(TourImage tourImage)
         {
             try
@@ -39,6 +59,7 @@ namespace BE_Capstone_Project.DAO
                 return false;
             }
         }
+
         public async Task<bool> DeleteTourImageByIdAsync(int tourImageId)
         {
             try
@@ -55,6 +76,26 @@ namespace BE_Capstone_Project.DAO
             catch (Exception ex)
             {
                 Console.WriteLine($"An error occurred while deleting the tour image with ID {tourImageId}: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> DeleteTourImagesByTourIdAsync(int tourId)
+        {
+            try
+            {
+                var tourImages = await _context.TourImages.Where(ti => ti.TourId == tourId).ToListAsync();
+
+                if (tourImages == null || tourImages.Count == 0) return true;
+
+                _context.TourImages.RemoveRange(tourImages);
+                await _context.SaveChangesAsync();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while deleting the tour images for tour with ID {tourId}: {ex.Message}");
                 return false;
             }
         }
