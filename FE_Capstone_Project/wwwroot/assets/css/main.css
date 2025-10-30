@@ -8480,3 +8480,61 @@ section,
 .starter-section {
   /* Add your styles here */
 }
+
+/* ⭐ Star rating styles */
+.star-rating {
+    direction: rtl;
+    display: inline-block;
+}
+
+.star-rating input {
+    display: none;
+}
+
+.star-rating label {
+    font-size: 2rem;
+    color: #ccc;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.star-rating input:checked ~ label,
+.star-rating label:hover,
+.star-rating label:hover ~ label {
+    color: #f5b301;
+}
+
+/* 🔒 Blur overlay for guests */
+#login-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+#login-overlay .overlay-content {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px 30px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+#login-overlay a {
+    color: #007b8f;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+#login-overlay a:hover {
+    text-decoration: underline;
+}
+
+/* Disable click interaction behind overlay */
+.blog-comment-form {
+    position: relative;
+}

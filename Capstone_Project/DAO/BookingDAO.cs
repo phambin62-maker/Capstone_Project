@@ -1,6 +1,7 @@
 ﻿using BE_Capstone_Project.Infrastructure;
 using BE_Capstone_Project.Domain.Models;
 using Microsoft.EntityFrameworkCore;
+using BE_Capstone_Project.Domain.Enums;
 
 namespace BE_Capstone_Project.DAO
 {
@@ -127,5 +128,37 @@ namespace BE_Capstone_Project.DAO
             }
         }
 
+        public async Task<bool> HasUserBookedTourAsync(int userId, int tourId)
+        {
+            try
+            {
+                return await _context.Bookings
+                .Include(b => b.TourSchedule)
+                .AnyAsync(b =>
+                    b.UserId == userId &&
+                    b.TourSchedule.TourId == tourId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while checking booking for user ID {userId} and tour ID {tourId}: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<Booking?> GetBookingByUserIdAndTourIdAsync(int userId, int tourId)
+        {
+            try
+            {
+                return await _context.Bookings
+                .FirstOrDefaultAsync(b =>
+                    b.UserId == userId &&
+                    b.TourSchedule.TourId == tourId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while retrieving booking for user ID {userId} and tour ID {tourId}: {ex.Message}");
+                return null;
+            }
+        }
     }
 }
