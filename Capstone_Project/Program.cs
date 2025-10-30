@@ -1,18 +1,21 @@
-using Microsoft.EntityFrameworkCore;
 using BE_Capstone_Project.Application.Auth.Services;
+using BE_Capstone_Project.Application.Bookings.Services;
+using BE_Capstone_Project.Application.Newses.Services;
+using BE_Capstone_Project.Application.Notifications.Services;
 using BE_Capstone_Project.Application.Report.Services;
 using BE_Capstone_Project.Application.Report.Services.Interfaces;
+using BE_Capstone_Project.Application.ReviewManagement.Services;
+using BE_Capstone_Project.Application.ReviewManagement.Services.Interfaces;
 using BE_Capstone_Project.Application.TourManagement.Services;
 using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
+using BE_Capstone_Project.Application.TourPriceHistories.Services;
 using BE_Capstone_Project.DAO;
 using BE_Capstone_Project.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using BE_Capstone_Project.Application.Report.Services;
-using BE_Capstone_Project.Application.Report.Services.Interfaces;
-using BE_Capstone_Project.Application.Services;
-
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<OtmsdbContext>(options =>
@@ -22,7 +25,13 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ITourService, TourService>();
 builder.Services.AddScoped<ITourImageService, TourImageService>();
-builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ITourScheduleService, TourScheduleService>();
+builder.Services.AddScoped<IWishlistService, WishlistService>();
+builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<TourPriceHistoryService>();
+builder.Services.AddScoped<NewsService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<BookingService>();
 
 //DAO
 builder.Services.AddScoped<BookingCustomerDAO>();
@@ -58,24 +67,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 Encoding.UTF8.GetBytes(jwtSettings["Key"]))
         };
     });
-builder.Services.AddAuthentication()
-    .AddGoogle(options =>
-    {
-        IConfigurationSection googleAuthNSection =
-            builder.Configuration.GetSection("Authentication:Google");
-        options.ClientId = googleAuthNSection["ClientId"];
-        options.ClientSecret = googleAuthNSection["ClientSecret"];
-    })
-    .AddFacebook(options =>
-    {
-        IConfigurationSection fbAuthNSection =
-            builder.Configuration.GetSection("Authentication:Facebook");
-        options.AppId = fbAuthNSection["AppId"];
-        options.AppSecret = fbAuthNSection["AppSecret"];
-    });
+builder.Services.AddAuthorization();
 
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = null;
+        options.JsonSerializerOptions.WriteIndented = true;
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -93,5 +92,4 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
 app.Run();

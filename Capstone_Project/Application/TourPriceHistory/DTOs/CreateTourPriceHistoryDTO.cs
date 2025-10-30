@@ -1,0 +1,13 @@
+﻿namespace BE_Capstone_Project.Application.TourPriceHistories.DTOs
+{
+    public class CreateTourPriceHistoryDTO
+    {
+        public int TourId { get; set; }
+        public decimal? Price { get; set; }
+        public decimal? ChildrenDiscount { get; set; }
+        public decimal? GroupDiscount { get; set; }
+        public int? GroupNumber { get; set; }
+        public DateOnly? StartPriceDate { get; set; }
+        public DateOnly? EndPriceDate { get; set; }
+    }
+}

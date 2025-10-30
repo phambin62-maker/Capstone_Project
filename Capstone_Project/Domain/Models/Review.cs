@@ -20,7 +20,7 @@ public partial class Review
 
     public DateTime? CreatedDate { get; set; }
 
-    public ReviewStatus? ReviewStatus { get; set; }
+    public bool? ReviewStatus { get; set; }
 
     public virtual Booking Booking { get; set; } = null!;
 

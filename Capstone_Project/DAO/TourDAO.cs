@@ -66,7 +66,7 @@ namespace BE_Capstone_Project.DAO
         {
             try
             {
-                return await _context.Tours.ToListAsync();
+                return await _context.Tours.Include(t => t.TourImages).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -79,7 +79,7 @@ namespace BE_Capstone_Project.DAO
         {
             try
             {
-                return await _context.Tours.FindAsync(tourId);
+                return await _context.Tours.Include(t => t.TourImages).FirstOrDefaultAsync(t => t.Id == tourId);
             }
             catch (Exception ex)
             {
@@ -93,6 +93,7 @@ namespace BE_Capstone_Project.DAO
             try
             {
                 return await _context.Tours
+                    .Include(t => t.TourImages)
                     .Where(t => t.CategoryId == categoryId)
                     .ToListAsync();
             }
@@ -108,6 +109,7 @@ namespace BE_Capstone_Project.DAO
             try
             {
                 return await _context.Tours
+                    .Include(t => t.TourImages)
                     .Where(t => t.StartLocationId == startLocationId)
                     .ToListAsync();
             }
@@ -123,6 +125,7 @@ namespace BE_Capstone_Project.DAO
             try
             {
                 return await _context.Tours
+                    .Include(t => t.TourImages)
                     .Where(t => t.EndLocationId == endLocationId)
                     .ToListAsync();
             }
@@ -138,6 +141,7 @@ namespace BE_Capstone_Project.DAO
             try
             {
                 return await _context.Tours
+                    .Include(t => t.TourImages)
                     .Where(t => t.CancelConditionId == cancelConditionId)
                     .ToListAsync();
             }
@@ -153,6 +157,7 @@ namespace BE_Capstone_Project.DAO
             try
             {
                 return await _context.Tours
+                    .Include(t => t.TourImages)
                     .Where(t => t.Price >= minPrice && t.Price <= maxPrice)
                     .ToListAsync();
             }
@@ -168,6 +173,7 @@ namespace BE_Capstone_Project.DAO
             try
             {
                 return await _context.Tours
+                    .Include(t => t.TourImages)
                     .Where(t => t.Name != null && t.Name.Contains(name))
                     .ToListAsync();
             }
@@ -188,6 +194,25 @@ namespace BE_Capstone_Project.DAO
             {
                 Console.WriteLine($"An error occurred while counting tours: {ex.Message}");
                 return 0;
+            }
+        }
+
+        public async Task<List<Tour>> GetPaginatedToursAsync(int page = 1, int pageSize = 10)
+        {
+            try
+            {
+                var paginatedTours = await _context.Tours
+                    .Include(t => t.TourImages)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                return paginatedTours;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while retrieving paginated tours: {ex.Message}");
+                return new List<Tour>();
             }
         }
     }
