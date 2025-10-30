@@ -8,7 +8,7 @@ namespace FE_Capstone_Project.Controllers
     public class StaffScheduleController : Controller
     {
         private readonly HttpClient _httpClient;
-        private const string BASE_API_URL = "https://localhost:5160/api/";
+        private const string BASE_API_URL = "https://localhost:7160/api/";
 
         public StaffScheduleController(IHttpClientFactory httpClientFactory)
         {

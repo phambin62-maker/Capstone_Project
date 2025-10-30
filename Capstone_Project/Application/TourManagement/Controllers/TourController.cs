@@ -229,7 +229,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
 
             return Ok(new { message = $"Found {tours.Count} tours", tours });
         }
-        // Thêm vào TourController.cs
+
         [HttpPost("ToggleTourStatus")]
         public async Task<IActionResult> ToggleTourStatus(int tourId)
         {
