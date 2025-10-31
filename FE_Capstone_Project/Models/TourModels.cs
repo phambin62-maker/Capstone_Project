@@ -54,6 +54,8 @@ namespace FE_Capstone_Project.Models
         public bool TourStatus { get; set; }
 
         // Thêm các properties cần thiết cho View
+        [JsonPropertyName("category")]
+        public TourCategory Category { get; set; } = new TourCategory();
         [JsonPropertyName("tourImages")]
         public List<TourImage> TourImages { get; set; } = new List<TourImage>();
 
@@ -139,7 +141,8 @@ namespace FE_Capstone_Project.Models
     {
         [JsonPropertyName("message")]
         public string Message { get; set; } = string.Empty;
-
+        [JsonPropertyName("canComment")]
+        public bool CanComment { get; set; }
         [JsonPropertyName("tour")]
         public TourViewModel? Tour { get; set; }
     }

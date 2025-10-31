@@ -50,8 +50,11 @@
 //        [JsonPropertyName("tourStatus")]
 //        public bool TourStatus { get; set; }
 
-//        [JsonPropertyName("tourImages")]
-//        public List<TourImage> TourImages { get; set; } = new List<TourImage>();
+        //[JsonPropertyName("category")]
+        //public TourCategory Category { get; set; } = new TourCategory();
+
+        //[JsonPropertyName("tourImages")]
+        //public List<TourImage> TourImages { get; set; } = new List<TourImage>();
 
 //        [JsonPropertyName("reviews")]
 //        public List<Review> Reviews { get; set; } = new List<Review>();
@@ -77,9 +80,12 @@
 //        [JsonPropertyName("message")]
 //        public string Message { get; set; } = string.Empty;
 
-//        [JsonPropertyName("tour")]
-//        public TourViewModel? Tour { get; set; }
-//    }
+    //    [JsonPropertyName("tour")]
+    //    public TourViewModel? Tour { get; set; }
+
+    //    [JsonPropertyName("canComment")]
+    //    public bool CanComment { get; set; }
+    //}
 
 //    public class TourCountResponse
 //    {
