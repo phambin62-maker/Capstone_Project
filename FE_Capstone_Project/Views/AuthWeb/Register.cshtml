@@ -1,16 +1,263 @@
-﻿<!DOCTYPE html>
-@model FE_Capstone_Project.Models.AuthViewModel
-@{
-    ViewData["Title"] = "Login";
-}
-
+﻿@model FE_Capstone_Project.Models.RegisterViewModel
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Travel Booking Login</title>
-    <link rel="stylesheet" href="~/css/style.css" asp-append-version="true" />
+    <title>Travel Booking Register</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #008cad 0%, #006d8a 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .login-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .login-header {
+            text-align: center;
+            padding: 40px 30px 30px;
+            background: linear-gradient(135deg, #008cad 0%, #006d8a 100%);
+            color: white;
+        }
+
+        .logo {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .login-header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .login-header p {
+            opacity: 0.9;
+            font-size: 15px;
+        }
+
+        .login-form {
+            padding: 40px 30px 30px;
+        }
+
+        .login-title {
+            font-size: 24px;
+            color: #1a1a1a;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .form-group {
+            position: relative;
+            margin-bottom: 25px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #008cad;
+            box-shadow: 0 0 0 3px rgba(0, 140, 173, 0.1);
+        }
+
+        .form-control:focus + label,
+        .form-control:not(:placeholder-shown) + label {
+            top: -10px;
+            left: 12px;
+            font-size: 12px;
+            background: white;
+            padding: 0 6px;
+            color: #008cad;
+        }
+
+        label {
+            position: absolute;
+            left: 16px;
+            top: 16px;
+            color: #999;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 14px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #999;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .password-toggle:hover {
+            color: #008cad;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 13px;
+            margin-top: 6px;
+            display: block;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #008cad 0%, #006d8a 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 140, 173, 0.3);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .divider {
+            text-align: center;
+            margin: 25px 0;
+            position: relative;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 100%;
+            height: 1px;
+            background: #e0e0e0;
+        }
+
+        .divider span {
+            position: relative;
+            background: white;
+            padding: 0 15px;
+            color: #999;
+            font-size: 14px;
+        }
+
+        .social-login {
+            padding: 0 30px 30px;
+        }
+
+        .social-btn {
+            width: 100%;
+            padding: 12px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 15px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .social-btn:hover {
+            border-color: #008cad;
+            background: #e6f5f8;
+        }
+
+        .social-btn a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .signup-link {
+            text-align: center;
+            padding: 0 30px 30px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .signup-link a {
+            color: #008cad;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .signup-link a:hover {
+            text-decoration: underline;
+        }
+
+        .success-message {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .success-icon {
+            margin-bottom: 15px;
+            animation: scaleIn 0.5s ease;
+        }
+
+        @@keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @@keyframes scaleIn {
+            from { transform: scale(0); }
+            to { transform: scale(1); }
+        }
+
+        #registerMessage {
+            margin-top: 10px;
+            text-align: center;
+            color: #e74c3c;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
     <div class="login-container">
@@ -23,23 +270,30 @@
                         <circle cx="20" cy="20" r="3" fill="white" />
                     </svg>
                 </div>
-                <h1>Welcome </h1>
-                <p>Sign up to continue your journey</p>
+                <h1>Welcome</h1>
+                <p>Create an account to start your journey</p>
             </div>
-
-            <form asp-action="Login" asp-controller="AuthWeb" method="post" class="login-form" novalidate>
-                <h2 class="login-title">Sign In</h2>
+            
+            <form asp-controller="AuthWeb" asp-action="Register"  method="post" id="registerForm" class="login-form" novalidate>
+                <h2 class="login-title">Sign Up</h2>
 
                 <!-- Username -->
                 <div class="form-group">
-                    <input type="text" id="username" name="UserName" value="@Model.Username" required autocomplete="username" placeholder="Username" class="form-control" />
+                    <input asp-for="Username" type="text" id="username" name="username" required autocomplete="username" placeholder="Username" class="form-control" />
                     <label for="username">Username</label>
                     <span class="error-message" id="usernameError"></span>
                 </div>
 
+                <!-- Email -->
+                <div class="form-group">
+                    <input asp-for="Email" type="email" id="email" name="email" required autocomplete="email" placeholder="Email" class="form-control" />
+                    <label for="email">Email</label>
+                    <span class="error-message" id="emailError"></span>
+                </div>
+
                 <!-- Password -->
                 <div class="form-group">
-                    <input type="password" id="password" name="Password" required autocomplete="current-password" placeholder="Password" class="form-control" />
+                    <input asp-for="Password" type="password" id="password" name="password" required autocomplete="new-password" placeholder="Password" class="form-control" />
                     <label for="password">Password</label>
 
                     <button type="button" class="password-toggle" id="passwordToggle" aria-label="Toggle password visibility">
@@ -50,35 +304,34 @@
 
                     <span class="error-message" id="passwordError"></span>
                 </div>
+
                 <!-- Submit -->
                 <button type="submit" class="login-btn">
-                    <span class="btn-text">Sign In</span>
+                    <span class="btn-text">Create Account</span>
                 </button>
-
+                
                 <!-- Message -->
-                @if (!string.IsNullOrEmpty(Model.Message))
+                <p id="registerMessage"></p>
+                @if (ViewBag.Error != null)
                 {
-                    <p id="loginMessage" style="margin-top: 10px; text-align:center; color:red;">@Model.Message</p>
+                    <div class="alert alert-danger mt-3" role="alert">
+                        @ViewBag.Error
+                    </div>
+                }
+
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert alert-success mt-3" role="alert">
+                        @TempData["SuccessMessage"]
+                    </div>
                 }
             </form>
+
             <div class="divider">
-                <span>or sign in with</span>
+                <span>or sign up with</span>
             </div>
-
-            <div class="social-login">
-                <button type="button" class="social-btn">
-                    <svg width="20" height="20" viewBox="0 0 20 20">
-                        <path fill="#4285F4" d="M18.12 8.89H10.22v2.22h4.54c-.2 1.11-.82 1.64-1.78 2.22v1.78h2.89c1.69-1.56 2.67-3.85 2.67-6.58 0-.58-.05-.71-.17-1.31l.05-.33z" />
-                        <path fill="#34A853" d="M10.22 18c2.4 0 4.41-.8 5.88-2.17l-2.89-1.78c-.8.56-1.82.89-2.99.89-2.3 0-4.25-1.55-4.94-3.64H2.17v1.83A8.22 8.22 0 0010.22 18z" />
-                        <path fill="#FBBC05" d="M5.28 11.3a4.9 4.9 0 010-3.14V6.33H2.17a8.22 8.22 0 000 7.8l3.11-2.83z" />
-                        <path fill="#EA4335" d="M10.22 3.58c1.46 0 2.78.5 3.82 1.5l2.83-2.83A8.22 8.22 0 002.17 6.33l3.11 2.83c.69-2.09 2.64-3.64 4.94-3.58z" />
-                    </svg>
-                    <a href="@Url.Action("GoogleLogin", "AuthWeb")">Login with Google</a>
-                </button>
-            </div>
-
             <div class="signup-link">
-                <p>New to TravelFlow? <a href="#">Create an account</a></p>
+                <p>Already have an account? <a href="#">Sign in</a></p>
             </div>
 
             <div class="success-message" id="successMessage">
@@ -88,13 +341,58 @@
                         <path d="M11 16l4 4 8-8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                 </div>
-                <h3>Welcome back!</h3>
+                <h3>Account created!</h3>
                 <p>Taking you to your travel dashboard...</p>
             </div>
         </div>
     </div>
 
-    <script src="~/js/form-untils.js"></script>
-    <script src="~/js/script.js"></script>
+    <script>
+        // Password toggle functionality
+        const passwordToggle = document.getElementById('passwordToggle');
+        const passwordInput = document.getElementById('password');
+
+        passwordToggle.addEventListener('click', () => {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+        });
+
+        // Form validation and submission
+        const registerForm = document.getElementById('registerForm');
+        const usernameInput = document.getElementById('username');
+        const emailInput = document.getElementById('email');
+        const usernameError = document.getElementById('usernameError');
+        const emailError = document.getElementById('emailError');
+        const passwordError = document.getElementById('passwordError');
+        const registerMessage = document.getElementById('registerMessage');
+            // Clear previous errors
+            usernameError.textContent = '';
+            emailError.textContent = '';
+            passwordError.textContent = '';
+            registerMessage.textContent = '';
+            
+            let isValid = true;
+
+            // Username validation
+            if (usernameInput.value.trim().length < 3) {
+                usernameError.textContent = 'Username must be at least 3 characters';
+                isValid = false;
+            }
+
+            // Email validation
+            const emailRegex = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
+            if (!emailRegex.test(emailInput.value)) {
+                emailError.textContent = 'Please enter a valid email address';
+                isValid = false;
+            }
+
+            // Password validation
+            if (passwordInput.value.length < 6) {
+                passwordError.textContent = 'Password must be at least 6 characters';
+                isValid = false;
+            }
+
+        });
+    </script>
 </body>
 </html>

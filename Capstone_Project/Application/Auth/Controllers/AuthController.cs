@@ -30,26 +30,53 @@ namespace BE_Capstone_Project.Application.Auth.Controllers
             _userService = userService;
 
         }
+[HttpPost("register")]
+public async Task<IActionResult> Register([FromBody] RegisterDto request)
+{
+    try
+    {
+        if (request == null)
+            return BadRequest("Request body is missing.");
 
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterDto request)
+        if (string.IsNullOrWhiteSpace(request.Username) || 
+            string.IsNullOrWhiteSpace(request.Email) || 
+            string.IsNullOrWhiteSpace(request.Password))
         {
-            if (await _context.Users.AnyAsync(u => u.Username == request.Username))
-                return BadRequest("Username already exists");
-            var user = new User
-            {
-                Username = request.Username,
-                Email = request.Email,
-                PasswordHash = HashPassword(request.Password),
-                RoleId = 3,
-                UserStatus = UserStatus.Active
-            };
-
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Register successful" });
+            return BadRequest("Username, Email, and Password are required.");
         }
+        if (await _context.Users.AnyAsync(u => u.Username == request.Username))
+        {
+            Console.WriteLine($"[Register] ❌ Username '{request.Username}' already exists.");
+            return BadRequest("Username already exists");
+        }
+        if (await _context.Users.AnyAsync(u => u.Email == request.Email))
+        {
+            Console.WriteLine($"[Register] ❌ Email '{request.Email}' already exists.");
+            return BadRequest("Email already exists");
+        }
+        var user = new User
+        {
+            Username = request.Username.Trim(),
+            Email = request.Email.Trim(),
+            PasswordHash = HashPassword(request.Password),
+            RoleId = 3,
+            UserStatus = UserStatus.Active
+        };
+
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+
+        Console.WriteLine($"[Register] ✅ User '{request.Username}' registered successfully.");
+
+        return Ok(new { message = "Register successful" });
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[Register] ⚠️ Exception: {ex.Message}");
+        return StatusCode(500, "Internal server error");
+    }
+}
+
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto request)
