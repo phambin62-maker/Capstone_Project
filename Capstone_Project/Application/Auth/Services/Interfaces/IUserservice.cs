@@ -8,5 +8,6 @@ namespace BE_Capstone_Project.Application.Services
     public interface IUserService
     {
         Task<bool> UpdateUserAsync(UpdateUserDto request);
+        Task<(bool Success, string Message, int? UserId,string? Token)> SyncGoogleUserAsync(GoogleUserDto dto);
     }
 }
