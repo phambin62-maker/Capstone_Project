@@ -1,5 +1,6 @@
 ﻿
 using BE_Capstone_Project.Application.Auth.Services;
+using BE_Capstone_Project.Application.Services;
 using BE_Capstone_Project.Domain.Enums;
 using BE_Capstone_Project.Domain.Models;
 using BE_Capstone_Project.Infrastructure;
@@ -20,11 +21,14 @@ namespace BE_Capstone_Project.Application.Auth.Controllers
     {
         private readonly OtmsdbContext _context;
         private readonly AuthService _authService;
-
-        public AuthController(OtmsdbContext context, AuthService authService)
+        private readonly IUserService _userService;
+        private readonly ILogger<AuthController> _logger;
+        public AuthController(OtmsdbContext context, AuthService authService, IUserService userService)
         {
             _context = context;
             _authService = authService;
+            _userService = userService;
+
         }
 
         [HttpPost("register")]
@@ -61,11 +65,11 @@ namespace BE_Capstone_Project.Application.Auth.Controllers
         [HttpGet("profile")]
         public async Task<IActionResult> Profile()
         {
-            var username = User.Identity?.Name;
-            if (string.IsNullOrEmpty(username))
+            var email = User.Identity?.Name;
+            if (string.IsNullOrEmpty(email))
                 return Unauthorized("Cannot find username in token");
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
             if (user == null)
                 return NotFound("User not found");
             return Ok(new
@@ -77,6 +81,25 @@ namespace BE_Capstone_Project.Application.Auth.Controllers
                 user.PhoneNumber
             });
         }
+        [HttpPost("google-sync")]
+        public async Task<IActionResult> GoogleSync([FromBody] GoogleUserDto dto)
+        {
+            var result = await _userService.SyncGoogleUserAsync(dto);
+
+            if (!result.Success)
+                return StatusCode(500, new { result.Message });
+
+            return Ok(new
+            {
+                Success = true,
+                Message = result.Message,
+                UserId = result.UserId,
+                Email = dto.Email,
+                Token = result.Token
+
+            });
+        }
+
         // Helper
         private static string HashPassword(string password)
         {
@@ -89,5 +112,6 @@ namespace BE_Capstone_Project.Application.Auth.Controllers
             var hashOfInput = HashPassword(password);
             return hashOfInput == hash;
         }
+        
     }
 }

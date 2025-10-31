@@ -25,6 +25,11 @@
 
 
         }
+        public class GoogleUserDto
+        {
+            public string Email { get; set; } = "";
+            public string FullName { get; set; } = "";
+            public string Provider { get; set; } = "Google";
 
         public class UserDto
         {

@@ -17,13 +17,14 @@ namespace FE_Capstone_Project.Controllers
     public class AuthWebController : Controller
     {
         private readonly HttpClient _httpClient;
-        private readonly string _baseUrl = "https://localhost:7160/api/auth"; // backend API URL
+        private readonly string _baseUrl = "https://localhost:7160/api/Auth"; // backend API URL
         private readonly ILogger<AuthWebController> _logger;
 
         public AuthWebController(IHttpClientFactory httpClientFactory)
         {
             _httpClient = httpClientFactory.CreateClient();
-           
+            _logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<AuthWebController>();
+
         }
 
         [HttpGet]
@@ -104,10 +105,60 @@ namespace FE_Capstone_Project.Controllers
             var name = claims?.FirstOrDefault(c => c.Type.Contains("givenname"))?.Value
                        ?? claims?.FirstOrDefault(c => c.Type.Contains("name"))?.Value;
 
+            if (email == null)
+            {
+                _logger.LogWarning("Google login không có email, chuyển hướng về trang Login");
+                return RedirectToAction("Login", "AuthWeb");
+            }
+
             HttpContext.Session.SetString("UserName", name ?? "");
-            HttpContext.Session.SetString("UserEmail", email ?? "");
-            return RedirectToAction("Index", "Home");
+            HttpContext.Session.SetString("UserEmail", email);
+
+            // ✅ Gửi yêu cầu đến BE
+            var userPayload = new
+            {
+                Email = email,
+                FullName = name,
+                Provider = "Google"
+            };
+
+            var requestUrl = $"{_baseUrl}/google-sync";
+            //_logger.LogInformation($"Gửi request đồng bộ Google user đến {requestUrl}");
+
+            var response = await _httpClient.PostAsJsonAsync(requestUrl, userPayload);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+
+                // ✅ Deserialize để lấy token BE trả về
+                using var doc = JsonDocument.Parse(content);
+                var root = doc.RootElement;
+
+                var token = root.TryGetProperty("token", out var tokenElement) ? tokenElement.GetString() : null;
+                var message = root.TryGetProperty("message", out var msgElement) ? msgElement.GetString() : "Đăng nhập thành công";
+
+                if (!string.IsNullOrEmpty(token))
+                {
+                    HttpContext.Session.SetString("JwtToken", token);
+                    _logger.LogInformation($"Lưu token vào session thành công cho {email}");
+                }
+                else
+                {
+                    _logger.LogWarning($"BE không trả về token cho {email}. Message: {message}");
+                }
+
+                return RedirectToAction("Index", "Home");
+            }
+            else
+            {
+                var err = await response.Content.ReadAsStringAsync();
+                _logger.LogError($"Không thể đồng bộ user Google: {err}");
+                return RedirectToAction("Login", "AuthWeb");
+            }
         }
+
+
 
         public IActionResult Logout()
         {
@@ -130,15 +181,15 @@ namespace FE_Capstone_Project.Controllers
                 return Content("Session chưa được lưu hoặc đã hết hạn.");
             }
 
-            return Content($"Session hợp lệ! UserName: {name}, Token: {email.Substring(0, 15)}...");
+            return Content($"Session hợp lệ! UserName: {name}, Token: {token.Substring(0, 15)}...");
         }
         [HttpGet]
         public async Task<IActionResult> Profile()
         {
             var token = HttpContext.Session.GetString("JwtToken");
-            var username = HttpContext.Session.GetString("UserName");
+            var email = HttpContext.Session.GetString("UserEmail");
 
-            if (string.IsNullOrEmpty(username))
+            if (string.IsNullOrEmpty(email))
                 return RedirectToAction("Login");
 
             _httpClient.DefaultRequestHeaders.Authorization =
