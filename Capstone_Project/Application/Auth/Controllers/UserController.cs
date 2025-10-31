@@ -44,5 +44,23 @@ namespace BE_Capstone_Project.Application.Auth.Controllers
 
             return StatusCode(500, new { message = "An error occurred while updating the profile." });
         }
+
+        [HttpGet("by-username/{username}")]
+        public async Task<IActionResult> GetUserByUsername(string username)
+        {
+            var user = await _userService.GetUserByUsername(username);
+            if (user == null)
+                return NotFound(new { message = "User not found." });
+            var userDto = new UserDto
+            {
+                Id = user.Id,
+                Username = user.Username,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                PhoneNumber = user.PhoneNumber,
+                Email = user.Email,
+            };
+            return Ok(userDto);
+        }
     }
 }

@@ -11,7 +11,7 @@ namespace BE_Capstone_Project.Application.TourManagement.DTOs
 
         public decimal? Price { get; set; }
 
-        public string? Duration { get; set; }
+        public byte Duration { get; set; }
 
         public int StartLocationId { get; set; }
 

@@ -1,6 +1,7 @@
 ﻿using BE_Capstone_Project.Domain.Enums;
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace BE_Capstone_Project.Domain.Models;
 
@@ -14,7 +15,7 @@ public partial class Tour
 
     public decimal? Price { get; set; }
 
-    public string? Duration { get; set; }
+    public byte Duration { get; set; }
 
     public int StartLocationId { get; set; }
 
@@ -46,6 +47,7 @@ public partial class Tour
 
     public virtual Location StartLocation { get; set; } = null!;
 
+    [JsonIgnore]
     public virtual ICollection<TourImage> TourImages { get; set; } = new List<TourImage>();
 
     public virtual ICollection<TourPriceHistory> TourPriceHistories { get; set; } = new List<TourPriceHistory>();

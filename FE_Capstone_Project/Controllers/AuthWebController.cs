@@ -61,16 +61,16 @@ namespace FE_Capstone_Project.Controllers
             }
 
             var responseString = await response.Content.ReadAsStringAsync();
-                var loginResult = JsonSerializer.Deserialize<LoginResponse>(responseString, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
+            var loginResult = JsonSerializer.Deserialize<LoginResponse>(responseString, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
 
             if (loginResult == null || string.IsNullOrEmpty(loginResult.Token))
-                {
+            {
                 model.Message = "Không nhận được token từ server.";
                 return View(model);
-                }
+            }
 
 
             var handler = new JwtSecurityTokenHandler();
@@ -84,9 +84,9 @@ namespace FE_Capstone_Project.Controllers
             HttpContext.Session.SetString("UserName", firstName);
             HttpContext.Session.SetString("UserEmail", email);
 
-                return RedirectToAction("Index", "Home");
+            return RedirectToAction("Index", "Home");
             ;
-            }
+        }
 
         [HttpGet]
         public IActionResult GoogleLogin()
@@ -174,8 +174,8 @@ namespace FE_Capstone_Project.Controllers
         {
             var username = HttpContext.Session.GetString("UserName");
             var token = HttpContext.Session.GetString("JwtToken");
-           var name = HttpContext.Session.GetString("UserName");
-           var email = HttpContext.Session.GetString("UserEmail");
+            var name = HttpContext.Session.GetString("UserName");
+            var email = HttpContext.Session.GetString("UserEmail");
             if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(email))
             {
                 return Content("Session chưa được lưu hoặc đã hết hạn.");
@@ -199,8 +199,8 @@ namespace FE_Capstone_Project.Controllers
             if (!response.IsSuccessStatusCode)
             {
                 ViewBag.Error = "Không thể lấy thông tin người dùng.";
-            return View();
-        }
+                return View();
+            }
 
             var json = await response.Content.ReadAsStringAsync();
             var user = JsonSerializer.Deserialize<UserProfileViewModel>(json, new JsonSerializerOptions
@@ -276,9 +276,9 @@ namespace FE_Capstone_Project.Controllers
             return View();
         }
     }
-        public class LoginResponse
-        {
-            public string Token { get; set; }
+    public class LoginResponse
+    {
+        public string Token { get; set; }
     }
 
 }

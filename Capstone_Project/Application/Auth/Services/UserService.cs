@@ -100,6 +100,11 @@ namespace BE_Capstone_Project.Application.Services
 
 
 
+        public async Task<User?> GetUserByUsername(string username)
+        {
+            return await _userDAO.GetUserByUsername(username);
+        }
+
         private static string HashPassword(string password)
         {
             using var sha = SHA256.Create();

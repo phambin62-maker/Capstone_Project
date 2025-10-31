@@ -127,6 +127,19 @@ namespace BE_Capstone_Project.DAO
             }
         }
 
+        public async Task<User?> GetUserByUsername(string username)
+        {
+            try
+            {
+                return await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while retrieving the user with username {username}: {ex.Message}");
+                return null;
+            }
+        }
+
         public async Task<List<User>> GetUsersByRoleId(int roleId)
         {
             try
