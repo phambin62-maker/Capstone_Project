@@ -1,4 +1,4 @@
-﻿@model List<FE_Capstone_Project.Models.TourViewModel>
+﻿@model List<TourViewModel>
 @{
     ViewData["Title"] = "Quản lý Tour";
     Layout = "~/Views/Shared/_StaffLayout.cshtml";
@@ -22,7 +22,13 @@
             </a>
         </div>
     </div>
-
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
     <!-- Thống kê nhanh -->
     <div class="row mb-4">
         <div class="col-md-3">
