@@ -31,6 +31,8 @@
             public string FullName { get; set; } = "";
             public string Provider { get; set; } = "Google";
 
+            
+        }
         public class UserDto
         {
             public int Id { get; set; }

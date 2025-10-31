@@ -181,7 +181,7 @@ namespace FE_Capstone_Project.Controllers
                 return Content("Session chưa được lưu hoặc đã hết hạn.");
             }
 
-            return Content($"Session hợp lệ! UserName: {name}, Token: {token.Substring(0, 15)}...");
+            return Content($"Session hợp lệ! UserName: {name}, Token: {token.Substring(0, 15)}..., username:{name}");
         }
         [HttpGet]
         public async Task<IActionResult> Profile()
