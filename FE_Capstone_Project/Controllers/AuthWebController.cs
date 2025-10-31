@@ -45,17 +45,12 @@ namespace FE_Capstone_Project.Controllers
         {
             if (!ModelState.IsValid)
                 return View(model);
-
-            // Chuẩn bị dữ liệu gửi đi
             var json = JsonSerializer.Serialize(model);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            // Gọi API backend
             var response = await _httpClient.PostAsync($"{_baseUrl}/login", content);
 
             if (!response.IsSuccessStatusCode)
             {
-                ViewData["HideHeader"] = true;
                 model.Message = "Sai thông tin đăng nhập hoặc tài khoản không tồn tại.";
                 return View(model);
             }
@@ -71,21 +66,31 @@ namespace FE_Capstone_Project.Controllers
                 model.Message = "Không nhận được token từ server.";
                 return View(model);
             }
-
-
             var handler = new JwtSecurityTokenHandler();
             var jwtToken = handler.ReadJwtToken(loginResult.Token);
             var payload = jwtToken.Payload;
 
             var firstName = payload.ContainsKey("unique_name") ? payload["unique_name"].ToString() : "";
             var email = payload.ContainsKey("email") ? payload["email"].ToString() : "";
-
+            
             HttpContext.Session.SetString("JwtToken", loginResult.Token);
             HttpContext.Session.SetString("UserName", firstName);
             HttpContext.Session.SetString("UserEmail", email);
+            HttpContext.Session.SetInt32("UserRoleId", loginResult.RoleId);
+            switch (loginResult.RoleId)
+            {
+                case 3: 
+                    return RedirectToAction("Index", "Home");
 
-            return RedirectToAction("Index", "Home");
-            ;
+                case 2: 
+                    return RedirectToAction("Index", "Staff");
+
+                case 1:
+                    return RedirectToAction("Dashboard", "Admin");
+                default:
+                   
+                    return RedirectToAction("Index", "Home");
+            }
         }
 
         [HttpGet]
@@ -162,14 +167,55 @@ namespace FE_Capstone_Project.Controllers
 
         public IActionResult Logout()
         {
+            
             HttpContext.Session.Clear();
             return RedirectToAction("Index", "Home");
         }
-
+        [HttpGet]
         public IActionResult Register()
         {
-            return View();
+            ViewData["HideHeader"] = true;
+            return View(new RegisterViewModel());
         }
+        [HttpPost]
+        public async Task<IActionResult> Register(RegisterViewModel model)
+        {
+            ViewData["HideHeader"] = true;
+            if (!ModelState.IsValid)
+            {
+                ViewBag.Error = "Vui lòng nhập đầy đủ thông tin.";
+                return View(model);
+            }
+
+            try
+            {
+                var apiUrl = "https://localhost:7160/api/auth/register";
+                var json = JsonSerializer.Serialize(model);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync(apiUrl, content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["SuccessMessage"] = "🎉 Đăng ký thành công! Vui lòng đăng nhập.";
+                    return RedirectToAction("Login");
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    ViewBag.Error = "Trùng Email hoặc User Name ";
+                    return View(model);
+                }
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = "⚠️ Không thể kết nối đến máy chủ: " + ex.Message;
+                return View(model);
+            }
+        }
+
+
+
         public IActionResult CheckSession()
         {
             var username = HttpContext.Session.GetString("UserName");
@@ -275,10 +321,12 @@ namespace FE_Capstone_Project.Controllers
         {
             return View();
         }
+        
     }
     public class LoginResponse
     {
         public string Token { get; set; }
+        public int RoleId { get; set; }
     }
 
 }
