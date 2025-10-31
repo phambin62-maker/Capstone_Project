@@ -65,13 +65,31 @@ namespace BE_Capstone_Project.Application.Auth.Controllers
         [HttpGet("profile")]
         public async Task<IActionResult> Profile()
         {
-            var email = User.Identity?.Name;
-            if (string.IsNullOrEmpty(email))
-                return Unauthorized("Cannot find username in token");
+            // Lấy username và email từ token (Claim)
+            var username = User.Identity?.Name;
+            var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            Console.WriteLine($"[Profile] Username in token: {username}");
+            Console.WriteLine($"[Profile] Email in token: {email}");
+
+            if (string.IsNullOrEmpty(username) && string.IsNullOrEmpty(email))
+            {
+                Console.WriteLine("[Profile] ❌ Không tìm thấy username hoặc email trong token");
+                return Unauthorized("Cannot find username or email in token");
+            }
+
+            // Tìm user bằng username trước, fallback sang email nếu cần
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Username == username || u.Email == email);
+
             if (user == null)
+            {
+                Console.WriteLine("[Profile] ❌ Không tìm thấy user trong DB");
                 return NotFound("User not found");
+            }
+
+            Console.WriteLine($"[Profile] ✅ Đã tìm thấy user: {user.Username}");
+
             return Ok(new
             {
                 user.Username,
@@ -81,6 +99,7 @@ namespace BE_Capstone_Project.Application.Auth.Controllers
                 user.PhoneNumber
             });
         }
+
         [HttpPost("google-sync")]
         public async Task<IActionResult> GoogleSync([FromBody] GoogleUserDto dto)
         {
