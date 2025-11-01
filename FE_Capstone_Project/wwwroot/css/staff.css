@@ -411,3 +411,20 @@
     background: #f8d7da;
     color: #721c24;
 }
+/* Button styles for toggle status */
+.btn-outline-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+
+.btn-outline-success:hover {
+    background-color: #198754;
+    border-color: #198754;
+    color: white;
+}
+
+/* Stat card improvements */
+.stat-card .stat-icon.bg-secondary {
+    background-color: #6c757d !important;
+}

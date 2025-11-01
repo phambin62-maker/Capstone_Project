@@ -3,9 +3,9 @@
     ViewData["Title"] = "Quản lý Tour";
     Layout = "~/Views/Shared/_StaffLayout.cshtml";
     
-    // Tính toán các giá trị thống kê an toàn
     var totalTours = Model?.Count ?? 0;
     var activeTours = Model?.Count(t => t.TourStatus) ?? 0;
+    var inactiveTours = Model?.Count(t => !t.TourStatus) ?? 0;
     var averagePrice = Model?.Any() == true ? Model.Average(t => t.Price) : 0;
     var displayingTours = Model?.Count ?? 0;
 }
@@ -14,7 +14,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0 text-dark">@ViewData["Title"]</h1>
         <div>
-            <a href="#" class="btn btn-primary">
+            <a href="@Url.Action("Create", "Staff")" class="btn btn-primary">
                 <i class="bi bi-plus-circle me-2"></i>Thêm Tour Mới
             </a>
             <a href="@Url.Action("Tours")" class="btn btn-outline-secondary">
@@ -45,11 +45,11 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="stat-icon bg-success">
-                            <i class="bi bi-check-circle"></i>
+                            <i class="bi bi-eye"></i>
                         </div>
                         <div class="ms-3">
                             <h4 class="mb-0">@activeTours</h4>
-                            <small class="text-muted">Tour hoạt động</small>
+                            <small class="text-muted">Đang hiển thị</small>
                         </div>
                     </div>
                 </div>
@@ -59,12 +59,12 @@
             <div class="card stat-card">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
-                        <div class="stat-icon bg-warning">
-                            <i class="bi bi-currency-dollar"></i>
+                        <div class="stat-icon bg-secondary">
+                            <i class="bi bi-eye-slash"></i>
                         </div>
                         <div class="ms-3">
-                            <h4 class="mb-0">@averagePrice.ToString("N0")</h4>
-                            <small class="text-muted">Giá trung bình</small>
+                            <h4 class="mb-0">@inactiveTours</h4>
+                            <small class="text-muted">Đang ẩn</small>
                         </div>
                     </div>
                 </div>
@@ -103,10 +103,10 @@
                                 <i class="bi bi-search"></i>
                             </button>
                         </div>
-                        <select class="form-select form-select-sm" style="width: 150px;" id="statusFilter">
+                        <select class="form-select form-select-sm" style="width: 180px;" id="statusFilter">
                             <option value="">Tất cả trạng thái</option>
-                            <option value="true">Hoạt động</option>
-                            <option value="false">Ngừng hoạt động</option>
+                            <option value="active">Đang hiển thị</option>
+                            <option value="inactive">Đang ẩn</option>
                         </select>
                     </div>
                 </div>
@@ -138,13 +138,13 @@
                                 <th width="120" class="text-center">Giảm giá nhóm</th>
                                 <th width="150" class="text-center">Số chỗ</th>
                                 <th width="120" class="text-center">Trạng thái</th>
-                                <th width="150" class="text-center">Thao tác</th>
+                                <th width="180" class="text-center">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var tour in Model)
                             {
-                                <tr data-status="@tour.TourStatus.ToString().ToLower()">
+                                <tr data-status="@(tour.TourStatus ? "active" : "inactive")">
                                     <td class="text-center">
                                         <span class="badge bg-secondary">#@tour.Id</span>
                                     </td>
@@ -172,12 +172,12 @@
                                     </td>
                                     <td class="text-center">
                                         <span class="badge bg-info bg-opacity-10 text-info border border-info">
-                                            @(tour.ChildDiscount?.ToString("P0") ?? "0%")
+                                            @(tour.ChildDiscount?.ToString("N0") ?? "0%")%
                                         </span>
                                     </td>
                                     <td class="text-center">
                                         <span class="badge bg-warning bg-opacity-10 text-warning border border-warning">
-                                            @(tour.GroupDiscount?.ToString("P0") ?? "0%")
+                                            @(tour.GroupDiscount?.ToString("N0") ?? "0%")%
                                         </span>
                                     </td>
                                     <td class="text-center">
@@ -187,9 +187,9 @@
                                         </div>
                                     </td>
                                     <td class="text-center">
-                                        <span class="badge @(tour.TourStatus ? "bg-success" : "bg-danger")">
-                                            <i class="bi @(tour.TourStatus ? "bi-check-circle" : "bi-x-circle") me-1"></i>
-                                            @(tour.TourStatus ? "Hoạt động" : "Ngừng")
+                                        <span class="badge @(tour.TourStatus ? "bg-success" : "bg-secondary")">
+                                            <i class="bi @(tour.TourStatus ? "bi-eye" : "bi-eye-slash") me-1"></i>
+                                            @(tour.TourStatus ? "Đang hiển thị" : "Đang ẩn")
                                         </span>
                                     </td>
                                     <td>
@@ -200,20 +200,20 @@
                                                data-bs-toggle="tooltip">
                                                 <i class="bi bi-eye"></i>
                                             </a>
-                                            <a href="#" 
+                                            <a href="@Url.Action("Edit", "Staff", new { id = tour.Id })" 
                                                class="btn btn-sm btn-outline-warning" 
                                                title="Sửa tour"
                                                data-bs-toggle="tooltip">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
-                                            <form method="post" action="@Url.Action("DeleteTour", "Staff")" class="d-inline">
+                                            <form method="post" action="@Url.Action("ToggleTourStatus", "Staff")" class="d-inline">
                                                 <input type="hidden" name="id" value="@tour.Id" />
                                                 <button type="submit" 
-                                                        class="btn btn-sm btn-outline-danger" 
-                                                        title="Xóa tour"
+                                                        class="btn btn-sm @(tour.TourStatus ? "btn-outline-secondary" : "btn-outline-success")" 
+                                                        title="@(tour.TourStatus ? "Ẩn tour" : "Hiện tour")"
                                                         data-bs-toggle="tooltip"
-                                                        onclick="return confirm('Bạn có chắc chắn muốn xóa tour \"@tour.Name\"?')">
-                                                    <i class="bi bi-trash"></i>
+                                                        onclick="return confirm('Bạn có chắc chắn muốn @(tour.TourStatus ? "ẩn" : "hiện") tour \"@tour.Name\"?')">
+                                                    <i class="bi @(tour.TourStatus ? "bi-eye-slash" : "bi-eye")"></i>
                                                 </button>
                                             </form>
                                         </div>
@@ -271,65 +271,6 @@
         </div>
     </div>
 </div>
-
-@section Styles {
-    <style>
-        .stat-card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            transition: transform 0.2s;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-2px);
-        }
-
-        .stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            color: white;
-        }
-
-        .tour-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            background-color: #f8f9fa;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-        }
-
-        .table th {
-            border-top: none;
-            font-weight: 600;
-            font-size: 0.875rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .seat-info {
-            font-size: 0.8rem;
-        }
-
-        .breadcrumb-nav {
-            background: transparent;
-            padding: 0;
-            margin-bottom: 1.5rem;
-        }
-
-        .staff-content {
-            padding: 2rem;
-        }
-    </style>
-}
 
 @section Scripts {
     <script>
