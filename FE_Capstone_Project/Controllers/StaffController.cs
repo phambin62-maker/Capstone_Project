@@ -23,9 +23,9 @@ namespace FE_Capstone_Project.Controllers
         }
 
         private async Task<(bool Success, T Data, string Error)> CallApiAsync<T>(
-    string endpoint,
-    HttpMethod method = null,
-    HttpContent content = null)
+            string endpoint,
+            HttpMethod method = null,
+            HttpContent content = null)
         {
             try
             {
@@ -76,7 +76,54 @@ namespace FE_Capstone_Project.Controllers
             ViewData["Title"] = "Staff Dashboard";
             return View();
         }
+        // Thêm method mới để load tour với đầy đủ thông tin
+        private async Task<List<TourViewModel>> LoadToursWithDetails(List<TourViewModel> tours)
+        {
+            var detailedTours = new List<TourViewModel>();
 
+            foreach (var tour in tours)
+            {
+                var detailedTour = await LoadTourDetails(tour);
+                detailedTours.Add(detailedTour);
+            }
+
+            return detailedTours;
+        }
+
+        private async Task<TourViewModel> LoadTourDetails(TourViewModel tour)
+        {
+            // Load category
+            if (tour.CategoryId > 0)
+            {
+                var (catSuccess, category, _) = await CallApiAsync<TourCategory>($"TourCategories/{tour.CategoryId}");
+                if (catSuccess && category != null)
+                {
+                    tour.Category = category;
+                }
+            }
+
+            // Load start location
+            if (tour.StartLocationId > 0)
+            {
+                var (startLocSuccess, startLocation, _) = await CallApiAsync<Location>($"Locations/{tour.StartLocationId}");
+                if (startLocSuccess && startLocation != null)
+                {
+                    tour.StartLocation = startLocation;
+                }
+            }
+
+            // Load end location
+            if (tour.EndLocationId > 0)
+            {
+                var (endLocSuccess, endLocation, _) = await CallApiAsync<Location>($"Locations/{tour.EndLocationId}");
+                if (endLocSuccess && endLocation != null)
+                {
+                    tour.EndLocation = endLocation;
+                }
+            }
+
+            return tour;
+        }
         public async Task<IActionResult> Tours(int page = 1, int pageSize = 10)
         {
             ViewData["Title"] = "Quản lý Tour";
@@ -92,11 +139,14 @@ namespace FE_Capstone_Project.Controllers
                 }
 
                 var tours = toursResponse?.Tours ?? new List<TourViewModel>();
-
+                tours = await LoadToursWithDetails(tours);
+                var (locSuccess, locations, _) = await CallApiAsync<List<Location>>("Locations");
+                var (catSuccess, categories, _) = await CallApiAsync<List<TourCategory>>("TourCategories");
                 // Get total count
                 var (countSuccess, countResponse, countError) = await CallApiAsync<TourCountResponse>("Tour/GetTotalTourCount");
                 var totalCount = countSuccess ? countResponse?.TourCount ?? tours.Count : tours.Count;
-
+                ViewBag.Locations = locSuccess ? locations : new List<Location>();
+                ViewBag.Categories = catSuccess ? categories : new List<TourCategory>();
                 ViewBag.CurrentPage = page;
                 ViewBag.PageSize = pageSize;
                 ViewBag.TotalCount = totalCount;
@@ -171,21 +221,30 @@ namespace FE_Capstone_Project.Controllers
         }
 
 
-        // FIXED: Edit method
         public async Task<IActionResult> Edit(int id)
         {
             try
             {
                 _logger.LogInformation($"Loading tour for edit ID: {id}");
 
+                // Lấy dữ liệu tour chi tiết
                 var (success, result, error) = await CallApiAsync<TourDetailResponse>($"Tour/GetTourById/{id}");
-
                 if (!success || result?.Tour == null)
                 {
                     TempData["ErrorMessage"] = $"Không tìm thấy tour với ID {id}. Lỗi: {error}";
                     return RedirectToAction("Tours");
                 }
 
+                // Lấy dữ liệu dropdown
+                var (locSuccess, locations, _) = await CallApiAsync<List<Location>>("Locations");
+                var (catSuccess, categories, _) = await CallApiAsync<List<TourCategory>>("TourCategories");
+                var (cancelSuccess, cancelConditions, _) = await CallApiAsync<List<CancelCondition>>("CancelCondition");
+
+                ViewBag.Locations = locSuccess ? locations : new List<Location>();
+                ViewBag.Categories = catSuccess ? categories : new List<TourCategory>();
+                ViewBag.CancelConditions = cancelSuccess ? cancelConditions : new List<CancelCondition>();
+
+                // Tạo model cho Edit
                 var editModel = new TourEditModel
                 {
                     Id = result.Tour.Id,
@@ -214,6 +273,7 @@ namespace FE_Capstone_Project.Controllers
                 return RedirectToAction("Tours");
             }
         }
+
 
         // FIXED: Edit POST method
         [HttpPost]
@@ -440,7 +500,7 @@ namespace FE_Capstone_Project.Controllers
             formData.Add(new StringContent(model.EndLocationId.ToString()), "EndLocationId");
             formData.Add(new StringContent(model.CategoryId.ToString()), "CategoryId");
             formData.Add(new StringContent(model.CancelConditionId.ToString()), "CancelConditionId");
-            formData.Add(new StringContent(model.ChildDiscount.ToString()), "ChildDiscount");
+            formData.Add(new StringContent(model.ChildDiscount.ToString()), "ChildDiscount");   
             formData.Add(new StringContent(model.GroupDiscount.ToString()), "GroupDiscount");
             formData.Add(new StringContent(model.GroupNumber.ToString()), "GroupNumber");
             formData.Add(new StringContent(model.MinSeats.ToString()), "MinSeats");

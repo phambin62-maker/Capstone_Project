@@ -1,12 +1,11 @@
 ﻿@model List<TourViewModel>
 @{
-    ViewData["Title"] = "Quản lý Tour";
+    ViewData["Title"] = "Tour Management";
     Layout = "~/Views/Shared/_StaffLayout.cshtml";
     
     var totalTours = Model?.Count ?? 0;
     var activeTours = Model?.Count(t => t.TourStatus) ?? 0;
     var inactiveTours = Model?.Count(t => !t.TourStatus) ?? 0;
-    var averagePrice = Model?.Any() == true ? Model.Average(t => t.Price) : 0;
     var displayingTours = Model?.Count ?? 0;
 }
 
@@ -15,10 +14,10 @@
         <h1 class="h3 mb-0 text-dark">@ViewData["Title"]</h1>
         <div>
             <a href="@Url.Action("Create", "Staff")" class="btn btn-primary">
-                <i class="bi bi-plus-circle me-2"></i>Thêm Tour Mới
+                <i class="bi bi-plus-circle me-2"></i>Add New Tour
             </a>
             <a href="@Url.Action("Tours")" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-clockwise me-2"></i>Tải lại
+                <i class="bi bi-arrow-clockwise me-2"></i>Reload
             </a>
         </div>
     </div>
@@ -29,7 +28,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
-    <!-- Thống kê nhanh -->
+    <!-- Quick statistics -->
     <div class="row mb-4">
         <div class="col-md-3">
             <div class="card stat-card">
@@ -40,7 +39,7 @@
                         </div>
                         <div class="ms-3">
                             <h4 class="mb-0">@ViewBag.TotalCount</h4>
-                            <small class="text-muted">Tổng số tour</small>
+                            <small class="text-muted">Total Tours</small>
                         </div>
                     </div>
                 </div>
@@ -55,7 +54,7 @@
                         </div>
                         <div class="ms-3">
                             <h4 class="mb-0">@activeTours</h4>
-                            <small class="text-muted">Đang hiển thị</small>
+                            <small class="text-muted">Active</small>
                         </div>
                     </div>
                 </div>
@@ -70,7 +69,7 @@
                         </div>
                         <div class="ms-3">
                             <h4 class="mb-0">@inactiveTours</h4>
-                            <small class="text-muted">Đang ẩn</small>
+                            <small class="text-muted">Inactive</small>
                         </div>
                     </div>
                 </div>
@@ -85,7 +84,7 @@
                         </div>
                         <div class="ms-3">
                             <h4 class="mb-0">@displayingTours</h4>
-                            <small class="text-muted">Đang hiển thị</small>
+                            <small class="text-muted">Displayed</small>
                         </div>
                     </div>
                 </div>
@@ -98,22 +97,88 @@
             <div class="row align-items-center">
                 <div class="col-md-6">
                     <h5 class="card-title mb-0 text-dark">
-                        <i class="bi bi-list-ul me-2"></i>Danh sách Tour
+                        <i class="bi bi-list-ul me-2"></i>Tour List
                     </h5>
                 </div>
                 <div class="col-md-6 text-end">
                     <div class="d-flex justify-content-end gap-2">
                         <div class="input-group input-group-sm" style="width: 250px;">
-                            <input type="text" class="form-control" placeholder="Tìm kiếm tour..." id="searchInput">
-                            <button class="btn btn-outline-secondary" type="button">
+                            <input type="text" class="form-control" placeholder="Search tour..." id="searchInput">
+                            <button class="btn btn-outline-secondary" type="button" id="searchButton">
                                 <i class="bi bi-search"></i>
                             </button>
                         </div>
                         <select class="form-select form-select-sm" style="width: 180px;" id="statusFilter">
-                            <option value="">Tất cả trạng thái</option>
-                            <option value="active">Đang hiển thị</option>
-                            <option value="inactive">Đang ẩn</option>
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
                         </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Advanced filters -->
+            <div class="row mt-3">
+                <div class="col-md-12">
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <small class="text-muted me-2"><strong>Filters:</strong></small>
+                        
+                        <!-- Start location filter -->
+                        <select class="form-select form-select-sm" style="width: 180px;" id="startLocationFilter">
+                            <option value="">All Start Locations</option>
+                            @if (ViewBag.Locations != null)
+                            {
+                                foreach (var location in ViewBag.Locations)
+                                {
+                                    <option value="@location.Id">@location.LocationName</option>
+                                }
+                            }
+                        </select>
+
+                        <!-- End location filter -->
+                        <select class="form-select form-select-sm" style="width: 180px;" id="endLocationFilter">
+                            <option value="">All End Locations</option>
+                            @if (ViewBag.Locations != null)
+                            {
+                                foreach (var location in ViewBag.Locations)
+                                {
+                                    <option value="@location.Id">@location.LocationName</option>
+                                }
+                            }
+                        </select>
+
+                        <!-- Category filter -->
+                        <select class="form-select form-select-sm" style="width: 180px;" id="categoryFilter">
+                            <option value="">All Categories</option>
+                            @if (ViewBag.Categories != null)
+                            {
+                                foreach (var category in ViewBag.Categories)
+                                {
+                                    <option value="@category.Id">@category.CategoryName</option>
+                                }
+                            }
+                        </select>
+
+                        <!-- Sort by price -->
+                        <select class="form-select form-select-sm" style="width: 180px;" id="sortByPrice">
+                            <option value="">Sort by Price</option>
+                            <option value="asc">Price: Low to High</option>
+                            <option value="desc">Price: High to Low</option>
+                        </select>
+
+                        <!-- Price range -->
+                        <div class="input-group input-group-sm" style="width: 200px;">
+                            <input type="number" class="form-control" placeholder="Min Price" id="minPrice">
+                            <input type="number" class="form-control" placeholder="Max Price" id="maxPrice">
+                        </div>
+
+                        <button class="btn btn-sm btn-outline-primary" id="applyFilters">
+                            <i class="bi bi-funnel me-1"></i>Apply
+                        </button>
+                        
+                        <button class="btn btn-sm btn-outline-secondary" id="resetFilters">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Reset
+                        </button>
                     </div>
                 </div>
             </div>
@@ -123,10 +188,10 @@
             {
                 <div class="text-center py-5">
                     <i class="bi bi-inbox display-1 text-muted mb-3"></i>
-                    <h5 class="text-muted">Không có tour nào được tìm thấy</h5>
-                    <p class="text-muted mb-4">Hiện tại không có tour nào trong hệ thống hoặc có lỗi khi tải dữ liệu.</p>
+                    <h5 class="text-muted">No tours found</h5>
+                    <p class="text-muted mb-4">Currently there are no tours in the system or an error occurred while loading data.</p>
                     <a href="@Url.Action("Tours")" class="btn btn-primary">
-                        <i class="bi bi-arrow-clockwise me-2"></i>Tải lại
+                        <i class="bi bi-arrow-clockwise me-2"></i>Reload
                     </a>
                 </div>
             }
@@ -137,20 +202,27 @@
                         <thead class="table-light">
                             <tr>
                                 <th width="80" class="text-center">ID</th>
-                                <th>Tên Tour</th>
-                                <th width="120" class="text-center">Giá</th>
-                                <th width="120" class="text-center">Thời lượng</th>
-                                <th width="120" class="text-center">Giảm giá trẻ em</th>
-                                <th width="120" class="text-center">Giảm giá nhóm</th>
-                                <th width="150" class="text-center">Số chỗ</th>
-                                <th width="120" class="text-center">Trạng thái</th>
-                                <th width="180" class="text-center">Thao tác</th>
+                                <th>Tour Name</th>
+                                <th width="150" class="text-center">Start Location</th>
+                                <th width="150" class="text-center">End Location</th>
+                                <th width="120" class="text-center">Category</th>
+                                <th width="120" class="text-center">Price</th>
+                                <th width="120" class="text-center">Duration</th>
+                                <th width="120" class="text-center">Child Discount</th>
+                                <th width="120" class="text-center">Group Discount</th>
+                                <th width="150" class="text-center">Seats</th>
+                                <th width="120" class="text-center">Status</th>
+                                <th width="180" class="text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var tour in Model)
                             {
-                                <tr data-status="@(tour.TourStatus ? "active" : "inactive")">
+                                <tr data-status="@(tour.TourStatus ? "active" : "inactive")"
+                                    data-start-location="@tour.StartLocationId"
+                                    data-end-location="@tour.EndLocationId"
+                                    data-category="@tour.CategoryId"
+                                    data-price="@tour.Price">
                                     <td class="text-center">
                                         <span class="badge bg-secondary">#@tour.Id</span>
                                     </td>
@@ -171,44 +243,86 @@
                                         </div>
                                     </td>
                                     <td class="text-center">
+                                        @if (tour.StartLocation != null && !string.IsNullOrEmpty(tour.StartLocation.LocationName))
+                                        {
+                                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary">
+                                                @tour.StartLocation.LocationName
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary">
+                                                ID: @tour.StartLocationId
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (tour.EndLocation != null && !string.IsNullOrEmpty(tour.EndLocation.LocationName))
+                                        {
+                                            <span class="badge bg-success bg-opacity-10 text-success border border-success">
+                                                @tour.EndLocation.LocationName
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary">
+                                                ID: @tour.EndLocationId
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (tour.Category != null && !string.IsNullOrEmpty(tour.Category.CategoryName))
+                                        {
+                                            <span class="badge bg-info bg-opacity-10 text-info border border-info">
+                                                @tour.Category.CategoryName
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary">
+                                                ID: @tour.CategoryId
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
                                         <span class="fw-bold text-success">@tour.Price.ToString("N0") VND</span>
                                     </td>
                                     <td class="text-center">
-                                        <span class="badge bg-light text-dark border">@tour.Duration</span>
+                                        <span class="badge bg-light text-dark border">@tour.Duration days</span>
                                     </td>
                                     <td class="text-center">
                                         <span class="badge bg-info bg-opacity-10 text-info border border-info">
-                                            @(tour.ChildDiscount?.ToString("N0") ?? "0%")%
+                                            @(tour.ChildDiscount?.ToString("N0") ?? "0")%
                                         </span>
                                     </td>
                                     <td class="text-center">
                                         <span class="badge bg-warning bg-opacity-10 text-warning border border-warning">
-                                            @(tour.GroupDiscount?.ToString("N0") ?? "0%")%
+                                            @(tour.GroupDiscount?.ToString("N0") ?? "0")%
                                         </span>
                                     </td>
                                     <td class="text-center">
                                         <div class="seat-info">
-                                            <small class="text-muted d-block">Tối thiểu: <strong>@(tour.MinSeats?.ToString() ?? "N/A")</strong></small>
-                                            <small class="text-muted d-block">Tối đa: <strong>@(tour.MaxSeats?.ToString() ?? "N/A")</strong></small>
+                                            <small class="text-muted d-block">Min: <strong>@(tour.MinSeats?.ToString() ?? "N/A")</strong></small>
+                                            <small class="text-muted d-block">Max: <strong>@(tour.MaxSeats?.ToString() ?? "N/A")</strong></small>
                                         </div>
                                     </td>
                                     <td class="text-center">
                                         <span class="badge @(tour.TourStatus ? "bg-success" : "bg-secondary")">
                                             <i class="bi @(tour.TourStatus ? "bi-eye" : "bi-eye-slash") me-1"></i>
-                                            @(tour.TourStatus ? "Đang hiển thị" : "Đang ẩn")
+                                            @(tour.TourStatus ? "Active" : "Inactive")
                                         </span>
                                     </td>
                                     <td>
                                         <div class="d-flex justify-content-center gap-1">
                                             <a href="@Url.Action("TourDetails", "Staff", new { id = tour.Id })" 
                                                class="btn btn-sm btn-outline-primary" 
-                                               title="Xem chi tiết"
+                                               title="View details"
                                                data-bs-toggle="tooltip">
                                                 <i class="bi bi-eye"></i>
                                             </a>
                                             <a href="@Url.Action("Edit", "Staff", new { id = tour.Id })" 
                                                class="btn btn-sm btn-outline-warning" 
-                                               title="Sửa tour"
+                                               title="Edit tour"
                                                data-bs-toggle="tooltip">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
@@ -216,9 +330,9 @@
                                                 <input type="hidden" name="id" value="@tour.Id" />
                                                 <button type="submit" 
                                                         class="btn btn-sm @(tour.TourStatus ? "btn-outline-secondary" : "btn-outline-success")" 
-                                                        title="@(tour.TourStatus ? "Ẩn tour" : "Hiện tour")"
+                                                        title="@(tour.TourStatus ? "Hide tour" : "Show tour")"
                                                         data-bs-toggle="tooltip"
-                                                        onclick="return confirm('Bạn có chắc chắn muốn @(tour.TourStatus ? "ẩn" : "hiện") tour \"@tour.Name\"?')">
+                                                        onclick="return confirm('Are you sure you want to @(tour.TourStatus ? "hide" : "show") tour \"@tour.Name\"?')">
                                                     <i class="bi @(tour.TourStatus ? "bi-eye-slash" : "bi-eye")"></i>
                                                 </button>
                                             </form>
@@ -230,23 +344,23 @@
                     </table>
                 </div>
 
-                <!-- Phân trang -->
+                <!-- Pagination -->
                 @if (ViewBag.TotalPages > 1)
                 {
                     <div class="d-flex justify-content-between align-items-center mt-4">
                         <div class="text-muted">
-                            Hiển thị <strong>@Model.Count</strong> tour trên tổng số <strong>@ViewBag.TotalCount</strong> tour
+                            Showing <strong>@Model.Count</strong> tours of <strong>@ViewBag.TotalCount</strong> total
                         </div>
                         <nav aria-label="Page navigation">
                             <ul class="pagination pagination-sm mb-0">
-                                <!-- Nút Previous -->
+                                <!-- Previous button -->
                                 <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
                                     <a class="page-link" href="@Url.Action("Tours", new { page = ViewBag.CurrentPage - 1, pageSize = ViewBag.PageSize })">
                                         <i class="bi bi-chevron-left"></i>
                                     </a>
                                 </li>
 
-                                <!-- Các trang -->
+                                <!-- Pages -->
                                 @for (int i = 1; i <= ViewBag.TotalPages; i++)
                                 {
                                     if (i == 1 || i == ViewBag.TotalPages || (i >= ViewBag.CurrentPage - 1 && i <= ViewBag.CurrentPage + 1))
@@ -263,7 +377,7 @@
                                     }
                                 }
 
-                                <!-- Nút Next -->
+                                <!-- Next button -->
                                 <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
                                     <a class="page-link" href="@Url.Action("Tours", new { page = ViewBag.CurrentPage + 1, pageSize = ViewBag.PageSize })">
                                         <i class="bi bi-chevron-right"></i>
@@ -281,10 +395,10 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
-            // Khởi tạo tooltip
+            // Initialize tooltip
             $('[data-bs-toggle="tooltip"]').tooltip();
 
-            // Tìm kiếm tour
+            // Search tour by name
             $('#searchInput').on('keyup', function () {
                 var value = $(this).val().toLowerCase();
                 $('#toursTable tbody tr').filter(function () {
@@ -292,32 +406,101 @@
                 });
             });
 
-            // Lọc theo trạng thái
+            $('#searchButton').on('click', function () {
+                var value = $('#searchInput').val().toLowerCase();
+                $('#toursTable tbody tr').filter(function () {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+                });
+            });
+
+            // Filter by status
             $('#statusFilter').on('change', function () {
-                var status = $(this).val();
-                if (status === '') {
-                    $('#toursTable tbody tr').show();
-                } else {
-                    $('#toursTable tbody tr').each(function () {
-                        var rowStatus = $(this).data('status');
-                        $(this).toggle(rowStatus === status);
+                applyAllFilters();
+            });
+
+            // Apply all filters
+            $('#applyFilters').on('click', function () {
+                applyAllFilters();
+            });
+
+            // Reset filters
+            $('#resetFilters').on('click', function () {
+                $('#startLocationFilter').val('');
+                $('#endLocationFilter').val('');
+                $('#categoryFilter').val('');
+                $('#sortByPrice').val('');
+                $('#minPrice').val('');
+                $('#maxPrice').val('');
+                $('#statusFilter').val('');
+                $('#searchInput').val('');
+                
+                // Show all rows
+                $('#toursTable tbody tr').show();
+                
+                // Sort back to original order
+                var tbody = $('#toursTable tbody');
+                tbody.find('tr').sort(function(a, b) {
+                    return $(a).find('td:first .badge').text().localeCompare($(b).find('td:first .badge').text());
+                }).appendTo(tbody);
+            });
+
+            function applyAllFilters() {
+                var statusFilter = $('#statusFilter').val();
+                var startLocationFilter = $('#startLocationFilter').val();
+                var endLocationFilter = $('#endLocationFilter').val();
+                var categoryFilter = $('#categoryFilter').val();
+                var minPrice = $('#minPrice').val();
+                var maxPrice = $('#maxPrice').val();
+                var sortByPrice = $('#sortByPrice').val();
+                var searchValue = $('#searchInput').val().toLowerCase();
+
+                $('#toursTable tbody tr').each(function () {
+                    var showRow = true;
+                    var $row = $(this);
+        
+                    if (statusFilter && $row.data('status') !== statusFilter) {
+                        showRow = false;
+                    }
+                    if (startLocationFilter && $row.data('start-location')?.toString() !== startLocationFilter) {
+                        showRow = false;
+                    }
+                    if (endLocationFilter && $row.data('end-location')?.toString() !== endLocationFilter) {
+                        showRow = false;
+                    }
+                    if (categoryFilter && $row.data('category')?.toString() !== categoryFilter) {
+                        showRow = false;
+                    }
+                    var price = parseFloat($row.data('price')) || 0;
+                    if (minPrice && price < parseFloat(minPrice)) showRow = false;
+                    if (maxPrice && price > parseFloat(maxPrice)) showRow = false;
+                    if (searchValue && $row.text().toLowerCase().indexOf(searchValue) === -1) showRow = false;
+        
+                    $row.toggle(showRow);
+                });
+
+                if (sortByPrice) {
+                    var tbody = $('#toursTable tbody');
+                    var rows = tbody.find('tr:visible').get();
+                    rows.sort(function(a, b) {
+                        var priceA = parseFloat($(a).data('price')) || 0;
+                        var priceB = parseFloat($(b).data('price')) || 0;
+                        return sortByPrice === 'asc' ? priceA - priceB : priceB - priceA;
+                    });
+                    $.each(rows, function(index, row) {
+                        tbody.append(row);
                     });
                 }
-            });
+            }
 
             // Auto hide alerts after 5 seconds
             setTimeout(function() {
                 $('.alert').alert('close');
             }, 5000);
 
-            // Thêm hiệu ứng hover cho table rows
+            // Hover effect for table rows
             $('#toursTable tbody tr').hover(
-                function() {
-                    $(this).addClass('table-active');
-                },
-                function() {
-                    $(this).removeClass('table-active');
-                }
+                function() { $(this).addClass('table-active'); },
+                function() { $(this).removeClass('table-active'); }
             );
         });
     </script>
