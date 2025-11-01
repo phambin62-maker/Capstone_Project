@@ -25,4 +25,9 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Application\LocationManagement\DTOs\" />
+    <Folder Include="Application\TourCategoryManagement\DTOs\" />
+  </ItemGroup>
+
 </Project>
