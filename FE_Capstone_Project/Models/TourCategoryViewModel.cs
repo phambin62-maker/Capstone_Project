@@ -15,6 +15,17 @@ namespace FE_Capstone_Project.Models
         [JsonPropertyName("message")]
         public string Message { get; set; } = string.Empty;
         [JsonPropertyName("categories")]
-        public List<TourCategoryViewModel> TourCategories { get; set; } = new List<TourCategoryViewModel>();
+        public TourCategoriesResponse2 Categories { get; set; } = new TourCategoriesResponse2();
+    }
+
+    public class TourCategoriesResponse2
+    {
+        [JsonPropertyName("success")]
+        public bool Success { get; set; }
+
+        [JsonPropertyName("message")]
+        public string Message { get; set; } = string.Empty;
+        [JsonPropertyName("data")]
+        public List<TourCategoryViewModel> Data { get; set; } = new List<TourCategoryViewModel>();
     }
 }

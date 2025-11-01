@@ -16,6 +16,16 @@ namespace FE_Capstone_Project.Models
         [JsonPropertyName("message")]
         public string Message { get; set; } = string.Empty;
         [JsonPropertyName("locations")]
-        public List<LocationViewModel> Locations { get; set; } = new List<LocationViewModel>();
+        public LocationsResponse2 Locations { get; set; } = new LocationsResponse2();
+    }
+
+    public class LocationsResponse2
+    {
+        [JsonPropertyName("success")]
+        public bool Success { get; set; }
+        [JsonPropertyName("message")]
+        public string Message { get; set; } = string.Empty;
+        [JsonPropertyName("data")]
+        public List<LocationViewModel> Data { get; set; } = new List<LocationViewModel>();
     }
 }

@@ -1,7 +1,5 @@
 ﻿using BE_Capstone_Project.Application.Auth.Services;
 using BE_Capstone_Project.Application.Bookings.Services;
-using BE_Capstone_Project.Application.LocationManagement.Services;
-using BE_Capstone_Project.Application.LocationManagement.Services.Interfaces;
 using BE_Capstone_Project.Application.CancelConditions.Services;
 using BE_Capstone_Project.Application.CancelConditions.Services.Interfaces;
 using BE_Capstone_Project.Application.Categories.Services;
@@ -15,8 +13,6 @@ using BE_Capstone_Project.Application.Report.Services.Interfaces;
 using BE_Capstone_Project.Application.ReviewManagement.Services;
 using BE_Capstone_Project.Application.ReviewManagement.Services.Interfaces;
 using BE_Capstone_Project.Application.Services;
-using BE_Capstone_Project.Application.TourCategoryManagement.Services;
-using BE_Capstone_Project.Application.TourCategoryManagement.Services.Interfaces;
 using BE_Capstone_Project.Application.TourManagement.Services;
 using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
 using BE_Capstone_Project.Application.TourPriceHistories.Services;
@@ -46,7 +42,6 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<BookingService>();
 builder.Services.AddScoped<ILocationService, LocationService>();
 builder.Services.AddScoped<ITourCategoryService, TourCategoryService>();
-builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICancelConditionService, CancelConditionService>();
 
 //DAO

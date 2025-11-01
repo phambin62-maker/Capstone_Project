@@ -46,8 +46,6 @@ public partial class Tour
     public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
 
     public virtual Location StartLocation { get; set; } = null!;
-
-    [JsonIgnore]
     public virtual ICollection<TourImage> TourImages { get; set; } = new List<TourImage>();
 
     public virtual ICollection<TourPriceHistory> TourPriceHistories { get; set; } = new List<TourPriceHistory>();

@@ -28,8 +28,8 @@ namespace FE_Capstone_Project.Controllers
             {
                 var allToursTask = _apiHelper.GetAsync<TourListResponse>("Tour/GetAllTours");
                 var topToursTask = _apiHelper.GetAsync<TourListResponse>("Tour/GetTopToursByEachCategories");
-                var locationsTask = _apiHelper.GetAsync<LocationsResponse>("Location/GetAllLocations");
-                var tourCategoriesTask = _apiHelper.GetAsync<TourCategoriesResponse>("TourCategory/GetAllTourCategories");
+                var locationsTask = _apiHelper.GetAsync<LocationsResponse>("Locations/GetAllLocations");
+                var tourCategoriesTask = _apiHelper.GetAsync<TourCategoriesResponse>("TourCategories/GetAllTourCategories");
 
                 await Task.WhenAll(allToursTask, topToursTask, locationsTask, tourCategoriesTask);
 
@@ -40,8 +40,8 @@ namespace FE_Capstone_Project.Controllers
 
                 var tours = allToursResult?.Tours ?? new List<TourViewModel>();
                 var featuredTours = topToursResult?.Tours ?? new List<TourViewModel>();
-                var destinations = locationsResult?.Locations ?? new List<LocationViewModel>();
-                var categories = tourCategoriesResult?.TourCategories ?? new List<TourCategoryViewModel>();
+                var destinations = locationsResult?.Locations.Data ?? new List<LocationViewModel>();
+                var categories = tourCategoriesResult?.Categories.Data ?? new List<TourCategoryViewModel>();
 
                 _toursCache.Clear();
                 _topToursCache.Clear();
