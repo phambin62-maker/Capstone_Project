@@ -1,6 +1,6 @@
-﻿@model FE_Capstone_Project.Models.TourDetailModel
+﻿@model TourDetailModel
 @{
-    ViewData["Title"] = "Chi tiết Tour";
+    ViewData["Title"] = "Tour Details";
     Layout = "~/Views/Shared/_StaffLayout.cshtml";
 }
 
@@ -9,20 +9,21 @@
         <h1 class="h3 mb-0 text-dark">@ViewData["Title"]</h1>
         <div>
             <a href="@Url.Action("Edit", "Staff", new { id = Model.Id })" class="btn btn-warning me-2">
-                <i class="bi bi-pencil me-2"></i>Sửa Tour
+                <i class="bi bi-pencil me-2"></i>Edit Tour
             </a>
             <a href="@Url.Action("Tours")" class="btn btn-secondary">
-                <i class="bi bi-arrow-left me-2"></i>Quay lại
+                <i class="bi bi-arrow-left me-2"></i>Back
             </a>
         </div>
     </div>
 
     <div class="row">
         <div class="col-md-8">
+            <!-- Basic Info -->
             <div class="card mb-4">
                 <div class="card-header bg-primary text-white">
                     <h5 class="card-title mb-0">
-                        <i class="bi bi-info-circle me-2"></i>Thông tin cơ bản
+                        <i class="bi bi-info-circle me-2"></i>Basic Information
                     </h5>
                 </div>
                 <div class="card-body">
@@ -30,26 +31,26 @@
                         <div class="col-md-6">
                             <table class="table table-borderless">
                                 <tr>
-                                    <td width="40%" class="fw-bold">ID Tour:</td>
+                                    <td width="40%" class="fw-bold">Tour ID:</td>
                                     <td><span class="badge bg-secondary">#@Model.Id</span></td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-bold">Tên Tour:</td>
+                                    <td class="fw-bold">Tour Name:</td>
                                     <td><strong class="text-primary">@Model.Name</strong></td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-bold">Giá:</td>
+                                    <td class="fw-bold">Price:</td>
                                     <td><span class="text-success fw-bold fs-5">@Model.Price.ToString("N0") VND</span></td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-bold">Thời lượng:</td>
-                                    <td>@Model.Duration</td>
+                                    <td class="fw-bold">Duration:</td>
+                                    <td>@Model.Duration days</td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-bold">Trạng thái:</td>
+                                    <td class="fw-bold">Status:</td>
                                     <td>
                                         <span class="badge @(Model.TourStatus ? "bg-success" : "bg-danger")">
-                                            @(Model.TourStatus ? "Đang hiển thị" : "Đang ẩn")
+                                            @(Model.TourStatus ? "Active" : "Hidden")
                                         </span>
                                     </td>
                                 </tr>
@@ -58,19 +59,19 @@
                         <div class="col-md-6">
                             <table class="table table-borderless">
                                 <tr>
-                                    <td width="40%" class="fw-bold">Điểm xuất phát:</td>
+                                    <td width="40%" class="fw-bold">Start Location:</td>
                                     <td>@Model.StartLocationName</td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-bold">Điểm đến:</td>
+                                    <td class="fw-bold">End Location:</td>
                                     <td>@Model.EndLocationName</td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-bold">Danh mục:</td>
+                                    <td class="fw-bold">Category:</td>
                                     <td>@Model.CategoryName</td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-bold">Điều kiện hủy:</td>
+                                    <td class="fw-bold">Cancellation Policy:</td>
                                     <td>@Model.CancelConditionName</td>
                                 </tr>
                             </table>
@@ -79,62 +80,11 @@
                 </div>
             </div>
 
+            <!-- Detailed Description -->
             <div class="card mb-4">
-                <div class="card-header bg-info text-white">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-percent me-2"></i>Thông tin giảm giá
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4 text-center">
-                            <div class="border rounded p-3">
-                                <h6 class="text-muted">Giảm giá trẻ em</h6>
-                                <h4 class="text-info">@(Model.ChildDiscount?.ToString("N0") ?? "0")%</h4>
-                            </div>
-                        </div>
-                        <div class="col-md-4 text-center">
-                            <div class="border rounded p-3">
-                                <h6 class="text-muted">Giảm giá nhóm</h6>
-                                <h4 class="text-warning">@(Model.GroupDiscount?.ToString("N0") ?? "0")%</h4>
-                            </div>
-                        </div>
-                        <div class="col-md-4 text-center">
-                            <div class="border rounded p-3">
-                                <h6 class="text-muted">Số người nhóm</h6>
-                                <h4 class="text-success">@(Model.GroupNumber?.ToString() ?? "N/A")</h4>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card mb-4">
-                <div class="card-header bg-success text-white">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-people me-2"></i>Thông tin chỗ ngồi
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="text-center">
-                        <div class="mb-3">
-                            <h6 class="text-muted">Số chỗ tối thiểu</h6>
-                            <h3 class="text-primary">@(Model.MinSeats?.ToString() ?? "N/A")</h3>
-                        </div>
-                        <div>
-                            <h6 class="text-muted">Số chỗ tối đa</h6>
-                            <h3 class="text-primary">@(Model.MaxSeats?.ToString() ?? "N/A")</h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
                 <div class="card-header bg-secondary text-white">
                     <h5 class="card-title mb-0">
-                        <i class="bi bi-card-text me-2"></i>Mô tả chi tiết
+                        <i class="bi bi-card-text me-2"></i>Detailed Description
                     </h5>
                 </div>
                 <div class="card-body">
@@ -144,8 +94,62 @@
                     }
                     else
                     {
-                        <p class="text-muted">Không có mô tả</p>
+                        <p class="text-muted">No description available</p>
                     }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Discount Info -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-percent me-2"></i>Discount Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <div class="border rounded p-3">
+                                <h6 class="text-muted">Child Discount</h6>
+                                <h4 class="text-info">@(Model.ChildDiscount?.ToString("N0") ?? "0")%</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="border rounded p-3">
+                                <h6 class="text-muted">Group Discount</h6>
+                                <h4 class="text-warning">@(Model.GroupDiscount?.ToString("N0") ?? "0")%</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="border rounded p-3">
+                                <h6 class="text-muted">Group Number</h6>
+                                <h4 class="text-success">@(Model.GroupNumber?.ToString() ?? "N/A")</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seats Info -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-people me-2"></i>Seat Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center">
+                        <div class="mb-3">
+                            <h6 class="text-muted">Minimum Seats</h6>
+                            <h3 class="text-primary">@(Model.MinSeats?.ToString() ?? "N/A")</h3>
+                        </div>
+                        <div>
+                            <h6 class="text-muted">Maximum Seats</h6>
+                            <h3 class="text-primary">@(Model.MaxSeats?.ToString() ?? "N/A")</h3>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

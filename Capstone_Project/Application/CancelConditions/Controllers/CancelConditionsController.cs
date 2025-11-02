@@ -43,7 +43,6 @@ namespace BE_Capstone_Project.Application.CancelConditions.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CancelConditionCreateDTO dto)
         {
-            // ModelState validation
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values
@@ -74,7 +73,6 @@ namespace BE_Capstone_Project.Application.CancelConditions.Controllers
         [HttpPut]
         public async Task<IActionResult> Update([FromBody] CancelConditionUpdateDTO dto)
         {
-            // ModelState validation
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values
