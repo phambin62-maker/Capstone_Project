@@ -119,6 +119,14 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "News" ? "active" : "")"
+                           href="/Staff/News">
+                            <i class="bi bi-newspaper me-2"></i>
+                            News
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
                         <a class="nav-link" href="/Staff/Support">
                             <i class="bi bi-headset me-2"></i>Hỗ trợ
                         </a>
