@@ -40,8 +40,8 @@ namespace FE_Capstone_Project.Controllers
 
                 var tours = allToursResult?.Tours ?? new List<TourViewModel>();
                 var featuredTours = topToursResult?.Tours ?? new List<TourViewModel>();
-                var destinations = locationsResult?.Locations.Data ?? new List<LocationViewModel>();
-                var categories = tourCategoriesResult?.Categories.Data ?? new List<TourCategoryViewModel>();
+                var destinations = locationsResult?.Data ?? new List<LocationViewModel>();
+                var categories = tourCategoriesResult?.Data ?? new List<TourCategoryViewModel>();
 
                 _toursCache.Clear();
                 _topToursCache.Clear();
@@ -89,6 +89,9 @@ namespace FE_Capstone_Project.Controllers
                     return View(new TourViewModel());
                 }
 
+                var tourSchedules = await _apiHelper.GetAsync<TourScheduleListResponse>($"TourSchedule/tour/available/{tourId}");
+
+                ViewBag.TourSchedules = tourSchedules.Data ?? new List<TourScheduleDTO>();
                 ViewBag.CanComment = result.CanComment;
                 return View(result.Tour);
             }
