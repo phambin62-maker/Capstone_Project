@@ -91,7 +91,7 @@ namespace BE_Capstone_Project.Application.Categories.Controllers
             {
                 return NotFound(new { message = "No tour categories found" });
             }
-            return Ok(new { message = "Tour categories fetched successfully", categories });
+            return Ok(new { message = "Tour categories fetched successfully", categories.Data });
         }
     }
 }
