@@ -4,6 +4,7 @@ using FE_Capstone_Project.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace FE_Capstone_Project.Controllers
 {
@@ -21,7 +22,11 @@ namespace FE_Capstone_Project.Controllers
             _httpClient.BaseAddress = new Uri(BASE_API_URL);
             _httpClient.Timeout = TimeSpan.FromSeconds(30);
             _logger = logger;
-            _jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            _jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                Converters = { new JsonStringEnumConverter() }
+            };
             _dataService = dataService;
         }
 
@@ -46,13 +51,13 @@ namespace FE_Capstone_Project.Controllers
                     using var doc = JsonDocument.Parse(responseContent);
                     JsonElement root = doc.RootElement;
 
-                    // ✅ Nếu là object và có "data" thì deserialize phần data
+                    
                     if (root.ValueKind == JsonValueKind.Object && root.TryGetProperty("data", out var dataElement))
                     {
                         var result = JsonSerializer.Deserialize<T>(dataElement.GetRawText(), _jsonOptions);
                         return (true, result, string.Empty);
                     }
-                    // ✅ Nếu là mảng hoặc object không có "data"
+                    
                     else
                     {
                         var result = JsonSerializer.Deserialize<T>(responseContent, _jsonOptions);
@@ -139,12 +144,12 @@ namespace FE_Capstone_Project.Controllers
 
                 var tours = toursResponse?.Tours ?? new List<TourViewModel>();
                 tours = await LoadToursWithDetails(tours);
-                var locations = await _dataService.GetAllLocationsAsync();
-                var categories = await _dataService.GetAllCategoriesAsync();
+                var (locSuccess, locations, _) = await CallApiAsync<List<Location>>("Locations");
+                var (catSuccess, categories, _) = await CallApiAsync<List<TourCategory>>("TourCategories");
                 var (countSuccess, countResponse, countError) = await CallApiAsync<TourCountResponse>("Tour/GetTotalTourCount");
                 var totalCount = countSuccess ? countResponse?.TourCount ?? tours.Count : tours.Count;
-                ViewBag.Locations = locations;
-                ViewBag.Categories = categories;
+                ViewBag.Locations = locSuccess ? locations : new List<Location>();
+                ViewBag.Categories = catSuccess ? categories : new List<TourCategory>();
                 ViewBag.CurrentPage = page;
                 ViewBag.PageSize = pageSize;
                 ViewBag.TotalCount = totalCount;
@@ -232,14 +237,15 @@ namespace FE_Capstone_Project.Controllers
                     return RedirectToAction("Tours");
                 }
 
-                // Lấy dữ liệu dropdown
-                var locations = await _dataService.GetAllLocationsAsync();
-                var categories = await _dataService.GetAllCategoriesAsync();
-                var cancelConditions = await _dataService.GetAllCategoriesAsync();
+                var (locSuccess, locations, _) = await CallApiAsync<List<Location>>("Locations");
+                var (catSuccess, categories, _) = await CallApiAsync<List<TourCategory>>("TourCategories");
+                var (cancelSuccess, cancelConditions, _) = await CallApiAsync<List<CancelCondition>>("CancelCondition");
 
-                ViewBag.Locations = await _dataService.GetAllLocationsAsync();
-                ViewBag.Categories = await _dataService.GetAllCategoriesAsync();
-                ViewBag.CancelConditions = await _dataService.GetAllCategoriesAsync();
+
+
+                ViewBag.Locations = locSuccess ? locations : new List<Location>();
+                ViewBag.Categories = catSuccess ? categories : new List<TourCategory>();
+                ViewBag.CancelConditions = cancelSuccess ? cancelConditions : new List<CancelCondition>();
 
                 var editModel = new TourEditModel
                 {

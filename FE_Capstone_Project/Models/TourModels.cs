@@ -53,7 +53,6 @@ namespace FE_Capstone_Project.Models
         [JsonPropertyName("tourStatus")]
         public bool TourStatus { get; set; }
 
-        // Thêm các properties cần thiết cho View
         [JsonPropertyName("category")]
         public TourCategory Category { get; set; } = new TourCategory();
 
