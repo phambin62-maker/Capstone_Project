@@ -75,7 +75,7 @@ namespace FE_Capstone_Project.Models
     }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
-    public enum ScheduleStatus
+    public enum ScheduleStatus : byte
     {
         Scheduled = 1,
         InProgress = 2,

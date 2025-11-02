@@ -83,13 +83,14 @@ namespace FE_Capstone_Project.Controllers
             {
                 var username = HttpContext.Session.GetString("UserName");
                 var result = await _apiHelper.GetAsync<TourDetailResponse>($"Tour/GetTourById/{tourId}?username={username}");
+                var tourSchedules = await _apiHelper.GetAsync<TourScheduleListResponse>($"TourSchedule/tour/available/{tourId}");
+
                 if (result == null || result.Tour == null)
                 {
                     ViewBag.ErrorMessage = "Tour could not be found.";
+                    ViewBag.CanComment = false;
                     return View(new TourViewModel());
                 }
-
-                var tourSchedules = await _apiHelper.GetAsync<TourScheduleListResponse>($"TourSchedule/tour/available/{tourId}");
 
                 ViewBag.TourSchedules = tourSchedules.Data ?? new List<TourScheduleDTO>();
                 ViewBag.CanComment = result.CanComment;
@@ -98,6 +99,7 @@ namespace FE_Capstone_Project.Controllers
             catch (Exception ex)
             {
                 ViewBag.ErrorMessage = $"Error connecting to server: {ex.Message}";
+                ViewBag.CanComment = false;
                 return View(new TourViewModel());
             }
         }

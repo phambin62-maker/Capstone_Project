@@ -1,5 +1,6 @@
-﻿using System.Text.Json;
-using System.Text;
+﻿using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace FE_Capstone_Project.Helpers
 {
@@ -21,13 +22,16 @@ namespace FE_Capstone_Project.Helpers
                     return default;
 
                 var json = await response.Content.ReadAsStringAsync();
+
                 return JsonSerializer.Deserialize<T>(json, new JsonSerializerOptions
                 {
-                    PropertyNameCaseInsensitive = true
+                    PropertyNameCaseInsensitive = true,
+                    Converters = { new JsonStringEnumConverter() }
                 });
             }
-            catch
+            catch(Exception ex)
             {
+                Console.WriteLine("Error occurred while making GET request to " + ex);
                 return default;
             }
         }
@@ -46,7 +50,8 @@ namespace FE_Capstone_Project.Helpers
                 var responseJson = await response.Content.ReadAsStringAsync();
                 return JsonSerializer.Deserialize<TResponse>(responseJson, new JsonSerializerOptions
                 {
-                    PropertyNameCaseInsensitive = true
+                    PropertyNameCaseInsensitive = true,
+                    Converters = { new JsonStringEnumConverter() }
                 });
             }
             catch
