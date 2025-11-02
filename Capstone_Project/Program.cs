@@ -1,11 +1,18 @@
-using BE_Capstone_Project.Application.Auth.Services;
+﻿using BE_Capstone_Project.Application.Auth.Services;
 using BE_Capstone_Project.Application.Bookings.Services;
+using BE_Capstone_Project.Application.CancelConditions.Services;
+using BE_Capstone_Project.Application.CancelConditions.Services.Interfaces;
+using BE_Capstone_Project.Application.Categories.Services;
+using BE_Capstone_Project.Application.Categories.Services.Interfaces;
+using BE_Capstone_Project.Application.Locations.Services;
+using BE_Capstone_Project.Application.Locations.Services.Interfaces;
 using BE_Capstone_Project.Application.Newses.Services;
 using BE_Capstone_Project.Application.Notifications.Services;
 using BE_Capstone_Project.Application.Report.Services;
 using BE_Capstone_Project.Application.Report.Services.Interfaces;
 using BE_Capstone_Project.Application.ReviewManagement.Services;
 using BE_Capstone_Project.Application.ReviewManagement.Services.Interfaces;
+using BE_Capstone_Project.Application.Services;
 using BE_Capstone_Project.Application.TourManagement.Services;
 using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
 using BE_Capstone_Project.Application.TourPriceHistories.Services;
@@ -32,7 +39,11 @@ builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<TourPriceHistoryService>();
 builder.Services.AddScoped<NewsService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<BookingService>();
+builder.Services.AddScoped<ILocationService, LocationService>();
+builder.Services.AddScoped<ITourCategoryService, TourCategoryService>();
+builder.Services.AddScoped<ICancelConditionService, CancelConditionService>();
 
 //DAO
 builder.Services.AddScoped<BookingCustomerDAO>();
@@ -78,12 +89,23 @@ builder.Services.AddControllers()
     });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        policy =>
+        {
+            policy.AllowAnyOrigin()      
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
 
 var app = builder.Build();
+app.UseCors("AllowAll");
 
 if (app.Environment.IsDevelopment())
 {
+
     app.UseSwagger();
     app.UseSwaggerUI();
 }

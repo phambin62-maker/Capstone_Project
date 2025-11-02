@@ -1,6 +1,7 @@
 ﻿using BE_Capstone_Project.Domain.Enums;
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace BE_Capstone_Project.Domain.Models;
 
@@ -45,7 +46,6 @@ public partial class Tour
     public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
 
     public virtual Location StartLocation { get; set; } = null!;
-
     public virtual ICollection<TourImage> TourImages { get; set; } = new List<TourImage>();
 
     public virtual ICollection<TourPriceHistory> TourPriceHistories { get; set; } = new List<TourPriceHistory>();

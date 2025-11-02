@@ -1,100 +1,153 @@
-﻿@model FE_Capstone_Project.Models.TourViewModel
-
+﻿@model FE_Capstone_Project.Models.TourDetailModel
 @{
     ViewData["Title"] = "Chi tiết Tour";
+    Layout = "~/Views/Shared/_StaffLayout.cshtml";
 }
 
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0">@ViewData["Title"]</h1>
-        <a href="@Url.Action("Tours")" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Quay lại
-        </a>
+        <h1 class="h3 mb-0 text-dark">@ViewData["Title"]</h1>
+        <div>
+            <a href="@Url.Action("Edit", "Staff", new { id = Model.Id })" class="btn btn-warning me-2">
+                <i class="bi bi-pencil me-2"></i>Sửa Tour
+            </a>
+            <a href="@Url.Action("Tours")" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Quay lại
+            </a>
+        </div>
     </div>
 
-    <div class="card">
-        <div class="card-header">
-            <h5 class="card-title mb-0">Thông tin Tour</h5>
-        </div>
-        <div class="card-body">
-            @if (Model != null)
-            {
-                <div class="row">
-                    <div class="col-md-6">
-                        <table class="table table-bordered">
-                            <tr>
-                                <th width="40%">ID Tour:</th>
-                                <td>@Model.Id</td>
-                            </tr>
-                            <tr>
-                                <th>Tên Tour:</th>
-                                <td><strong class="text-primary">@Model.Name</strong></td>
-                            </tr>
-                            <tr>
-                                <th>Giá:</th>
-                                <td><span class="text-success fw-bold">@Model.Price.ToString("N0") VND</span></td>
-                            </tr>
-                            <tr>
-                                <th>Thời lượng:</th>
-                                <td>@Model.Duration</td>
-                            </tr>
-                            <tr>
-                                <th>Giảm giá trẻ em:</th>
-                                <td>@(Model.ChildDiscount?.ToString("P0") ?? "0%")</td>
-                            </tr>
-                        </table>
-                    </div>
-                    <div class="col-md-6">
-                        <table class="table table-bordered">
-                            <tr>
-                                <th width="40%">Giảm giá nhóm:</th>
-                                <td>@(Model.GroupDiscount?.ToString("P0") ?? "0%")</td>
-                            </tr>
-                            <tr>
-                                <th>Số người nhóm:</th>
-                                <td>@(Model.GroupNumber?.ToString() ?? "N/A")</td>
-                            </tr>
-                            <tr>
-                                <th>Số chỗ tối thiểu:</th>
-                                <td>@(Model.MinSeats?.ToString() ?? "N/A")</td>
-                            </tr>
-                            <tr>
-                                <th>Số chỗ tối đa:</th>
-                                <td>@(Model.MaxSeats?.ToString() ?? "N/A")</td>
-                            </tr>
-                            <tr>
-                                <th>Trạng thái:</th>
-                                <td>
-                                    <span class="badge @(Model.TourStatus ? "bg-success" : "bg-danger")">
-                                        @(Model.TourStatus ? "Hoạt động" : "Ngừng hoạt động")
-                                    </span>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Thông tin cơ bản
+                    </h5>
                 </div>
-                <div class="row mt-3">
-                    <div class="col-12">
-                        <h6>Mô tả:</h6>
-                        <div class="border p-3 bg-light">
-                            @if (!string.IsNullOrEmpty(Model.Description))
-                            {
-                                @Model.Description
-                            }
-                            else
-                            {
-                                <span class="text-muted">Không có mô tả</span>
-                            }
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td width="40%" class="fw-bold">ID Tour:</td>
+                                    <td><span class="badge bg-secondary">#@Model.Id</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Tên Tour:</td>
+                                    <td><strong class="text-primary">@Model.Name</strong></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Giá:</td>
+                                    <td><span class="text-success fw-bold fs-5">@Model.Price.ToString("N0") VND</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Thời lượng:</td>
+                                    <td>@Model.Duration</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Trạng thái:</td>
+                                    <td>
+                                        <span class="badge @(Model.TourStatus ? "bg-success" : "bg-danger")">
+                                            @(Model.TourStatus ? "Đang hiển thị" : "Đang ẩn")
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td width="40%" class="fw-bold">Điểm xuất phát:</td>
+                                    <td>@Model.StartLocationName</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Điểm đến:</td>
+                                    <td>@Model.EndLocationName</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Danh mục:</td>
+                                    <td>@Model.CategoryName</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Điều kiện hủy:</td>
+                                    <td>@Model.CancelConditionName</td>
+                                </tr>
+                            </table>
                         </div>
                     </div>
                 </div>
-            }
-            else
-            {
-                <div class="alert alert-warning">
-                    Không tìm thấy thông tin tour.
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-percent me-2"></i>Thông tin giảm giá
+                    </h5>
                 </div>
-            }
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <div class="border rounded p-3">
+                                <h6 class="text-muted">Giảm giá trẻ em</h6>
+                                <h4 class="text-info">@(Model.ChildDiscount?.ToString("N0") ?? "0")%</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="border rounded p-3">
+                                <h6 class="text-muted">Giảm giá nhóm</h6>
+                                <h4 class="text-warning">@(Model.GroupDiscount?.ToString("N0") ?? "0")%</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="border rounded p-3">
+                                <h6 class="text-muted">Số người nhóm</h6>
+                                <h4 class="text-success">@(Model.GroupNumber?.ToString() ?? "N/A")</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-people me-2"></i>Thông tin chỗ ngồi
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center">
+                        <div class="mb-3">
+                            <h6 class="text-muted">Số chỗ tối thiểu</h6>
+                            <h3 class="text-primary">@(Model.MinSeats?.ToString() ?? "N/A")</h3>
+                        </div>
+                        <div>
+                            <h6 class="text-muted">Số chỗ tối đa</h6>
+                            <h3 class="text-primary">@(Model.MaxSeats?.ToString() ?? "N/A")</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-card-text me-2"></i>Mô tả chi tiết
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(Model.Description))
+                    {
+                        <p class="card-text">@Model.Description</p>
+                    }
+                    else
+                    {
+                        <p class="text-muted">Không có mô tả</p>
+                    }
+                </div>
+            </div>
         </div>
     </div>
 </div>

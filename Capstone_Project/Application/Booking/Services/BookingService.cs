@@ -1,7 +1,8 @@
 ﻿using BE_Capstone_Project.Application.Bookings.DTOs;
 using BE_Capstone_Project.DAO;
-using BE_Capstone_Project.Domain.Models;
 using BE_Capstone_Project.Domain.Enums;
+using BE_Capstone_Project.Domain.Models;
+using DocumentFormat.OpenXml.Office2010.Excel;
 
 namespace BE_Capstone_Project.Application.Bookings.Services
 {
@@ -119,6 +120,16 @@ namespace BE_Capstone_Project.Application.Bookings.Services
                 Username = b.User?.Username,
                 TourName = b.TourSchedule?.Tour?.Name
             });
+        }
+
+        public async Task<bool> HasUserBookedTour(int userId, int tourId)
+        {
+            return await _bookingDAO.HasUserBookedTourAsync(userId, tourId);
+        }
+
+        public async Task<Booking?> GetBookingByUserIdAndTourId(int userId, int tourId)
+        {
+            return await _bookingDAO.GetBookingByUserIdAndTourIdAsync(userId, tourId);
         }
     }
 }

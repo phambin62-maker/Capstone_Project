@@ -28,7 +28,16 @@ namespace BE_Capstone_Project.DAO
                 return -1;
             }
         }
+        public async Task<User?> GetByEmailAsync(string email)
+        {
+            return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        }
 
+        public async Task CreateAsync(User user)
+        {
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+        }
         public async Task<bool> UpdateUser(UpdateUserDto request)
         {
             try
@@ -114,6 +123,19 @@ namespace BE_Capstone_Project.DAO
             catch (Exception ex)
             {
                 Console.WriteLine($"An error occurred while retrieving the user with email {email}: {ex.Message}");
+                return null;
+            }
+        }
+
+        public async Task<User?> GetUserByUsername(string username)
+        {
+            try
+            {
+                return await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while retrieving the user with username {username}: {ex.Message}");
                 return null;
             }
         }

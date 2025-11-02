@@ -223,5 +223,61 @@ namespace BE_Capstone_Project.DAO
                 return new List<Tour>();
             }
         }
+
+        public async Task<List<Tour>> GetTopToursByEachCategoriesAsync()
+        {
+            try
+            {
+                // 1) Booking counts per TourId via Bookings -> TourSchedules -> TourId
+                var bookingCountsDict = await _context.Bookings
+                    .Join(_context.TourSchedules,
+                          b => b.TourScheduleId,
+                          ts => ts.Id,
+                          (b, ts) => new { ts.TourId })
+                    .GroupBy(x => x.TourId)
+                    .Select(g => new { TourId = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(x => x.TourId, x => x.Count);
+
+                // 2) Average stars per TourId from Reviews
+                var avgStarsDict = await _context.Reviews
+                    .GroupBy(r => r.TourId)
+                    .Select(g => new { TourId = g.Key, AvgStars = g.Average(r => (double?)r.Stars) })
+                    .ToDictionaryAsync(x => x.TourId, x => x.AvgStars ?? 0.0);
+
+                // 3) Load tours (include images if desired)
+                var tours = await _context.Tours
+                    .Include(t => t.TourImages)
+                    .Include(t => t.Category)
+                    .ToListAsync();
+
+                // 4) Project with counts and avg stars (0 when missing)
+                var toursWithMetrics = tours
+                    .Select(t => new
+                    {
+                        Tour = t,
+                        CategoryId = t.CategoryId,
+                        BookingCount = bookingCountsDict.TryGetValue(t.Id, out var bc) ? bc : 0,
+                        AvgStars = avgStarsDict.TryGetValue(t.Id, out var asv) ? asv : 0.0
+                    })
+                    .ToList();
+
+                // 5) For each category pick the top tour (booking count desc, then avg stars desc, then id tie-breaker)
+                var topToursByCategory = toursWithMetrics
+                    .GroupBy(x => x.CategoryId)
+                    .Select(g => g
+                        .OrderByDescending(x => x.BookingCount)
+                        .ThenByDescending(x => x.AvgStars)
+                        .ThenBy(x => x.Tour.Id)
+                        .First().Tour)
+                    .ToList();
+
+                return topToursByCategory;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while retrieving top tours by each category: {ex.Message}");
+                return new List<Tour>();
+            }
+        }
     }
 }

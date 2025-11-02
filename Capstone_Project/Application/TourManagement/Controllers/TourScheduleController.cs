@@ -10,7 +10,12 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
     public class TourScheduleController : ControllerBase
     {
         private readonly ITourScheduleService _tourScheduleService;
-        public TourScheduleController(ITourScheduleService tourScheduleService) => _tourScheduleService = tourScheduleService;
+        private readonly ITourService _tourService;
+        public TourScheduleController(ITourService tourService, ITourScheduleService tourScheduleService)
+        {
+            _tourService = tourService;
+            _tourScheduleService = tourScheduleService; 
+        }
 
         [HttpGet]
         public async Task<ActionResult<ApiResponse<List<TourScheduleDTO>>>> GetAllTourSchedules()
@@ -126,6 +131,22 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new ApiResponse<List<TourScheduleDTO>>(false, $"Internal server error: {ex.Message}"));
+            }
+        }
+        [HttpGet("GetTourNameById")]
+        public async Task<IActionResult> GetTourNameById(int id)
+        {
+            try
+            {
+                var tour = await _tourService.GetTourById(id);
+                if (tour == null)
+                    return NotFound(new { message = $"Không tìm thấy tour với id {id}" });
+
+                return Ok(new { id = tour.Id, name = tour.Name });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Lỗi khi lấy tên tour", error = ex.Message });
             }
         }
     }

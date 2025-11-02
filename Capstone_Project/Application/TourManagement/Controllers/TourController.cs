@@ -1,9 +1,12 @@
-﻿using BE_Capstone_Project.Application.TourManagement.DTOs;
+﻿using BE_Capstone_Project.Application.Bookings.Services;
+using BE_Capstone_Project.Application.Services;
+using BE_Capstone_Project.Application.TourManagement.DTOs;
 using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
 using BE_Capstone_Project.Domain.Enums;
 using BE_Capstone_Project.Domain.Models;
 using DocumentFormat.OpenXml.Office2010.Excel;
 using DocumentFormat.OpenXml.Spreadsheet;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,10 +18,18 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
     {
         private readonly ITourService _tourService;
         private readonly ITourImageService _tourImageService;
-        public TourController(ITourService tourService, ITourImageService tourImageService)
+        private readonly IUserService _userService;
+        private readonly BookingService _bookingService;
+        public TourController(
+            ITourService tourService, 
+            ITourImageService tourImageService, 
+            IUserService userService, 
+            BookingService bookingService)
         {
             _tourService = tourService;
             _tourImageService = tourImageService;
+            _userService = userService;
+            _bookingService = bookingService;
         }
 
         [HttpPost("AddTour")]
@@ -141,14 +152,25 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpGet("GetTourById/{id}")]
-        public async Task<IActionResult> GetTourById(int id)
+        public async Task<IActionResult> GetTourById(int id, [FromQuery] string? username)
         {
             var tour = await _tourService.GetTourById(id);
 
             if (tour == null)
                 return NotFound(new { message = $"No tour found with id {id}" });
 
-            return Ok(new { message = $"Tour with id {id} found successfully", tour });
+            bool canComment = false;
+
+            if(!string.IsNullOrEmpty(username))
+            {
+                var user = await _userService.GetUserByUsername(username);
+                if (user != null)
+                {
+                    canComment = await _bookingService.HasUserBookedTour(user.Id, id);
+                }
+            }
+
+            return Ok(new { message = $"Tour with id {id} found successfully", tour, CanComment = canComment });
         }
 
         [HttpGet("GetToursByCategoryId")]
@@ -223,6 +245,47 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         public async Task<IActionResult> GetPaginatedTours(int page = 1, int pageSize = 10)
         {
             var tours = await _tourService.GetPaginatedTours(page, pageSize);
+
+            if (tours == null || !tours.Any())
+                return Ok(new { message = "No tours found", tours });
+
+            return Ok(new { message = $"Found {tours.Count} tours", tours });
+        }
+
+        [HttpPost("ToggleTourStatus")]
+        public async Task<IActionResult> ToggleTourStatus(int tourId)
+        {
+            try
+            {
+                var tour = await _tourService.GetTourById(tourId);
+                if (tour == null)
+                    return NotFound(new { message = $"Không tìm thấy tour với id {tourId}" });
+
+                // Đảo ngược trạng thái
+                tour.TourStatus = !tour.TourStatus;
+                var newStatus = tour.TourStatus;
+
+                var result = await _tourService.UpdateTour(tour);
+
+                if (!result)
+                    return BadRequest(new { message = "Thay đổi trạng thái thất bại" });
+
+                return Ok(new
+                {
+                    message = (bool)newStatus ? "Tour đã được hiển thị" : "Tour đã được ẩn",
+                    newStatus = newStatus
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Lỗi khi thay đổi trạng thái", error = ex.Message });
+            }
+        }
+
+        [HttpGet("GetTopToursByEachCategories")]
+        public async Task<IActionResult> GetTopToursByEachCategories()
+        {
+            var tours = await _tourService.GetTopToursByEachCategories();
 
             if (tours == null || !tours.Any())
                 return Ok(new { message = "No tours found", tours });

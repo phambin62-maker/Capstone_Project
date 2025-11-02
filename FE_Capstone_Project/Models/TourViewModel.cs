@@ -50,6 +50,9 @@ namespace FE_Capstone_Project.Models
         [JsonPropertyName("tourStatus")]
         public bool TourStatus { get; set; }
 
+        [JsonPropertyName("category")]
+        public TourCategory Category { get; set; } = new TourCategory();
+
         [JsonPropertyName("tourImages")]
         public List<TourImage> TourImages { get; set; } = new List<TourImage>();
 
@@ -79,6 +82,9 @@ namespace FE_Capstone_Project.Models
 
         [JsonPropertyName("tour")]
         public TourViewModel? Tour { get; set; }
+
+        [JsonPropertyName("canComment")]
+        public bool CanComment { get; set; }
     }
 
     public class TourCountResponse
