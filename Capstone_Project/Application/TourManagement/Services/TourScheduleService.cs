@@ -85,6 +85,9 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
             {
                 Id = tourSchedule.Id,
                 TourId = tourSchedule.TourId,
+                StartLocation = tourSchedule.Tour?.StartLocation?.LocationName,
+                EndLocation = tourSchedule.Tour?.EndLocation?.LocationName,
+                CategoryName = tourSchedule.Tour?.Category?.CategoryName,
                 DepartureDate = tourSchedule.DepartureDate,
                 ArrivalDate = tourSchedule.ArrivalDate,
                 ScheduleStatus = tourSchedule.ScheduleStatus,
