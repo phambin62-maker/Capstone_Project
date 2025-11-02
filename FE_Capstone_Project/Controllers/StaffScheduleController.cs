@@ -1,10 +1,13 @@
 ﻿using FE_Capstone_Project.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using System.Text.Json;
 
+
 namespace FE_Capstone_Project.Controllers
 {
+    [Authorize(Roles = "Staff")]
     public class StaffScheduleController : Controller
     {
         private readonly HttpClient _httpClient;
@@ -23,15 +26,38 @@ namespace FE_Capstone_Project.Controllers
             return View();
         }
 
-        // GET: Hiển thị danh sách lịch trình
-        public async Task<IActionResult> Schedules(int page = 1, int pageSize = 10)
+        public async Task<IActionResult> Schedules(int? tourId = null, int page = 1, int pageSize = 10)
         {
-            ViewData["Title"] = "Danh sách Lịch trình Tour";
-
             try
             {
-                var response = await _httpClient.GetAsync($"TourSchedule/GetPaginatedTourSchedules?page={page}&pageSize={pageSize}");
+                List<TourScheduleDTO> schedules;
+                int totalCount;
+                string apiUrl;
 
+                if (tourId.HasValue)
+                {
+                    apiUrl = $"TourSchedule/GetPaginatedTourSchedules/{tourId}?page={page}&pageSize={pageSize}";
+                    ViewData["Title"] = $"Lịch trình Tour #{tourId}";
+
+                    var tourResponse = await _httpClient.GetAsync($"TourSchedule/GetTourNameById?id={tourId}");
+                    if (tourResponse.IsSuccessStatusCode)
+                    {
+                        var tourContent = await tourResponse.Content.ReadAsStringAsync();
+                        var tourResult = JsonSerializer.Deserialize<TourResponse>(tourContent, new JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true
+                        });
+                        ViewBag.TourName = tourResult?.Name ?? $"Tour #{tourId}";
+                        ViewData["Title"] = $"Lịch trình - {ViewBag.TourName}";
+                    }
+                }
+                else
+                {
+                    apiUrl = $"TourSchedule/GetPaginatedTourSchedules?page={page}&pageSize={pageSize}";
+                    ViewData["Title"] = "Danh sách Lịch trình Tour";
+                }
+
+                var response = await _httpClient.GetAsync(apiUrl);
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
@@ -40,13 +66,29 @@ namespace FE_Capstone_Project.Controllers
                         PropertyNameCaseInsensitive = true
                     });
 
-                    var schedules = result?.Data ?? new List<TourScheduleDTO>();
+                    schedules = result?.Data ?? new List<TourScheduleDTO>();
 
-                    // Lấy tổng số lịch trình (có thể cần API riêng)
+                    var countApiUrl = tourId.HasValue ? $"TourSchedule/tour/{tourId}" : "TourSchedule";
+                    var countResponse = await _httpClient.GetAsync(countApiUrl);
+                    if (countResponse.IsSuccessStatusCode)
+                    {
+                        var countContent = await countResponse.Content.ReadAsStringAsync();
+                        var countResult = JsonSerializer.Deserialize<ApiResponse<List<TourScheduleDTO>>>(countContent, new JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true
+                        });
+                        totalCount = countResult?.Data?.Count ?? schedules.Count;
+                    }
+                    else
+                    {
+                        totalCount = schedules.Count;
+                    }
+
+                    ViewBag.TourId = tourId;
                     ViewBag.CurrentPage = page;
                     ViewBag.PageSize = pageSize;
-                    ViewBag.TotalCount = schedules.Count;
-                    ViewBag.TotalPages = (int)Math.Ceiling(schedules.Count / (double)pageSize);
+                    ViewBag.TotalCount = totalCount;
+                    ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
                     return View(schedules);
                 }
@@ -58,49 +100,13 @@ namespace FE_Capstone_Project.Controllers
             }
             catch (Exception ex)
             {
-                ViewBag.ErrorMessage = "Lỗi kết nối đến server.";
+                ViewBag.ErrorMessage = $"Lỗi kết nối đến server: {ex.Message}";
                 return View(new List<TourScheduleDTO>());
             }
         }
 
-        // GET: Hiển thị lịch trình theo tour
-        public async Task<IActionResult> SchedulesByTour(int tourId, int page = 1, int pageSize = 5)
-        {
-            ViewData["Title"] = "Lịch trình Tour";
+        
 
-            try
-            {
-                var response = await _httpClient.GetAsync($"TourSchedule/GetPaginatedTourSchedules/{tourId}?page={page}&pageSize={pageSize}");
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var content = await response.Content.ReadAsStringAsync();
-                    var result = JsonSerializer.Deserialize<ApiResponse<List<TourScheduleDTO>>>(content, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
-
-                    var schedules = result?.Data ?? new List<TourScheduleDTO>();
-                    ViewBag.TourId = tourId;
-                    ViewBag.CurrentPage = page;
-                    ViewBag.PageSize = pageSize;
-
-                    return View("TourSchedules", schedules);
-                }
-                else
-                {
-                    TempData["ErrorMessage"] = "Không thể tải lịch trình tour.";
-                    return RedirectToAction("Schedules");
-                }
-            }
-            catch (Exception ex)
-            {
-                TempData["ErrorMessage"] = "Lỗi kết nối đến server.";
-                return RedirectToAction("Schedules");
-            }
-        }
-
-        // GET: Hiển thị form tạo lịch trình
         public IActionResult Create(int? tourId = null)
         {
             ViewData["Title"] = "Thêm Lịch trình Mới";
@@ -112,14 +118,20 @@ namespace FE_Capstone_Project.Controllers
             return View(model);
         }
 
-        // POST: Tạo lịch trình mới
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateTourScheduleRequest model)
         {
             try
             {
                 if (!ModelState.IsValid)
                 {
+                    return View(model);
+                }
+
+                if (model.DepartureDate >= model.ArrivalDate)
+                {
+                    ModelState.AddModelError("ArrivalDate", "Ngày kết thúc phải sau ngày khởi hành");
                     return View(model);
                 }
 
@@ -151,7 +163,6 @@ namespace FE_Capstone_Project.Controllers
             }
         }
 
-        // GET: Hiển thị form chỉnh sửa
         public async Task<IActionResult> Edit(int id)
         {
             try
@@ -178,6 +189,7 @@ namespace FE_Capstone_Project.Controllers
                         };
 
                         ViewBag.ScheduleId = result.Data.Id;
+                        ViewBag.TourName = result.Data.TourName;
                         return View(editModel);
                     }
                 }
@@ -187,19 +199,26 @@ namespace FE_Capstone_Project.Controllers
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Lỗi kết nối đến server.";
+                TempData["ErrorMessage"] = $"Lỗi kết nối đến server: {ex.Message}";
                 return RedirectToAction("Schedules");
             }
         }
 
-        // POST: Cập nhật lịch trình
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, UpdateTourScheduleRequest model)
         {
             try
             {
                 if (!ModelState.IsValid)
                 {
+                    ViewBag.ScheduleId = id;
+                    return View(model);
+                }
+
+                if (model.DepartureDate >= model.ArrivalDate)
+                {
+                    ModelState.AddModelError("ArrivalDate", "Ngày kết thúc phải sau ngày khởi hành");
                     ViewBag.ScheduleId = id;
                     return View(model);
                 }
@@ -236,6 +255,7 @@ namespace FE_Capstone_Project.Controllers
 
         // POST: Xóa lịch trình
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -291,7 +311,7 @@ namespace FE_Capstone_Project.Controllers
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Lỗi kết nối đến server.";
+                TempData["ErrorMessage"] = $"Lỗi kết nối đến server: {ex.Message}";
                 return RedirectToAction("Schedules");
             }
         }
