@@ -61,16 +61,23 @@ namespace BE_Capstone_Project.DAO
 
         public async Task<List<Review>> GetAllReviewsAsync()
         {
-            try
-            {
-                return await _context.Reviews.ToListAsync();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error occurred while retrieving all reviews: {ex.Message}");
-                return new List<Review>();
-            }
+            return await _context.Reviews
+     .Include(r => r.User)
+     .Include(r => r.Tour)
+     .Select(r => new Review
+     {
+         Id = r.Id,
+         Comment = r.Comment,
+         Stars = r.Stars,
+         CreatedDate = r.CreatedDate,
+         ReviewStatus = r.ReviewStatus,
+         User = new User { Username = r.User.Username },
+         Tour = new Tour { Name = r.Tour.Name }
+     })
+     .ToListAsync();
         }
+    
+
 
         public async Task<Review?> GetReviewByIdAsync(int reviewId)
         {
