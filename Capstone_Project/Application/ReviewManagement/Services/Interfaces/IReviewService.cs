@@ -1,4 +1,5 @@
-﻿using BE_Capstone_Project.Domain.Models;
+﻿using BE_Capstone_Project.Application.ReviewManagement.DTOs;
+using BE_Capstone_Project.Domain.Models;
 
 namespace BE_Capstone_Project.Application.ReviewManagement.Services.Interfaces
 {
@@ -10,5 +11,6 @@ namespace BE_Capstone_Project.Application.ReviewManagement.Services.Interfaces
         Task<List<Review>> GetReviewsByTourId(int tourId);
         Task<int> GetReviewCountByTourId(int tourId);
         Task<Review?> GetReviewById(int reviewId);
+        Task<List<ReviewPopDTO>> GetAllReviewsAsync();
     }
 }

@@ -1,11 +1,11 @@
-﻿using BE_Capstone_Project.Application.ReviewManagement.DTOs;
-using BE_Capstone_Project.Domain.Models;
-using BE_Capstone_Project.Domain.Enums;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using BE_Capstone_Project.Application.Bookings.Services;
+using BE_Capstone_Project.Application.ReviewManagement.DTOs;
 using BE_Capstone_Project.Application.ReviewManagement.Services.Interfaces;
 using BE_Capstone_Project.Application.Services;
-using BE_Capstone_Project.Application.Bookings.Services;
+using BE_Capstone_Project.Domain.Enums;
+using BE_Capstone_Project.Domain.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BE_Capstone_Project.Application.ReviewManagement.Controllers
 {
@@ -16,11 +16,13 @@ namespace BE_Capstone_Project.Application.ReviewManagement.Controllers
         private readonly IReviewService _reviewService;
         private readonly IUserService _userService;
         private readonly BookingService _bookingService;
-        public ReviewController(IReviewService reviewService, IUserService userService, BookingService bookingService) 
+        private readonly ILogger<ReviewController> _logger;
+        public ReviewController(IReviewService reviewService, IUserService userService, BookingService bookingService, ILogger<ReviewController> logger) 
         {
             _reviewService = reviewService;
             _userService = userService;
             _bookingService = bookingService;
+            _logger = logger;
         }
 
         [HttpPost("AddReview")]
@@ -86,6 +88,29 @@ namespace BE_Capstone_Project.Application.ReviewManagement.Controllers
             if (reviews == null || reviewCount == 0) return Ok(new { message = "There are no review in the tour" });
 
             return Ok(new { message = "Review are fetched successfully", reviews, reviewCount });
+        }
+        [HttpGet("get-all")]
+        public async Task<IActionResult> GetAllReviews()
+        {
+            try
+            {
+                _logger.LogInformation("[ReviewController] 🚀 /api/review/get-all called.");
+
+                var reviews = await _reviewService.GetAllReviewsAsync();
+
+                if (reviews == null || !reviews.Any())
+                {
+                    _logger.LogWarning("[ReviewController] ⚠️ No reviews found.");
+                    return NotFound(new { message = "No reviews available." });
+                }
+
+                return Ok(reviews);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[ReviewController] ❌ Error while getting reviews.");
+                return StatusCode(500, new { message = "Error fetching reviews." });
+            }
         }
     }
 }

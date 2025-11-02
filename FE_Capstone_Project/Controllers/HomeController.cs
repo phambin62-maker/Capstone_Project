@@ -1,24 +1,59 @@
-﻿using FE_Capstone_Project.Models;
+﻿using BE_Capstone_Project.Application.ReviewManagement.DTOs;
+using FE_Capstone_Project.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
+using System.Net.Http;
+using System.Text.Json;
 
 namespace FE_Capstone_Project.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-
-        public HomeController(ILogger<HomeController> logger)
+        private readonly HttpClient _httpClient;
+        private readonly string _baseUrl = "https://localhost:7160/api/review";
+        public HomeController(ILogger<HomeController> logger, HttpClient httpClient)
         {
             _logger = logger;
+            _httpClient = httpClient;
         }
 
-        public IActionResult Index()
+        public  async Task<IActionResult> IndexAsync()
         {
             var firstName = HttpContext.Session.GetString("FirstName");
             ViewBag.FirstName = firstName;
-            return View();
-           
+            List<ReviewViewModel> reviews = new();
+
+            try
+            {
+                var response = await _httpClient.GetAsync($"{_baseUrl}/get-all");
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync();
+                    reviews = JsonSerializer.Deserialize<List<ReviewViewModel>>(json, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+                    reviews = reviews?.OrderByDescending(r => r.CreatedDate)
+                                     
+                                     .ToList() ?? new();
+                }
+                else
+                {
+                    ViewBag.Error = "Không thể tải bình luận.";
+                }
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Lỗi khi gọi API review: {ex.Message}";
+            }
+
+            // 🔹 Truyền thêm danh sách review sang View (qua ViewBag hoặc ViewModel)
+            ViewBag.Reviews = reviews;
+
+            return View(reviews);
+
         }
 
         public IActionResult Privacy()

@@ -22,7 +22,6 @@ namespace BE_Capstone_Project.Application.Auth.Controllers
         private readonly OtmsdbContext _context;
         private readonly AuthService _authService;
         private readonly IUserService _userService;
-        private readonly ILogger<AuthController> _logger;
         public AuthController(OtmsdbContext context, AuthService authService, IUserService userService)
         {
             _context = context;
