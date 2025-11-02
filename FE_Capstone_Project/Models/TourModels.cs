@@ -1,7 +1,7 @@
 ﻿// Models/TourModels.cs
+using BE_Capstone_Project.Domain.Models;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
-using BE_Capstone_Project.Domain.Models;
 
 namespace FE_Capstone_Project.Models
 {
@@ -56,7 +56,7 @@ namespace FE_Capstone_Project.Models
         // Thêm các properties cần thiết cho View
         [JsonPropertyName("category")]
         public TourCategory Category { get; set; } = new TourCategory();
-        
+
         [JsonPropertyName("tourImages")]
         public List<TourImage> TourImages { get; set; } = new List<TourImage>();
 
@@ -70,37 +70,35 @@ namespace FE_Capstone_Project.Models
         public Location EndLocation { get; set; } = new Location();
     }
 
-    // Location model cho View
-    public class LocationViewModel
-    {
-        [JsonPropertyName("id")]
-        public int Id { get; set; }
+    //public class LocationViewModel
+    //{
+    //    [JsonPropertyName("id")]
+    //    public int Id { get; set; }
 
-        [JsonPropertyName("locationName")]
-        public string LocationName { get; set; } = string.Empty;
+    //    [JsonPropertyName("locationName")]
+    //    public string LocationName { get; set; } = string.Empty;
 
-        [JsonPropertyName("description")]
-        public string Description { get; set; } = string.Empty;
-    }
+    //    [JsonPropertyName("description")]
+    //    public string Description { get; set; } = string.Empty;
+    //}
 
-    // Review model cho View
-    public class ReviewViewModel
-    {
-        [JsonPropertyName("id")]
-        public int Id { get; set; }
+    //public class ReviewViewModel
+    //{
+    //    [JsonPropertyName("id")]
+    //    public int Id { get; set; }
 
-        [JsonPropertyName("stars")]
-        public byte Stars { get; set; }
+    //    [JsonPropertyName("stars")]
+    //    public byte Stars { get; set; }
 
-        [JsonPropertyName("comment")]
-        public string Comment { get; set; } = string.Empty;
+    //    [JsonPropertyName("comment")]
+    //    public string Comment { get; set; } = string.Empty;
 
-        [JsonPropertyName("createdDate")]
-        public DateTime? CreatedDate { get; set; }
+    //    [JsonPropertyName("createdDate")]
+    //    public DateTime? CreatedDate { get; set; }
 
-        [JsonPropertyName("user")]
-        public UserViewModel User { get; set; } = new UserViewModel();
-    }
+    //    [JsonPropertyName("user")]
+    //    public UserViewModel User { get; set; } = new UserViewModel();
+    //}
 
     // User model cho View
     public class UserViewModel

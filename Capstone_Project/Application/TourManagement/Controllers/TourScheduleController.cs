@@ -3,6 +3,7 @@ using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
 using DocumentFormat.OpenXml.Bibliography;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json.Serialization;
 
 namespace BE_Capstone_Project.Application.TourManagement.Controllers
 {
@@ -176,9 +177,20 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
 
     public class ApiResponse<T>
     {
+        [JsonPropertyName("success")]
         public bool Success { get; set; }
+
+        [JsonPropertyName("message")]
         public string Message { get; set; }
+
+        [JsonPropertyName("data")]
         public T Data { get; set; }
-        public ApiResponse(bool success, string message, T data = default) => (Success, Message, Data) = (success, message, data);
+
+        public ApiResponse(bool success, string message, T data = default)
+        {
+            Success = success;
+            Message = message;
+            Data = data;
+        }
     }
 }
