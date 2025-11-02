@@ -17,7 +17,6 @@ using BE_Capstone_Project.Application.TourManagement.Services;
 using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
 using BE_Capstone_Project.Application.TourPriceHistories.Services;
 using BE_Capstone_Project.DAO;
->>>>>>> 84faab9efed93263eaf345084c2103f3bdb983fd
 using BE_Capstone_Project.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
