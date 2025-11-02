@@ -82,5 +82,16 @@ namespace BE_Capstone_Project.Application.Categories.Controllers
 
             return Ok(new { message = result.Message });
         }
+
+        [HttpGet("GetAllTourCategories")]
+        public async Task<IActionResult> GetAllTourCategories2()
+        {
+            var categories = await _tourCategoryService.GetAllTourCategoriesAsync();
+            if (categories.Data == null || categories.Data.Count == 0)
+            {
+                return NotFound(new { message = "No tour categories found" });
+            }
+            return Ok(new { message = "Tour categories fetched successfully", categories.Data });
+        }
     }
 }
