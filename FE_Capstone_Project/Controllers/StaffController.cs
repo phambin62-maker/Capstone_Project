@@ -291,7 +291,7 @@ namespace FE_Capstone_Project.Controllers
             }
         }
 
-        // EDIT - Hiển thị form chỉnh sửa tour
+        
         public async Task<IActionResult> Edit(int id)
         {
             try
@@ -468,6 +468,198 @@ namespace FE_Capstone_Project.Controllers
         {
             ViewData["Title"] = "Hồ sơ cá nhân";
             return View();
+        }
+
+
+
+
+        [HttpGet]
+        public async Task<IActionResult> News()
+        {
+            ViewData["Title"] = "Quản lý Tin tức";
+
+            try
+            {
+                var response = await _httpClient.GetAsync("News");
+                if (!response.IsSuccessStatusCode)
+                {
+                    TempData["ErrorMessage"] = "Không thể tải danh sách tin tức.";
+                    return View(new List<NewsViewModel>());
+                }
+
+                var content = await response.Content.ReadAsStringAsync();
+                var newsList = JsonSerializer.Deserialize<List<NewsViewModel>>(content, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                return View(newsList ?? new List<NewsViewModel>());
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Lỗi kết nối đến server: " + ex.Message;
+                return View(new List<NewsViewModel>());
+            }
+        }
+
+        [HttpGet]
+        public IActionResult CreateNews()
+        {
+            ViewData["Title"] = "Tạo Tin tức Mới";
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateNews(NewsCreateModel model, IFormFile? imageFile)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    TempData["ErrorMessage"] = "Vui lòng nhập đầy đủ thông tin.";
+                    return View(model);
+                }
+
+                string? imageBase64 = null;
+                if (imageFile != null && imageFile.Length > 0)
+                {
+                    using var memoryStream = new MemoryStream();
+                    await imageFile.CopyToAsync(memoryStream);
+                    var imageBytes = memoryStream.ToArray();
+                    imageBase64 = $"data:{imageFile.ContentType};base64,{Convert.ToBase64String(imageBytes)}";
+                }
+
+
+                var dto = new
+                {
+                    UserId = model.UserId,
+                    Title = model.Title,
+                    Content = model.Content,
+                    Image = imageBase64,
+                    NewsStatus = model.NewsStatus
+                };
+
+                var jsonContent = new StringContent(JsonSerializer.Serialize(dto), Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync("News", jsonContent);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["SuccessMessage"] = "Tạo tin tức thành công!";
+                    return RedirectToAction("News");
+                }
+
+                TempData["ErrorMessage"] = $"Tạo tin thất bại: {responseContent}";
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Lỗi hệ thống: " + ex.Message;
+                return View(model);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditNews(int id)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"News/{id}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    TempData["ErrorMessage"] = "Không tìm thấy tin tức.";
+                    return RedirectToAction("News");
+                }
+
+                var content = await response.Content.ReadAsStringAsync();
+
+                var newsItem = JsonSerializer.Deserialize<EditNewsModel>(content, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                ViewData["Title"] = $"Chỉnh sửa Tin - {newsItem?.Title}";
+                return View(newsItem);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Lỗi kết nối đến server: " + ex.Message;
+                return RedirectToAction("News");
+            }
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> EditNews(int id, NewsCreateModel model, IFormFile? imageFile)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    TempData["ErrorMessage"] = "Vui lòng nhập đầy đủ thông tin.";
+                    return View(model);
+                }
+
+                string? imageBase64 = model.Image;
+                if (imageFile != null && imageFile.Length > 0)
+                {
+                    using var memoryStream = new MemoryStream();
+                    await imageFile.CopyToAsync(memoryStream);
+                    var imageBytes = memoryStream.ToArray();
+                    imageBase64 = $"data:{imageFile.ContentType};base64,{Convert.ToBase64String(imageBytes)}";
+                }
+
+                var dto = new
+                {
+                    UserId = model.UserId,
+                    Title = model.Title,
+                    Content = model.Content,
+                    Image = imageBase64,
+                    NewsStatus = model.NewsStatus
+                };
+
+                var jsonContent = new StringContent(JsonSerializer.Serialize(dto), Encoding.UTF8, "application/json");
+                var response = await _httpClient.PutAsync($"News/{id}", jsonContent);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["SuccessMessage"] = "Cập nhật tin tức thành công!";
+                    return RedirectToAction("News");
+                }
+
+                TempData["ErrorMessage"] = $"Cập nhật thất bại: {responseContent}";
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Lỗi hệ thống: " + ex.Message;
+                return View(model);
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteNews(int id)
+        {
+            try
+            {
+                var response = await _httpClient.DeleteAsync($"News/{id}");
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["SuccessMessage"] = "Xóa tin tức thành công!";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Xóa tin thất bại!";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Lỗi hệ thống: " + ex.Message;
+            }
+
+            return RedirectToAction("News");
         }
     }
 }
