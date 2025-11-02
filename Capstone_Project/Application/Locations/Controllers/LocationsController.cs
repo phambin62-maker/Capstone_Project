@@ -91,7 +91,7 @@ namespace BE_Capstone_Project.Application.Locations.Controllers
             {
                 return NotFound(new { message = "No locations found" });
             }
-            return Ok(new { message = "Locations fetched successfully", locations });
+            return Ok(new { message = "Locations fetched successfully", locations.Data });
         }
     }
 }

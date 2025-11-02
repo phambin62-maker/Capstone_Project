@@ -1,5 +1,6 @@
 ﻿using BE_Capstone_Project.Application.TourManagement.DTOs;
 using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
+using DocumentFormat.OpenXml.Bibliography;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -53,6 +54,28 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
             {
                 var schedules = await _tourScheduleService.GetTourSchedulesByTourId(tourId);
                 return Ok(new ApiResponse<List<TourScheduleDTO>>(true, "Tour schedules retrieved successfully", schedules));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ApiResponse<List<TourScheduleDTO>>(false, $"Internal server error: {ex.Message}"));
+            }
+        }
+
+
+        [HttpGet("tour/available/{tourId}")]
+        public async Task<ActionResult<ApiResponse<List<TourScheduleDTO>>>> GetTourSchedulesByTourIdAndYear(int tourId)
+        {
+            try
+            {
+                var schedules = await _tourScheduleService.GetTourSchedulesByTourId(tourId);
+
+                var validSchedules = schedules
+                .Where(s => s.DepartureDate.HasValue &&
+                            s.DepartureDate.Value >= DateOnly.FromDateTime(DateTime.Today))
+                .OrderBy(s => s.DepartureDate)
+                .ToList();
+
+                return Ok(new ApiResponse<List<TourScheduleDTO>>(true, "Tour schedules retrieved successfully", validSchedules));
             }
             catch (Exception ex)
             {

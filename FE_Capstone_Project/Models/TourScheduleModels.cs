@@ -82,4 +82,14 @@ namespace FE_Capstone_Project.Models
         Completed = 3,
         Cancelled = 4
     }
+
+    public class TourScheduleListResponse
+    {
+        [JsonPropertyName("success")]
+        public bool Success { get; set; }
+        [JsonPropertyName("message")]
+        public string Message { get; set; } = string.Empty;
+        [JsonPropertyName("data")]
+        public List<TourScheduleDTO> Data { get; set; } = new List<TourScheduleDTO>();
+    }
 }
