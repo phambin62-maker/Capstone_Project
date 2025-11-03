@@ -2,9 +2,6 @@
 
 namespace BE_Capstone_Project.Application.Newses.DTOs
 {
-    /// <summary>
-    /// DTO dùng để tạo hoặc cập nhật tin tức.
-    /// </summary>
     public class CreateNewsDTO
     {
         public int UserId { get; set; }
@@ -12,7 +9,6 @@ namespace BE_Capstone_Project.Application.Newses.DTOs
         public string? Content { get; set; }
         public string? Image { get; set; }
 
-        // Mặc định tin mới tạo là Draft (chưa đăng)
         public NewsStatus? NewsStatus { get; set; } 
     }
 }
