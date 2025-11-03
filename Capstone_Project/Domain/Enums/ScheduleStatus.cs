@@ -1,5 +1,8 @@
-﻿namespace BE_Capstone_Project.Domain.Enums
+﻿using System.Text.Json.Serialization;
+
+namespace BE_Capstone_Project.Domain.Enums
 {
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum ScheduleStatus : byte
     {
         Cancelled = 0,

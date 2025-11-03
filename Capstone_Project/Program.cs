@@ -40,7 +40,6 @@ builder.Services.AddScoped<NewsService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<BookingService>();
-builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ILocationService, LocationService>();
 builder.Services.AddScoped<ITourCategoryService, TourCategoryService>();
 builder.Services.AddScoped<ICancelConditionService, CancelConditionService>();
@@ -99,6 +98,12 @@ builder.Services.AddCors(options =>
                   .AllowAnyMethod();
         });
 });
+
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 
 var app = builder.Build();
 app.UseCors("AllowAll");

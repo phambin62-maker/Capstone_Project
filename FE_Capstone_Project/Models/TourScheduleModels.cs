@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace FE_Capstone_Project.Models
 {
@@ -9,18 +10,28 @@ namespace FE_Capstone_Project.Models
 
         [JsonPropertyName("tourId")]
         public int TourId { get; set; }
+        [JsonPropertyName("startLocation")]
+        public string? StartLocation { get; set; }
 
-        [JsonPropertyName("departureDate")]
+        [JsonPropertyName("endLocation")]
+        public string? EndLocation { get; set; }
+
+        [JsonPropertyName("categoryName")]
+        public string? CategoryName { get; set; }
+        [JsonConverter(typeof(DateOnlyJsonConverter))]
         public DateOnly? DepartureDate { get; set; }
 
-        [JsonPropertyName("arrivalDate")]
+        [JsonConverter(typeof(DateOnlyJsonConverter))]
         public DateOnly? ArrivalDate { get; set; }
+
 
         [JsonPropertyName("scheduleStatus")]
         public ScheduleStatus? ScheduleStatus { get; set; }
 
         [JsonPropertyName("tourName")]
         public string? TourName { get; set; }
+
+        
     }
 
     public class CreateTourScheduleRequest
@@ -29,19 +40,22 @@ namespace FE_Capstone_Project.Models
         public int TourId { get; set; }
 
         [JsonPropertyName("departureDate")]
+        [JsonConverter(typeof(DateOnlyJsonConverter))]
         public DateOnly DepartureDate { get; set; } = DateOnly.FromDateTime(DateTime.Now);
 
         [JsonPropertyName("arrivalDate")]
+        [JsonConverter(typeof(DateOnlyJsonConverter))]
         public DateOnly ArrivalDate { get; set; } = DateOnly.FromDateTime(DateTime.Now.AddDays(1));
     }
 
     public class UpdateTourScheduleRequest
     {
-        [JsonPropertyName("departureDate")]
-        public DateOnly DepartureDate { get; set; }
+        [JsonConverter(typeof(DateOnlyJsonConverter))]
+        public DateOnly? DepartureDate { get; set; }
 
-        [JsonPropertyName("arrivalDate")]
-        public DateOnly ArrivalDate { get; set; }
+        [JsonConverter(typeof(DateOnlyJsonConverter))]
+        public DateOnly? ArrivalDate { get; set; }
+
 
         [JsonPropertyName("scheduleStatus")]
         public ScheduleStatus ScheduleStatus { get; set; }
@@ -56,15 +70,7 @@ namespace FE_Capstone_Project.Models
         public string Message { get; set; } = string.Empty;
 
         [JsonPropertyName("data")]
-        public T Data { get; set; }
-        public class TourResponse
-        {
-                [JsonPropertyName("id")]
-                public int Id { get; set; }
-
-                [JsonPropertyName("name")]
-                public string Name { get; set; } = string.Empty;
-        }
+        public T Data { get; set; }        
         public ApiResponse(bool success, string message, T data = default)
         {
             Success = success;
@@ -75,11 +81,41 @@ namespace FE_Capstone_Project.Models
     }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
-    public enum ScheduleStatus
+    public enum ScheduleStatus : byte
     {
-        Scheduled = 1,
-        InProgress = 2,
-        Completed = 3,
-        Cancelled = 4
+        Cancelled = 0,
+        Completed = 1,
+        Ongoing = 2,
+        Scheduled = 3,
     }
+    public class TourResponse
+    {
+        [JsonPropertyName("id")]
+        public int Id { get; set; }
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; } = string.Empty;
+    }
+
+    public class TourScheduleListResponse
+    {
+        [JsonPropertyName("success")]
+        public bool Success { get; set; }
+        [JsonPropertyName("message")]
+        public string Message { get; set; } = string.Empty;
+        [JsonPropertyName("data")]
+        public List<TourScheduleDTO> Data { get; set; } = new List<TourScheduleDTO>();
+    }
+
+    public class DateOnlyJsonConverter : JsonConverter<DateOnly>
+    {
+        private const string Format = "yyyy-MM-dd";
+
+        public override DateOnly Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            => DateOnly.ParseExact(reader.GetString()!, Format);
+
+        public override void Write(Utf8JsonWriter writer, DateOnly value, JsonSerializerOptions options)
+            => writer.WriteStringValue(value.ToString(Format));
+    }
+
 }

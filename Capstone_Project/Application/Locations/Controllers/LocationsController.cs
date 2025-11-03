@@ -82,5 +82,16 @@ namespace BE_Capstone_Project.Application.Locations.Controllers
 
             return Ok(new { message = result.Message });
         }
+
+        [HttpGet("GetAllLocations")]
+        public async Task<IActionResult> GetAllLocations2()
+        {
+            var locations = await _locationService.GetAllLocationsAsync();
+            if (locations.Data == null || locations.Data.Count == 0)
+            {
+                return NotFound(new { message = "No locations found" });
+            }
+            return Ok(new { message = "Locations fetched successfully", locations.Data });
+        }
     }
 }

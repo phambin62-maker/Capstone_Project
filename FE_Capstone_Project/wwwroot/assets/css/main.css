@@ -8538,3 +8538,7 @@ section,
 .blog-comment-form {
     position: relative;
 }
+
+.disabled {
+    pointer-events: none;
+}

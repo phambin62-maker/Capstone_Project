@@ -1,4 +1,5 @@
 @using FE_Capstone_Project.Helpers;
+@using System.Globalization
 @model TourViewModel
 @{
     string avgRatingText = "N/A";
@@ -67,62 +68,48 @@
                         <div class="pricing-header">
                             <div class="price-item">
                                 <h3>Starting from</h3>
-                                <div class="price-amount">$3,299</div>
-                                <p>per person (double occupancy)</p>
+                                <div class="price-amount">@string.Format("{0:N0} VND", Model.Price)</div>
+                                <p>per person</p>
                             </div>
                         </div>
                         <div class="pricing-details">
                             <div class="row">
-                                <div class="col-lg-4">
+                                <div class="col-lg-6">
                                     <div class="price-type">
-                                        <h4>Double Occupancy</h4>
-                                        <div class="price">$3,299</div>
-                                        <p>per person</p>
+                                        <h4>Child Discount</h4>
+                                        <div class="price">@string.Format("{0:N0}", Model.ChildDiscount)%</div>
+                                        <p>per child</p>
                                     </div>
                                 </div>
-                                <div class="col-lg-4">
-                                    <div class="price-type">
-                                        <h4>Single Supplement</h4>
-                                        <div class="price">+$899</div>
-                                        <p>additional</p>
-                                    </div>
-                                </div>
-                                <div class="col-lg-4">
+                                <div class="col-lg-6">
                                     <div class="price-type">
                                         <h4>Group Discount</h4>
-                                        <div class="price">-$200</div>
+                                        <div class="price">@string.Format("{0:N0}", Model.GroupDiscount)%</div>
                                         <p>for 6+ people</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="available-dates">
-                            <h3>2024 Departure Dates</h3>
+                            <h3>@DateTime.Now.Year Departure Dates</h3>
                             <div class="dates-grid">
-                                <div class="date-option">
-                                    <div class="date">May 15-26</div>
-                                    <div class="availability">6 spots left</div>
-                                </div>
-                                <div class="date-option">
-                                    <div class="date">June 12-23</div>
-                                    <div class="availability">Available</div>
-                                </div>
-                                <div class="date-option">
-                                    <div class="date">July 10-21</div>
-                                    <div class="availability">Almost full</div>
-                                </div>
-                                <div class="date-option">
-                                    <div class="date">August 14-25</div>
-                                    <div class="availability">Available</div>
-                                </div>
-                                <div class="date-option">
-                                    <div class="date">September 18-29</div>
-                                    <div class="availability">Available</div>
-                                </div>
-                                <div class="date-option">
-                                    <div class="date">October 9-20</div>
-                                    <div class="availability">11 spots left</div>
-                                </div>
+                                @if(ViewBag.TourSchedules != null && ViewBag.TourSchedules.Count > 0)
+                                {
+                                    @foreach (TourScheduleDTO schedule in ViewBag.TourSchedules)
+                                    {
+                                        <div class="date-option">
+                                            <div class="date">
+                                                @schedule.DepartureDate.Value.ToString("MMM dd", CultureInfo.InvariantCulture) -
+                                                @schedule.ArrivalDate.Value.ToString("dd", CultureInfo.InvariantCulture)
+                                            </div>
+                                            <div class="availability">Available</div>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <p>No scheduled dates available at the moment. Please check back later.</p>
+                                }
                             </div>
                         </div>
                     </div>
@@ -135,7 +122,7 @@
                         @foreach (var images in Model.TourImages)
                         {
                             <div class="gallery-item">
-                                <a href="~/assets/img/travel/destination-1.webp" class="glightbox">
+                                <a href="@images.Image" class="glightbox">
                                     <img src="@images.Image" class="img-fluid" loading="lazy">
                                 </a>
                             </div>

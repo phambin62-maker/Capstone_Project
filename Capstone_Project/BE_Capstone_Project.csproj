@@ -25,4 +25,8 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Application\TourManagement\" />
+  </ItemGroup>
+
 </Project>

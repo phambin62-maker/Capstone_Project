@@ -1,0 +1,136 @@
+﻿@model IEnumerable<FE_Capstone_Project.Models.NewsViewModel>
+@{
+    ViewData["Title"] = "Quản lý Tin tức";
+    Layout = "~/Views/Shared/_StaffLayout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark">@ViewData["Title"]</h2>
+        <a href="@Url.Action("CreateNews", "Staff")" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i> Tạo tin tức mới
+        </a>
+    </div>
+
+    <!-- ALERTS -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- TABLE -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            @if (Model == null || !Model.Any())
+            {
+                <div class="text-center py-4">
+                    <i class="bi bi-info-circle fs-3 text-muted"></i>
+                    <p class="text-muted mb-0 mt-2">Hiện chưa có tin tức nào.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>Ảnh</th>
+                                <th>Tiêu đề</th>
+                                <th>Tác giả</th>
+                                <th>Ngày tạo</th>
+                                <th>Trạng thái</th>
+                                <th class="text-end">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var news in Model)
+                            {
+                                <tr>
+                                    <td>@news.Id</td>
+
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(news.Image))
+                                        {
+                                            <img src="@news.Image" alt="News Image" style="width: 80px; height: 60px; object-fit: cover; border-radius: 4px;" />
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Không có</span>
+                                        }
+                                    </td>
+
+                                    <td class="fw-semibold">@news.Title</td>
+                                    <td>@news.AuthorName</td>
+                                    <td>@news.CreatedDate?.ToString("dd/MM/yyyy HH:mm")</td>
+
+                                    <td>
+                                        @{
+                                            // So sánh theo chuỗi (do BE trả về "Draft", "Published", "Hidden")
+                                            var status = news.NewsStatus?.ToLowerInvariant();
+                                            string badgeClass = status switch
+                                            {
+                                                "published" => "badge bg-success",
+                                                "draft" => "badge bg-warning text-dark",
+                                                "hidden" => "badge bg-secondary",
+                                                _ => "badge bg-light text-dark"
+                                            };
+
+                                            string badgeText = status switch
+                                            {
+                                                "published" => "Đã đăng",
+                                                "draft" => "Bản nháp",
+                                                "hidden" => "Ẩn",
+                                                _ => "Không xác định"
+                                            };
+                                        }
+                                        <span class="@badgeClass">@badgeText</span>
+                                    </td>
+
+                                    <td class="text-end">
+                                        <div class="btn-group">
+                                            <!-- Edit -->
+                                            <a href="@Url.Action("EditNews", "Staff", new { id = news.Id })"
+                                               class="btn btn-sm btn-outline-primary" title="Chỉnh sửa">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+
+                                            <!-- Delete -->
+                                            <form asp-action="DeleteNews" asp-controller="Staff" method="post" class="d-inline">
+                                                <input type="hidden" name="id" value="@news.Id" />
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-outline-danger"
+                                                        title="Xóa tin"
+                                                        onclick="return confirm('Bạn có chắc chắn muốn xóa tin này không?');">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+
+                                            <!-- Xem / Thay đổi -->
+                                            <a href="@Url.Action("EditNews", "Staff", new { id = news.Id })"
+                                               class="btn btn-sm btn-outline-secondary" title="Xem hoặc thay đổi trạng thái">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
