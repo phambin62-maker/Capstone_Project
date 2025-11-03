@@ -9,7 +9,7 @@ namespace BE_Capstone_Project.Application.ReviewManagement.Services
     public class ReviewService : IReviewService
     {
         private readonly ReviewDAO _reviewDAO;
-        private readonly ILogger<ReviewService> _logger = LoggerFactory.Create(builder => 
+        private readonly ILogger<ReviewService> _logger = LoggerFactory.Create(builder =>
         {
             builder.AddConsole();
         }).CreateLogger<ReviewService>();
@@ -50,7 +50,7 @@ namespace BE_Capstone_Project.Application.ReviewManagement.Services
         }
         public async Task<List<ReviewPopDTO>> GetAllReviewsAsync()
         {
-            _logger.LogInformation("[ReviewService] 🟢 Fetching all reviews...");
+            _logger.LogInformation("[ReviewService]  Fetching all reviews...");
 
             var reviews = await _reviewDAO.GetAllReviewsAsync();
 
@@ -64,8 +64,12 @@ namespace BE_Capstone_Project.Application.ReviewManagement.Services
                 CreatedDate = r.CreatedDate
             }).ToList();
 
-            _logger.LogInformation($"[ReviewService] ✅ Retrieved {result.Count} reviews.");
+            _logger.LogInformation($"[ReviewService]  Retrieved {result.Count} reviews.");
             return result;
+        }
+        public async Task<List<TourRatingDTO>> GetTourPopAsync()
+        {
+            return await _reviewDAO.GetTourRatingsAsync();
         }
     }
 }

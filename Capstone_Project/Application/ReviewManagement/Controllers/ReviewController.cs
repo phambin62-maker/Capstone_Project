@@ -89,6 +89,12 @@ namespace BE_Capstone_Project.Application.ReviewManagement.Controllers
 
             return Ok(new { message = "Review are fetched successfully", reviews, reviewCount });
         }
+        [HttpGet("tour-ratings")]
+        public async Task<IActionResult> GetTourRatings()
+        {
+            var result = await _reviewService.GetTourPopAsync();
+            return Ok(result);
+        }
         [HttpGet("get-all")]
         public async Task<IActionResult> GetAllReviews()
         {
