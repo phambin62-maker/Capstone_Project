@@ -1,11 +1,11 @@
-﻿using BE_Capstone_Project.Application.TourManagement.DTOs;
-using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
+﻿using BE_Capstone_Project.Application.WishlistManagement.DTOs;
+using BE_Capstone_Project.Application.WishlistManagement.Services.Interfaces;
 using BE_Capstone_Project.DAO;
 using BE_Capstone_Project.Domain.Models;
 using BE_Capstone_Project.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
-namespace BE_Capstone_Project.Application.TourManagement.Services
+namespace BE_Capstone_Project.Application.WishlistManagement.Services
 {
     public class WishlistService : IWishlistService
     {

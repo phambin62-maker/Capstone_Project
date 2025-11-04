@@ -16,6 +16,8 @@ using BE_Capstone_Project.Application.Services;
 using BE_Capstone_Project.Application.TourManagement.Services;
 using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
 using BE_Capstone_Project.Application.TourPriceHistories.Services;
+using BE_Capstone_Project.Application.WishlistManagement.Services;
+using BE_Capstone_Project.Application.WishlistManagement.Services.Interfaces;
 using BE_Capstone_Project.DAO;
 using BE_Capstone_Project.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
