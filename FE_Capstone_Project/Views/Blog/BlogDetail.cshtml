@@ -1,0 +1,42 @@
+﻿@model FE_Capstone_Project.Models.NewsViewModel
+@{
+    ViewData["Title"] = Model?.Title ?? "Article details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container my-5">
+    <div class="text-center mb-4">
+        <h1 class="fw-bold">@Model.Title</h1>
+        <p class="text-muted">
+            <i class="bi bi-person"></i> @Model.AuthorName
+            &nbsp;|&nbsp;
+            <i class="bi bi-calendar3"></i> @Model.CreatedDate?.ToString("dd/MM/yyyy HH:mm")
+        </p>
+    </div>
+    @{
+        string fallbackImageUrl = "/assets/img/blog/blog-hero-1.webp";
+        string finalImageUrl = string.IsNullOrEmpty(Model.Image) ? fallbackImageUrl : Model.Image;
+    }
+
+    @if (!string.IsNullOrEmpty(finalImageUrl))
+    {
+        <div class="text-center mb-4">
+            <img src="@finalImageUrl"
+                 alt="@Model.Title"
+                 class="img-fluid rounded shadow"
+                 style="max-height:450px; object-fit:cover;" />
+        </div>
+    }
+
+    <div class="mx-auto" style="max-width: 850px;">
+        <div class="article-content fs-5 text-justify" style="line-height:1.8;">
+            @Html.Raw(Model.Content)
+        </div>
+    </div>
+
+    <div class="text-center mt-5">
+        <a href="@Url.Action("Index", "Blog")" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to list
+        </a>
+    </div>
+</div>

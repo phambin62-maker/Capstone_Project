@@ -2,8 +2,14 @@
 using FE_Capstone_Project.Models;
 using FE_Capstone_Project.Services;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Threading.Tasks;
+using System.Globalization;
 using System.Text.Json.Serialization;
 
 namespace FE_Capstone_Project.Controllers
@@ -553,35 +559,97 @@ namespace FE_Capstone_Project.Controllers
             return View();
         }
 
+        private string NormalizeString(string? text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return string.Empty;
 
+            string normalized = new string(text
+                .Normalize(NormalizationForm.FormD)
+                .Where(c => Char.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                .ToArray());
 
+            return normalized.ToLowerInvariant().Trim();
+        }
 
-        [HttpGet]
-        public async Task<IActionResult> News()
+        public async Task<IActionResult> News(int page = 1, int pageSize = 10, string? search = null, DateTime? fromDate = null, DateTime? toDate = null, string? status = null)
         {
             ViewData["Title"] = "Quản lý Tin tức";
 
             try
             {
-                var response = await _httpClient.GetAsync("News");
+                var response = await _httpClient.GetAsync($"News");
+
                 if (!response.IsSuccessStatusCode)
                 {
                     TempData["ErrorMessage"] = "Không thể tải danh sách tin tức.";
-                    return View(new List<NewsViewModel>());
+                    return View(new NewsListViewModel { NewsList = new List<NewsViewModel>() });
                 }
 
                 var content = await response.Content.ReadAsStringAsync();
+
                 var newsList = JsonSerializer.Deserialize<List<NewsViewModel>>(content, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
-                });
+                }) ?? new List<NewsViewModel>();
 
-                return View(newsList ?? new List<NewsViewModel>());
+                IEnumerable<NewsViewModel> filteredNews = newsList;
+
+                if (!string.IsNullOrWhiteSpace(search))
+                {
+                    string normalizedSearch = NormalizeString(search);
+
+                    filteredNews = filteredNews.Where(n =>
+                    {
+                        string normalizedTitle = NormalizeString(n.Title);
+                        string normalizedAuthor = NormalizeString(n.AuthorName);
+                        string normalizedContent = NormalizeString(n.Content);
+
+                        return normalizedTitle.Contains(normalizedSearch) ||
+                               normalizedAuthor.Contains(normalizedSearch) ||
+                               normalizedContent.Contains(normalizedSearch);
+                    }).ToList();
+                }
+
+                if (fromDate.HasValue)
+                {
+                    filteredNews = filteredNews.Where(n => n.CreatedDate?.Date >= fromDate.Value.Date);
+                }
+
+                if (toDate.HasValue)
+                {
+                    filteredNews = filteredNews.Where(n => n.CreatedDate?.Date <= toDate.Value.Date);
+                }
+
+                if (!string.IsNullOrWhiteSpace(status))
+                {
+                    string lowerStatus = status.ToLowerInvariant();
+                    filteredNews = filteredNews.Where(n => n.NewsStatus != null && n.NewsStatus.ToLowerInvariant() == lowerStatus);
+                }
+
+                var finalNewsList = filteredNews.ToList();
+                int totalItems = finalNewsList.Count;
+                int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+                var pagedNews = finalNewsList.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+
+                var viewModel = new NewsListViewModel
+                {
+                    NewsList = pagedNews,
+                    CurrentPage = page,
+                    TotalPages = totalPages,
+                    Search = search,
+                    FromDate = fromDate,
+                    ToDate = toDate,
+                    Status = status
+                };
+
+                return View(viewModel);
             }
             catch (Exception ex)
             {
                 TempData["ErrorMessage"] = "Lỗi kết nối đến server: " + ex.Message;
-                return View(new List<NewsViewModel>());
+                return View(new NewsListViewModel { NewsList = new List<NewsViewModel>() });
             }
         }
 
@@ -640,6 +708,35 @@ namespace FE_Capstone_Project.Controllers
             {
                 TempData["ErrorMessage"] = "Lỗi hệ thống: " + ex.Message;
                 return View(model);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ViewNews(int id)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"News/{id}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    TempData["ErrorMessage"] = "Không tìm thấy tin tức.";
+                    return RedirectToAction("News");
+                }
+
+                var content = await response.Content.ReadAsStringAsync();
+
+                var newsItem = JsonSerializer.Deserialize<EditNewsModel>(content, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                ViewData["Title"] = $"Xem chi tiết Tin - {newsItem?.Title}";
+                return View("ViewNews", newsItem);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Lỗi kết nối đến server: " + ex.Message;
+                return RedirectToAction("News");
             }
         }
 

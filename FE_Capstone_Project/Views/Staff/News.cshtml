@@ -1,19 +1,18 @@
-﻿@model IEnumerable<FE_Capstone_Project.Models.NewsViewModel>
+﻿@model FE_Capstone_Project.Models.NewsListViewModel
+@using Microsoft.AspNetCore.Routing
 @{
-    ViewData["Title"] = "Quản lý Tin tức";
+    ViewData["Title"] = "News Management";
     Layout = "~/Views/Shared/_StaffLayout.cshtml";
 }
 
 <div class="container-fluid mt-4">
-    <!-- HEADER -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="fw-bold text-dark">@ViewData["Title"]</h2>
         <a href="@Url.Action("CreateNews", "Staff")" class="btn btn-primary">
-            <i class="bi bi-plus-circle me-2"></i> Tạo tin tức mới
+            <i class="bi bi-plus-circle me-2"></i> Create new news
         </a>
     </div>
 
-    <!-- ALERTS -->
     @if (TempData["SuccessMessage"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -30,14 +29,56 @@
         </div>
     }
 
-    <!-- TABLE -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light fw-bold">Search & Filter</div>
+        <div class="card-body">
+            <form method="get" asp-action="News" asp-controller="Staff" class="row g-3 align-items-end">
+
+                <div class="col-md-3">
+                    <label class="form-label">Title / Author</label>
+                    <input type="text" name="search" value="@Model.Search" class="form-control" placeholder="Từ khóa..." />
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">From date</label>
+                    <input type="date" name="fromDate" value="@(Model.FromDate?.ToString("yyyy-MM-dd"))" class="form-control" />
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">By the date</label>
+                    <input type="date" name="toDate" value="@(Model.ToDate?.ToString("yyyy-MM-dd"))" class="form-control" />
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="">-- All status --</option>
+                        <option value="Published" selected="@("Published".Equals(Model.Status, StringComparison.OrdinalIgnoreCase))"></option>
+                        <option value="Draft" selected="@("Draft".Equals(Model.Status, StringComparison.OrdinalIgnoreCase))"></option>
+                        <option value="Hidden" selected="@("Hidden".Equals(Model.Status, StringComparison.OrdinalIgnoreCase))"></option>
+                    </select>
+                </div>
+
+                <div class="col-md-3 d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-funnel-fill me-2"></i> Filter data
+                    </button>
+                    <a href="@Url.Action("News", "Staff")" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle me-2"></i> Clear filter
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
     <div class="card shadow-sm">
         <div class="card-body">
-            @if (Model == null || !Model.Any())
+            @if (Model.NewsList == null || !Model.NewsList.Any())
             {
                 <div class="text-center py-4">
                     <i class="bi bi-info-circle fs-3 text-muted"></i>
-                    <p class="text-muted mb-0 mt-2">Hiện chưa có tin tức nào.</p>
+                    <p class="text-muted mb-0 mt-2">There is no news yet.</p>
                 </div>
             }
             else
@@ -46,20 +87,20 @@
                     <table class="table table-hover align-middle">
                         <thead class="table-dark">
                             <tr>
-                                <th>#</th>
-                                <th>Ảnh</th>
-                                <th>Tiêu đề</th>
-                                <th>Tác giả</th>
-                                <th>Ngày tạo</th>
-                                <th>Trạng thái</th>
-                                <th class="text-end">Hành động</th>
+                                <th style="display:none;">#</th>
+                                <th>Image</th>
+                                <th>Title</th>
+                                <th>Author</th>
+                                <th>From date</th>
+                                <th>Status</th>
+                                <th class="text-end">Act</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var news in Model)
+                            @foreach (var news in Model.NewsList)
                             {
                                 <tr>
-                                    <td>@news.Id</td>
+                                    <td style="display:none;">@news.Id</td>
 
                                     <td>
                                         @if (!string.IsNullOrEmpty(news.Image))
@@ -68,7 +109,7 @@
                                         }
                                         else
                                         {
-                                            <span class="text-muted">Không có</span>
+                                            <span class="text-muted">Do not have</span>
                                         }
                                     </td>
 
@@ -78,7 +119,6 @@
 
                                     <td>
                                         @{
-                                            // So sánh theo chuỗi (do BE trả về "Draft", "Published", "Hidden")
                                             var status = news.NewsStatus?.ToLowerInvariant();
                                             string badgeClass = status switch
                                             {
@@ -90,10 +130,10 @@
 
                                             string badgeText = status switch
                                             {
-                                                "published" => "Đã đăng",
-                                                "draft" => "Bản nháp",
-                                                "hidden" => "Ẩn",
-                                                _ => "Không xác định"
+                                                "published" => "",
+                                                "draft" => "",
+                                                "hidden" => "",
+                                                _ => "Unknown"
                                             };
                                         }
                                         <span class="@badgeClass">@badgeText</span>
@@ -101,26 +141,23 @@
 
                                     <td class="text-end">
                                         <div class="btn-group">
-                                            <!-- Edit -->
                                             <a href="@Url.Action("EditNews", "Staff", new { id = news.Id })"
-                                               class="btn btn-sm btn-outline-primary" title="Chỉnh sửa">
+                                               class="btn btn-sm btn-outline-primary" title="Edit">
                                                 <i class="bi bi-pencil-square"></i>
                                             </a>
 
-                                            <!-- Delete -->
                                             <form asp-action="DeleteNews" asp-controller="Staff" method="post" class="d-inline">
                                                 <input type="hidden" name="id" value="@news.Id" />
                                                 <button type="submit"
                                                         class="btn btn-sm btn-outline-danger"
-                                                        title="Xóa tin"
-                                                        onclick="return confirm('Bạn có chắc chắn muốn xóa tin này không?');">
+                                                        title="Delete news"
+                                                        onclick="return confirm('Are you sure you want to delete this news?');">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </form>
 
-                                            <!-- Xem / Thay đổi -->
-                                            <a href="@Url.Action("EditNews", "Staff", new { id = news.Id })"
-                                               class="btn btn-sm btn-outline-secondary" title="Xem hoặc thay đổi trạng thái">
+                                            <a href="@Url.Action("ViewNews", "Staff", new { id = news.Id })"
+                                               class="btn btn-sm btn-outline-secondary" title="See details">
                                                 <i class="bi bi-eye"></i>
                                             </a>
                                         </div>
@@ -130,6 +167,56 @@
                         </tbody>
                     </table>
                 </div>
+
+                @if (Model.TotalPages > 1)
+                {
+                    <nav class="mt-4">
+                        <ul class="pagination justify-content-end">
+                            @{
+                                string GetPageUrl(int pageNum)
+                                {
+                                    return Url.Action("News", "Staff", new
+                                    {
+                                        page = pageNum,
+                                        search = Model.Search,
+                                        fromDate = Model.FromDate?.ToString("yyyy-MM-dd"),
+                                        toDate = Model.ToDate?.ToString("yyyy-MM-dd"),
+                                        status = Model.Status
+                                    });
+                                }
+                            }
+
+                            @* Nút Previous *@
+                            <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
+                                <a class="page-link"
+                                   href="@GetPageUrl(Model.CurrentPage - 1)"
+                                   aria-label="Previous">
+                                    Previous page
+                                </a>
+                            </li>
+
+                            @* Các nút số trang *@
+                            @for (int i = 1; i <= Model.TotalPages; i++)
+                            {
+                                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                    <a class="page-link"
+                                       href="@GetPageUrl(i)">
+                                        @i
+                                    </a>
+                                </li>
+                            }
+
+                            @* Nút Next *@
+                            <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
+                                <a class="page-link"
+                                   href="@GetPageUrl(Model.CurrentPage + 1)"
+                                   aria-label="Next">
+                                    Next page
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                }
             }
         </div>
     </div>

@@ -1,4 +1,4 @@
-html {
+﻿html {
   font-size: 14px;
 }
 
@@ -19,4 +19,85 @@ html {
 
 body {
   margin-bottom: 60px;
+}
+
+/* --- 1. HERO SECTION (Tiêu đề Bolg) --- */
+.blog-hero-section {
+    background-color: #1a4e78; /* Màu xanh đậm */
+    background-image: linear-gradient(135deg, #1a4e78 0%, #007bff 100%);
+    color: white;
+    text-align: center;
+    padding: 60px 20px;
+    margin-bottom: 30px;
+}
+
+/* --- 2. BỘ LỌC VÀ CARD BÀI VIẾT --- */
+.filter-box {
+    background-color: #ffffff;
+    border: 1px solid #e9ecef;
+}
+
+.news-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 10px !important;
+    overflow: hidden;
+}
+
+    .news-card.hover-lift:hover {
+        transform: translateY(-8px); /* Nâng card lên khi hover */
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15) !important;
+    }
+
+.image-container {
+    height: 200px;
+    overflow: hidden;
+}
+
+.news-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.news-card.hover-lift:hover .news-image {
+    transform: scale(1.05);
+}
+
+/* --- 3. CẮT NGẮN VĂN BẢN (Text Truncation) --- */
+.text-truncate-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Số dòng tối đa */
+    -webkit-box-orient: vertical;
+    max-height: 3em; /* Khoảng 2 dòng */
+}
+
+.text-truncate-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    max-height: 4.5em; /* Khoảng 3 dòng */
+}
+
+/* --- 4. PHÂN TRANG TÙY CHỈNH --- */
+.pagination-primary .page-link {
+    color: #1a4e78;
+}
+
+.pagination-primary .page-item.active .page-link {
+    background-color: #1a4e78;
+    border-color: #1a4e78;
+}
+
+    .pagination-primary .page-item.active .page-link:focus,
+    .pagination-primary .page-item.active .page-link:hover {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+/* --- 5. Empty State --- */
+.empty-state {
+    color: #999;
 }
