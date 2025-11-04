@@ -94,6 +94,7 @@ namespace BE_Capstone_Project.DAO
             {
                 return await _context.Wishlists
                     .Where(w => w.UserId == userId)
+                    .Include(w => w.Tour)
                     .ToListAsync();
             }
             catch (Exception ex)

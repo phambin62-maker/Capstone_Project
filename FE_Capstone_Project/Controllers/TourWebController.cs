@@ -26,22 +26,15 @@ namespace FE_Capstone_Project.Controllers
         {
             try
             {
-                var allToursTask = _apiHelper.GetAsync<TourListResponse>("Tour/GetAllTours");
-                var topToursTask = _apiHelper.GetAsync<TourListResponse>("Tour/GetTopToursByEachCategories");
-                var locationsTask = _apiHelper.GetAsync<LocationsResponse>("Locations/GetAllLocations");
-                var tourCategoriesTask = _apiHelper.GetAsync<TourCategoriesResponse>("TourCategories/GetAllTourCategories");
+                var toursResponse = await _apiHelper.GetAsync<TourListResponse>("Tour/GetAllTours");
+                var featuredToursResponse = await _apiHelper.GetAsync<TourListResponse>("Tour/GetTopToursByEachCategories");
+                var destinationsResponse = await _apiHelper.GetAsync<LocationsResponse>("Locations/GetAllLocations");
+                var categoriesResponse = await _apiHelper.GetAsync<TourCategoriesResponse>("TourCategories/GetAllTourCategories");
 
-                await Task.WhenAll(allToursTask, topToursTask, locationsTask, tourCategoriesTask);
-
-                var allToursResult = allToursTask.Result;
-                var topToursResult = topToursTask.Result;
-                var locationsResult = locationsTask.Result;
-                var tourCategoriesResult = tourCategoriesTask.Result;
-
-                var tours = allToursResult?.Tours ?? new List<TourViewModel>();
-                var featuredTours = topToursResult?.Tours ?? new List<TourViewModel>();
-                var destinations = locationsResult?.Data ?? new List<LocationViewModel>();
-                var categories = tourCategoriesResult?.Data ?? new List<TourCategoryViewModel>();
+                var tours = toursResponse?.Tours ?? new List<TourViewModel>();
+                var featuredTours = featuredToursResponse?.Tours ?? new List<TourViewModel>();
+                var destinations = destinationsResponse?.Data ?? new List<LocationViewModel>();
+                var categories = categoriesResponse?.Data ?? new List<TourCategoryViewModel>();
 
                 _toursCache.Clear();
                 _topToursCache.Clear();
@@ -83,21 +76,24 @@ namespace FE_Capstone_Project.Controllers
             {
                 var username = HttpContext.Session.GetString("UserName");
                 var result = await _apiHelper.GetAsync<TourDetailResponse>($"Tour/GetTourById/{tourId}?username={username}");
+                var tourSchedules = await _apiHelper.GetAsync<TourScheduleListResponse>($"TourSchedule/tour/available/{tourId}");
+                var isInWishlist = await _apiHelper.GetAsync<bool>($"Wishlist/check/{tourId}?username={username}");
                 if (result == null || result.Tour == null)
                 {
                     ViewBag.ErrorMessage = "Tour could not be found.";
+                    ViewBag.CanComment = false;
                     return View(new TourViewModel());
                 }
 
-                var tourSchedules = await _apiHelper.GetAsync<TourScheduleListResponse>($"TourSchedule/tour/available/{tourId}");
-
                 ViewBag.TourSchedules = tourSchedules.Data ?? new List<TourScheduleDTO>();
                 ViewBag.CanComment = result.CanComment;
+                ViewBag.IsInWishlist = isInWishlist;
                 return View(result.Tour);
             }
             catch (Exception ex)
             {
                 ViewBag.ErrorMessage = $"Error connecting to server: {ex.Message}";
+                ViewBag.CanComment = false;
                 return View(new TourViewModel());
             }
         }

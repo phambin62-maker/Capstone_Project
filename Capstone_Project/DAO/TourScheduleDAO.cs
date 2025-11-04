@@ -66,6 +66,11 @@ namespace BE_Capstone_Project.DAO
             {
                 return await _context.TourSchedules
                     .Include(ts => ts.Tour)
+                        .ThenInclude(t => t.StartLocation) 
+                    .Include(ts => ts.Tour)
+                        .ThenInclude(t => t.EndLocation) 
+                    .Include(ts => ts.Tour)
+                        .ThenInclude(t => t.Category)
                     .ToListAsync();
             }
             catch (Exception ex)
@@ -97,6 +102,11 @@ namespace BE_Capstone_Project.DAO
                 return await _context.TourSchedules
                     .Where(ts => ts.TourId == tourId)
                     .Include(ts => ts.Tour)
+                        .ThenInclude(t => t.StartLocation)
+                    .Include(ts => ts.Tour)
+                        .ThenInclude(t => t.EndLocation)
+                    .Include(ts => ts.Tour)
+                        .ThenInclude(t => t.Category)
                     .ToListAsync();
             }
             catch (Exception ex)
@@ -111,6 +121,12 @@ namespace BE_Capstone_Project.DAO
             try
             {
                 var paginatedTourSchedules = await _context.TourSchedules
+                    .Include(ts => ts.Tour)
+                        .ThenInclude(t => t.StartLocation)
+                    .Include(ts => ts.Tour)
+                        .ThenInclude(t => t.EndLocation)
+                    .Include(ts => ts.Tour)
+                        .ThenInclude(t => t.Category)
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
                     .ToListAsync();
@@ -129,9 +145,15 @@ namespace BE_Capstone_Project.DAO
             try
             {
                 var paginatedTourSchedules = await _context.TourSchedules
+                    .Where(ts => ts.TourId == tourId)
+                    .Include(ts => ts.Tour)
+                        .ThenInclude(t => t.StartLocation)
+                    .Include(ts => ts.Tour)
+                        .ThenInclude(t => t.EndLocation)
+                    .Include(ts => ts.Tour)
+                        .ThenInclude(t => t.Category)
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
-                    .Where(ts => ts.TourId == tourId)
                     .ToListAsync();
 
                 return paginatedTourSchedules;

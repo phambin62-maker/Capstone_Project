@@ -1,11 +1,14 @@
-﻿using BE_Capstone_Project.Application.TourManagement.DTOs;
-using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
+﻿using BE_Capstone_Project.Application.Bookings.Services;
+using BE_Capstone_Project.Application.Services;
+using BE_Capstone_Project.Application.WishlistManagement.DTOs;
+using BE_Capstone_Project.Application.WishlistManagement.Services.Interfaces;
+using DocumentFormat.OpenXml.Office2010.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace BE_Capstone_Project.Application.TourManagement.Controllers
+namespace BE_Capstone_Project.Application.WishlistManagement.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -13,10 +16,12 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
     public class WishlistController : ControllerBase
     {
         private readonly IWishlistService _wishlistService;
+        private readonly IUserService _userService;
 
-        public WishlistController(IWishlistService wishlistService)
+        public WishlistController(IWishlistService wishlistService, IUserService userService)
         {
             _wishlistService = wishlistService;
+            _userService = userService;
         }
 
         private int GetCurrentUserId()
@@ -30,21 +35,32 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<WishlistResponse>>> GetUserWishlist()
+        public async Task<IActionResult> GetUserWishlist([FromQuery] string username)
         {
+            if (string.IsNullOrWhiteSpace(username))
+                return BadRequest("Username is required.");
+
             try
             {
-                var userId = GetCurrentUserId();
-                var wishlist = await _wishlistService.GetUserWishlistAsync(userId);
-                return Ok(wishlist);
+                var user = await _userService.GetUserByUsername(username);
+                if (user == null)
+                    return NotFound("User not found.");
+
+                var wishlist = await _wishlistService.GetUserWishlistAsync(user.Id);
+
+                return Ok(new
+                {
+                    message = $"Wishlist for user '{username}' retrieved successfully.",
+                    wishlist
+                });
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Unauthorized(ex.Message);
+                return Unauthorized(new { message = ex.Message });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(500, new { message = "An unexpected error occurred.", error = ex.Message });
             }
         }
 
@@ -53,8 +69,8 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         {
             try
             {
-                var userId = GetCurrentUserId();
-                var wishlistItem = await _wishlistService.AddToWishlistAsync(userId, request.TourId);
+                var user = await _userService.GetUserByUsername(request.Username);
+                var wishlistItem = await _wishlistService.AddToWishlistAsync(user.Id, request.TourId);
                 return Ok(wishlistItem);
             }
             catch (ArgumentException ex)
@@ -99,12 +115,12 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpDelete("tour/{tourId}")]
-        public async Task<ActionResult> RemoveFromWishlistByTourId(int tourId)
+        public async Task<ActionResult> RemoveFromWishlistByTourId(int tourId, [FromQuery] string username)
         {
             try
             {
-                var userId = GetCurrentUserId();
-                var result = await _wishlistService.RemoveFromWishlistByTourIdAsync(userId, tourId);
+                var user = await _userService.GetUserByUsername(username);
+                var result = await _wishlistService.RemoveFromWishlistByTourIdAsync(user.Id, tourId);
 
                 if (!result)
                     return NotFound("Tour not found in wishlist");
@@ -122,12 +138,14 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpGet("check/{tourId}")]
-        public async Task<ActionResult<bool>> CheckTourInWishlist(int tourId)
+        public async Task<IActionResult> CheckTourInWishlist(int tourId, [FromQuery] string username)
         {
             try
             {
-                var userId = GetCurrentUserId();
-                var isInWishlist = await _wishlistService.IsTourInWishlistAsync(userId, tourId);
+                Console.WriteLine($"Received username: '{username}'");
+                var user = await _userService.GetUserByUsername(username);
+                Console.WriteLine(" User fetched: " + (user != null ? user.Username : "null"));
+                var isInWishlist = await _wishlistService.IsTourInWishlistAsync(user.Id, tourId);
                 return Ok(isInWishlist);
             }
             catch (UnauthorizedAccessException ex)

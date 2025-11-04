@@ -1,6 +1,6 @@
-﻿using BE_Capstone_Project.Application.TourManagement.DTOs;
+﻿using BE_Capstone_Project.Application.WishlistManagement.DTOs;
 
-namespace BE_Capstone_Project.Application.TourManagement.Services.Interfaces
+namespace BE_Capstone_Project.Application.WishlistManagement.Services.Interfaces
 {
     public interface IWishlistService
     {

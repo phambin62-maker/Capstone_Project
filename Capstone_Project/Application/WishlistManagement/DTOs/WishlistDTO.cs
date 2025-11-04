@@ -1,4 +1,4 @@
-﻿namespace BE_Capstone_Project.Application.TourManagement.DTOs
+﻿namespace BE_Capstone_Project.Application.WishlistManagement.DTOs
 {
     public class WishlistDTO
     {
@@ -11,6 +11,7 @@
     public class AddWishlistRequest
     {
         public int TourId { get; set; }
+        public string Username { get; set; } = string.Empty;
     }
 
     public class WishlistResponse

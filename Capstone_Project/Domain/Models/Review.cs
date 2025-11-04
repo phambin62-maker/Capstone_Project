@@ -10,7 +10,7 @@ public partial class Review
     public int Id { get; set; }
 
     public int UserId { get; set; }
-
+    
     public int TourId { get; set; }
 
     public int BookingId { get; set; }
