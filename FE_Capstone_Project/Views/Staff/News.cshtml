@@ -36,7 +36,7 @@
 
                 <div class="col-md-3">
                     <label class="form-label">Title / Author</label>
-                    <input type="text" name="search" value="@Model.Search" class="form-control" placeholder="Từ khóa..." />
+                    <input type="text" name="search" value="@Model.Search" class="form-control" placeholder="Keyword..." />
                 </div>
 
                 <div class="col-md-2">
@@ -45,7 +45,7 @@
                 </div>
 
                 <div class="col-md-2">
-                    <label class="form-label">By the date</label>
+                    <label class="form-label">To date</label>
                     <input type="date" name="toDate" value="@(Model.ToDate?.ToString("yyyy-MM-dd"))" class="form-control" />
                 </div>
 
@@ -53,9 +53,9 @@
                     <label class="form-label">Status</label>
                     <select name="status" class="form-select">
                         <option value="">-- All status --</option>
-                        <option value="Published" selected="@("Published".Equals(Model.Status, StringComparison.OrdinalIgnoreCase))"></option>
-                        <option value="Draft" selected="@("Draft".Equals(Model.Status, StringComparison.OrdinalIgnoreCase))"></option>
-                        <option value="Hidden" selected="@("Hidden".Equals(Model.Status, StringComparison.OrdinalIgnoreCase))"></option>
+                        <option value="Published" selected="@("Published".Equals(Model.Status, StringComparison.OrdinalIgnoreCase))">Published</option>
+                        <option value="Draft" selected="@("Draft".Equals(Model.Status, StringComparison.OrdinalIgnoreCase))">Draft</option>
+                        <option value="Hidden" selected="@("Hidden".Equals(Model.Status, StringComparison.OrdinalIgnoreCase))">Hidden</option>
                     </select>
                 </div>
 
@@ -91,9 +91,9 @@
                                 <th>Image</th>
                                 <th>Title</th>
                                 <th>Author</th>
-                                <th>From date</th>
+                                <th>Created Date</th>
                                 <th>Status</th>
-                                <th class="text-end">Act</th>
+                                <th class="text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -109,7 +109,7 @@
                                         }
                                         else
                                         {
-                                            <span class="text-muted">Do not have</span>
+                                            <span class="text-muted">No Image</span>
                                         }
                                     </td>
 
@@ -128,11 +128,12 @@
                                                 _ => "badge bg-light text-dark"
                                             };
 
+                                            // FIX: Assign meaningful text values
                                             string badgeText = status switch
                                             {
-                                                "published" => "",
-                                                "draft" => "",
-                                                "hidden" => "",
+                                                "published" => "Published",
+                                                "draft" => "Draft",
+                                                "hidden" => "Hidden",
                                                 _ => "Unknown"
                                             };
                                         }
@@ -186,7 +187,7 @@
                                 }
                             }
 
-                            @* Nút Previous *@
+                            @* Previous Button *@
                             <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
                                 <a class="page-link"
                                    href="@GetPageUrl(Model.CurrentPage - 1)"
@@ -195,7 +196,7 @@
                                 </a>
                             </li>
 
-                            @* Các nút số trang *@
+                            @* Page Numbers *@
                             @for (int i = 1; i <= Model.TotalPages; i++)
                             {
                                 <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
@@ -206,7 +207,7 @@
                                 </li>
                             }
 
-                            @* Nút Next *@
+                            @* Next Button *@
                             <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
                                 <a class="page-link"
                                    href="@GetPageUrl(Model.CurrentPage + 1)"
