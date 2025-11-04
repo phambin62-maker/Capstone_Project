@@ -61,7 +61,8 @@
                                     <div class="swiper-slide">
                                         <div class="featured-tour-card">
                                             <div class="tour-image">
-                                                <img src="@featuredTour.TourImages.First().Image" class="img-fluid">
+                                                <img src="@(featuredTour.TourImages != null && featuredTour.TourImages.Any() ? featuredTour.TourImages.First().Image : "/images/default-tour.jpg")"
+                                                    class="img-fluid w-100" />
                                                 <div class="tour-badge">@featuredTour.Category.CategoryName</div>
                                             </div>
                                             <div class="tour-content">
@@ -187,7 +188,8 @@
                                     <div class="col-lg-4 col-md-6 mb-4">
                                         <div class="tour-card">
                                             <div class="tour-image">
-                                                <img src="@tour.TourImages.First().Image" class="img-fluid" />
+                                                <img src="@(tour.TourImages != null && tour.TourImages.Any() ? tour.TourImages.First().Image : "/images/default-tour.jpg")"
+                                                    class="img-fluid w-100" />
                                                 <div class="tour-price">@string.Format("{0:N0} VND", tour.Price)</div>
                                             </div>
                                             <div class="tour-content">

@@ -63,19 +63,19 @@ namespace BE_Capstone_Project.DAO
         public async Task<List<Review>> GetAllReviewsAsync()
         {
             return await _context.Reviews
-     .Include(r => r.User)
-     .Include(r => r.Tour)
-     .Select(r => new Review
-     {
-         Id = r.Id,
-         Comment = r.Comment,
-         Stars = r.Stars,
-         CreatedDate = r.CreatedDate,
-         ReviewStatus = r.ReviewStatus,
-         User = new User { Username = r.User.Username },
-         Tour = new Tour { Name = r.Tour.Name }
-     })
-     .ToListAsync();
+             .Include(r => r.User)
+             .Include(r => r.Tour)
+             .Select(r => new Review
+             {
+                 Id = r.Id,
+                 Comment = r.Comment,
+                 Stars = r.Stars,
+                 CreatedDate = r.CreatedDate,
+                 ReviewStatus = r.ReviewStatus,
+                 User = new User { Username = r.User.Username },
+                 Tour = new Tour { Name = r.Tour.Name }
+             })
+             .ToListAsync();
         }
     
 
