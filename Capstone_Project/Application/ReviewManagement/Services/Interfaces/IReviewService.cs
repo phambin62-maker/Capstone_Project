@@ -12,5 +12,7 @@ namespace BE_Capstone_Project.Application.ReviewManagement.Services.Interfaces
         Task<int> GetReviewCountByTourId(int tourId);
         Task<Review?> GetReviewById(int reviewId);
         Task<List<ReviewPopDTO>> GetAllReviewsAsync();
+
+        Task<List<TourRatingDTO>> GetTourPopAsync();
     }
 }
