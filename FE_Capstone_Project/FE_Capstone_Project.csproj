@@ -192,6 +192,7 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\assets\img\icon\" />
+    <Folder Include="wwwroot\images\tours\" />
   </ItemGroup>
 
 </Project>
