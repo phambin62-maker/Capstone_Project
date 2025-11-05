@@ -7,6 +7,16 @@
     var activeTours = Model?.Count(t => t.TourStatus) ?? 0;
     var inactiveTours = Model?.Count(t => !t.TourStatus) ?? 0;
     var displayingTours = Model?.Count ?? 0;
+
+    // Lấy các tham số filter từ URL
+    var currentStatus = Context.Request.Query["status"].ToString();
+    var currentStartLocation = Context.Request.Query["startLocation"].ToString();
+    var currentEndLocation = Context.Request.Query["endLocation"].ToString();
+    var currentCategory = Context.Request.Query["category"].ToString();
+    var currentMinPrice = Context.Request.Query["minPrice"].ToString();
+    var currentMaxPrice = Context.Request.Query["maxPrice"].ToString();
+    var currentSort = Context.Request.Query["sort"].ToString();
+    var currentSearch = Context.Request.Query["search"].ToString();
 }
 
 <div class="container-fluid">
@@ -103,15 +113,29 @@
                 <div class="col-md-6 text-end">
                     <div class="d-flex justify-content-end gap-2">
                         <div class="input-group input-group-sm" style="width: 250px;">
-                            <input type="text" class="form-control" placeholder="Search tour..." id="searchInput">
+                            <input type="text" class="form-control" placeholder="Search tour..." id="searchInput" value="@currentSearch">
                             <button class="btn btn-outline-secondary" type="button" id="searchButton">
                                 <i class="bi bi-search"></i>
                             </button>
-                        </div>
-                        <select class="form-select form-select-sm" style="width: 180px;" id="statusFilter">
-                            <option value="">All Status</option>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
+                        </div>                        
+                        <!-- Sort by Price -->
+                        <select class="form-select form-select-sm" style="width: 180px;" id="sortByPrice">
+                            <option value="">Sort by Price</option>
+                            @if (currentSort == "asc")
+                            {
+                                <option value="asc" selected>Price: Low to High</option>
+                                <option value="desc">Price: High to Low</option>
+                            }
+                            else if (currentSort == "desc")
+                            {
+                                <option value="asc">Price: Low to High</option>
+                                <option value="desc" selected>Price: High to Low</option>
+                            }
+                            else
+                            {
+                                <option value="asc">Price: Low to High</option>
+                                <option value="desc">Price: High to Low</option>
+                            }
                         </select>
                     </div>
                 </div>
@@ -122,7 +146,25 @@
                 <div class="col-md-12">
                     <div class="d-flex flex-wrap gap-2 align-items-center">
                         <small class="text-muted me-2"><strong>Filters:</strong></small>
-                        
+                        <!-- Status filter -->
+                        <select class="form-select form-select-sm" style="width: 180px;" id="statusFilter">
+                            <option value="">All Status</option>
+                            @if (currentStatus == "active")
+                            {
+                                <option value="active" selected>Active</option>
+                                <option value="inactive">Inactive</option>
+                            }
+                            else if (currentStatus == "inactive")
+                            {
+                                <option value="active">Active</option>
+                                <option value="inactive" selected>Inactive</option>
+                            }
+                            else
+                            {
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            }
+                        </select>
                         <!-- Start location filter -->
                         <select class="form-select form-select-sm" style="width: 180px;" id="startLocationFilter">
                             <option value="">All Start Locations</option>
@@ -130,7 +172,14 @@
                             {
                                 foreach (var location in ViewBag.Locations)
                                 {
-                                    <option value="@location.Id">@location.LocationName</option>
+                                    if (currentStartLocation == location.Id.ToString())
+                                    {
+                                        <option value="@location.Id" selected>@location.LocationName</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@location.Id">@location.LocationName</option>
+                                    }
                                 }
                             }
                         </select>
@@ -142,7 +191,14 @@
                             {
                                 foreach (var location in ViewBag.Locations)
                                 {
-                                    <option value="@location.Id">@location.LocationName</option>
+                                    if (currentEndLocation == location.Id.ToString())
+                                    {
+                                        <option value="@location.Id" selected>@location.LocationName</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@location.Id">@location.LocationName</option>
+                                    }
                                 }
                             }
                         </select>
@@ -154,28 +210,28 @@
                             {
                                 foreach (var category in ViewBag.Categories)
                                 {
-                                    <option value="@category.Id">@category.CategoryName</option>
+                                    if (currentCategory == category.Id.ToString())
+                                    {
+                                        <option value="@category.Id" selected>@category.CategoryName</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@category.Id">@category.CategoryName</option>
+                                    }
                                 }
                             }
                         </select>
 
-                        <!-- Sort by price -->
-                        <select class="form-select form-select-sm" style="width: 180px;" id="sortByPrice">
-                            <option value="">Sort by Price</option>
-                            <option value="asc">Price: Low to High</option>
-                            <option value="desc">Price: High to Low</option>
-                        </select>
-
                         <!-- Price range -->
                         <div class="input-group input-group-sm" style="width: 200px;">
-                            <input type="number" class="form-control" placeholder="Min Price" id="minPrice">
-                            <input type="number" class="form-control" placeholder="Max Price" id="maxPrice">
+                            <input type="number" class="form-control" placeholder="Min Price" id="minPrice" value="@currentMinPrice">
+                            <input type="number" class="form-control" placeholder="Max Price" id="maxPrice" value="@currentMaxPrice">
                         </div>
 
                         <button class="btn btn-sm btn-outline-primary" id="applyFilters">
                             <i class="bi bi-funnel me-1"></i>Apply
                         </button>
-                        
+            
                         <button class="btn btn-sm btn-outline-secondary" id="resetFilters">
                             <i class="bi bi-arrow-clockwise me-1"></i>Reset
                         </button>
@@ -218,11 +274,7 @@
                         <tbody>
                             @foreach (var tour in Model)
                             {
-                                <tr data-status="@(tour.TourStatus ? "active" : "inactive")"
-                                    data-start-location="@tour.StartLocationId"
-                                    data-end-location="@tour.EndLocationId"
-                                    data-category="@tour.CategoryId"
-                                    data-price="@tour.Price">
+                                <tr>
                                     <td class="text-center">
                                         <span class="badge bg-secondary">#@tour.Id</span>
                                     </td>
@@ -355,7 +407,18 @@
                             <ul class="pagination pagination-sm mb-0">
                                 <!-- Previous button -->
                                 <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
-                                    <a class="page-link" href="@Url.Action("Tours", new { page = ViewBag.CurrentPage - 1, pageSize = ViewBag.PageSize })">
+                                    <a class="page-link" href="@Url.Action("Tours", new { 
+                                        page = ViewBag.CurrentPage - 1, 
+                                        pageSize = ViewBag.PageSize,
+                                        status = currentStatus,
+                                        startLocation = currentStartLocation,
+                                        endLocation = currentEndLocation,
+                                        category = currentCategory,
+                                        minPrice = currentMinPrice,
+                                        maxPrice = currentMaxPrice,
+                                        sort = currentSort,
+                                        search = currentSearch
+                                    })">
                                         <i class="bi bi-chevron-left"></i>
                                     </a>
                                 </li>
@@ -366,7 +429,18 @@
                                     if (i == 1 || i == ViewBag.TotalPages || (i >= ViewBag.CurrentPage - 1 && i <= ViewBag.CurrentPage + 1))
                                     {
                                         <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
-                                            <a class="page-link" href="@Url.Action("Tours", new { page = i, pageSize = ViewBag.PageSize })">@i</a>
+                                            <a class="page-link" href="@Url.Action("Tours", new { 
+                                                page = i, 
+                                                pageSize = ViewBag.PageSize,
+                                                status = currentStatus,
+                                                startLocation = currentStartLocation,
+                                                endLocation = currentEndLocation,
+                                                category = currentCategory,
+                                                minPrice = currentMinPrice,
+                                                maxPrice = currentMaxPrice,
+                                                sort = currentSort,
+                                                search = currentSearch
+                                            })">@i</a>
                                         </li>
                                     }
                                     else if (i == ViewBag.CurrentPage - 2 || i == ViewBag.CurrentPage + 2)
@@ -379,7 +453,18 @@
 
                                 <!-- Next button -->
                                 <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
-                                    <a class="page-link" href="@Url.Action("Tours", new { page = ViewBag.CurrentPage + 1, pageSize = ViewBag.PageSize })">
+                                    <a class="page-link" href="@Url.Action("Tours", new { 
+                                        page = ViewBag.CurrentPage + 1, 
+                                        pageSize = ViewBag.PageSize,
+                                        status = currentStatus,
+                                        startLocation = currentStartLocation,
+                                        endLocation = currentEndLocation,
+                                        category = currentCategory,
+                                        minPrice = currentMinPrice,
+                                        maxPrice = currentMaxPrice,
+                                        sort = currentSort,
+                                        search = currentSearch
+                                    })">
                                         <i class="bi bi-chevron-right"></i>
                                     </a>
                                 </li>
@@ -395,56 +480,35 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
-            // Initialize tooltip
             $('[data-bs-toggle="tooltip"]').tooltip();
 
-            // Search tour by name
-            $('#searchInput').on('keyup', function () {
-                var value = $(this).val().toLowerCase();
-                $('#toursTable tbody tr').filter(function () {
-                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
-                });
+            // Apply all filters - chuyển hướng với các tham số filter
+            $('#applyFilters').on('click', function () {
+                applyFiltersAndRedirect();
+            });
+
+            
+            $('#searchInput').on('keyup', function (e) {
+                if (e.keyCode === 13) { 
+                    applyFiltersAndRedirect();
+                }
             });
 
             $('#searchButton').on('click', function () {
-                var value = $('#searchInput').val().toLowerCase();
-                $('#toursTable tbody tr').filter(function () {
-                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
-                });
+                applyFiltersAndRedirect();
             });
 
-            // Filter by status
-            $('#statusFilter').on('change', function () {
-                applyAllFilters();
+            // Sort by Price - chuyển hướng khi thay đổi
+            $('#sortByPrice').on('change', function () {
+                applyFiltersAndRedirect();
             });
 
-            // Apply all filters
-            $('#applyFilters').on('click', function () {
-                applyAllFilters();
-            });
-
-            // Reset filters
+            // Reset filters - chuyển hướng về trang không có filter
             $('#resetFilters').on('click', function () {
-                $('#startLocationFilter').val('');
-                $('#endLocationFilter').val('');
-                $('#categoryFilter').val('');
-                $('#sortByPrice').val('');
-                $('#minPrice').val('');
-                $('#maxPrice').val('');
-                $('#statusFilter').val('');
-                $('#searchInput').val('');
-                
-                // Show all rows
-                $('#toursTable tbody tr').show();
-                
-                // Sort back to original order
-                var tbody = $('#toursTable tbody');
-                tbody.find('tr').sort(function(a, b) {
-                    return $(a).find('td:first .badge').text().localeCompare($(b).find('td:first .badge').text());
-                }).appendTo(tbody);
+                window.location.href = '@Url.Action("Tours")';
             });
 
-            function applyAllFilters() {
+            function applyFiltersAndRedirect() {
                 var statusFilter = $('#statusFilter').val();
                 var startLocationFilter = $('#startLocationFilter').val();
                 var endLocationFilter = $('#endLocationFilter').val();
@@ -452,44 +516,39 @@
                 var minPrice = $('#minPrice').val();
                 var maxPrice = $('#maxPrice').val();
                 var sortByPrice = $('#sortByPrice').val();
-                var searchValue = $('#searchInput').val().toLowerCase();
+                var searchValue = $('#searchInput').val();
 
-                $('#toursTable tbody tr').each(function () {
-                    var showRow = true;
-                    var $row = $(this);
-        
-                    if (statusFilter && $row.data('status') !== statusFilter) {
-                        showRow = false;
-                    }
-                    if (startLocationFilter && $row.data('start-location')?.toString() !== startLocationFilter) {
-                        showRow = false;
-                    }
-                    if (endLocationFilter && $row.data('end-location')?.toString() !== endLocationFilter) {
-                        showRow = false;
-                    }
-                    if (categoryFilter && $row.data('category')?.toString() !== categoryFilter) {
-                        showRow = false;
-                    }
-                    var price = parseFloat($row.data('price')) || 0;
-                    if (minPrice && price < parseFloat(minPrice)) showRow = false;
-                    if (maxPrice && price > parseFloat(maxPrice)) showRow = false;
-                    if (searchValue && $row.text().toLowerCase().indexOf(searchValue) === -1) showRow = false;
-        
-                    $row.toggle(showRow);
-                });
-
-                if (sortByPrice) {
-                    var tbody = $('#toursTable tbody');
-                    var rows = tbody.find('tr:visible').get();
-                    rows.sort(function(a, b) {
-                        var priceA = parseFloat($(a).data('price')) || 0;
-                        var priceB = parseFloat($(b).data('price')) || 0;
-                        return sortByPrice === 'asc' ? priceA - priceB : priceB - priceA;
-                    });
-                    $.each(rows, function(index, row) {
-                        tbody.append(row);
-                    });
+                // Xây dựng URL với các tham số filter
+                var url = '@Url.Action("Tours", new { page = 1 })'; // Luôn về trang 1 khi filter
+                
+                // Thêm các tham số filter nếu có
+                if (statusFilter) {
+                    url += '&status=' + encodeURIComponent(statusFilter);
                 }
+                if (startLocationFilter) {
+                    url += '&startLocation=' + encodeURIComponent(startLocationFilter);
+                }
+                if (endLocationFilter) {
+                    url += '&endLocation=' + encodeURIComponent(endLocationFilter);
+                }
+                if (categoryFilter) {
+                    url += '&category=' + encodeURIComponent(categoryFilter);
+                }
+                if (minPrice) {
+                    url += '&minPrice=' + encodeURIComponent(minPrice);
+                }
+                if (maxPrice) {
+                    url += '&maxPrice=' + encodeURIComponent(maxPrice);
+                }
+                if (sortByPrice) {
+                    url += '&sort=' + encodeURIComponent(sortByPrice);
+                }
+                if (searchValue) {
+                    url += '&search=' + encodeURIComponent(searchValue);
+                }
+
+                // Chuyển hướng đến URL mới
+                window.location.href = url;
             }
 
             // Auto hide alerts after 5 seconds

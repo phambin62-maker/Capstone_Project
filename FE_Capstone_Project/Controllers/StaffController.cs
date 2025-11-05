@@ -9,7 +9,7 @@ using System.Text.Json.Serialization;
 
 namespace FE_Capstone_Project.Controllers
 {
-    [Authorize(Roles = "Staff")]
+    //[Authorize(Roles = "Staff")]
     public class StaffController : Controller
     {
         private readonly HttpClient _httpClient;
@@ -130,13 +130,54 @@ namespace FE_Capstone_Project.Controllers
 
             return tour;
         }
-        public async Task<IActionResult> Tours(int page = 1, int pageSize = 10)
+        public async Task<IActionResult> Tours(
+        int page = 1,
+        int pageSize = 5,
+        string status = null, 
+        int? startLocation = null,
+        int? endLocation = null,
+        int? category = null,
+        decimal? minPrice = null,
+        decimal? maxPrice = null,
+        string sort = null,
+        string search = null)
         {
             ViewData["Title"] = "Quản lý Tour";
 
             try
             {
-                var (success, toursResponse, error) = await CallApiAsync<TourListResponse>($"Tour/GetPaginatedTours?page={page}&pageSize={pageSize}");
+                // Chuyển đổi string status sang bool?
+                bool? statusFilter = null;
+                if (!string.IsNullOrEmpty(status))
+                {
+                    if (status.ToLower() == "active")
+                        statusFilter = true;
+                    else if (status.ToLower() == "inactive")
+                        statusFilter = false;
+                }
+
+                // Xây dựng URL API với các tham số filter
+                var apiUrl = $"Tour/GetFilteredTours?page={page}&pageSize={pageSize}";
+
+                // Thêm các tham số filter nếu có
+                if (statusFilter.HasValue)
+                    apiUrl += $"&status={statusFilter.Value}";
+                if (startLocation.HasValue)
+                    apiUrl += $"&startLocation={startLocation.Value}";
+                if (endLocation.HasValue)
+                    apiUrl += $"&endLocation={endLocation.Value}";
+                if (category.HasValue)
+                    apiUrl += $"&category={category.Value}";
+                if (minPrice.HasValue)
+                    apiUrl += $"&minPrice={minPrice.Value}";
+                if (maxPrice.HasValue)
+                    apiUrl += $"&maxPrice={maxPrice.Value}";
+                if (!string.IsNullOrEmpty(sort))
+                    apiUrl += $"&sort={sort}";
+                if (!string.IsNullOrEmpty(search))
+                    apiUrl += $"&search={search}";
+
+                var (success, toursResponse, error) = await CallApiAsync<TourListResponse>(apiUrl);
 
                 if (!success)
                 {
@@ -146,16 +187,46 @@ namespace FE_Capstone_Project.Controllers
 
                 var tours = toursResponse?.Tours ?? new List<TourViewModel>();
                 tours = await LoadToursWithDetails(tours);
+
                 var (locSuccess, locations, _) = await CallApiAsync<List<Location>>("Locations");
                 var (catSuccess, categories, _) = await CallApiAsync<List<TourCategory>>("TourCategories");
-                var (countSuccess, countResponse, countError) = await CallApiAsync<TourCountResponse>("Tour/GetTotalTourCount");
+
+                // Lấy tổng số count với filter
+                var countApiUrl = "Tour/GetFilteredTourCount";
+                if (statusFilter.HasValue)
+                    countApiUrl += $"?status={statusFilter.Value}";
+                if (startLocation.HasValue)
+                    countApiUrl += $"&startLocation={startLocation.Value}";
+                if (endLocation.HasValue)
+                    countApiUrl += $"&endLocation={endLocation.Value}";
+                if (category.HasValue)
+                    countApiUrl += $"&category={category.Value}";
+                if (minPrice.HasValue)
+                    countApiUrl += $"&minPrice={minPrice.Value}";
+                if (maxPrice.HasValue)
+                    countApiUrl += $"&maxPrice={maxPrice.Value}";
+                if (!string.IsNullOrEmpty(search))
+                    countApiUrl += $"&search={search}";
+
+                var (countSuccess, countResponse, countError) = await CallApiAsync<TourCountResponse>(countApiUrl);
                 var totalCount = countSuccess ? countResponse?.TourCount ?? tours.Count : tours.Count;
+
                 ViewBag.Locations = locSuccess ? locations : new List<Location>();
                 ViewBag.Categories = catSuccess ? categories : new List<TourCategory>();
                 ViewBag.CurrentPage = page;
                 ViewBag.PageSize = pageSize;
                 ViewBag.TotalCount = totalCount;
                 ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+                // Lưu các tham số filter hiện tại để hiển thị trong view
+                ViewBag.CurrentStatus = status;
+                ViewBag.CurrentStartLocation = startLocation;
+                ViewBag.CurrentEndLocation = endLocation;
+                ViewBag.CurrentCategory = category;
+                ViewBag.CurrentMinPrice = minPrice;
+                ViewBag.CurrentMaxPrice = maxPrice;
+                ViewBag.CurrentSort = sort;
+                ViewBag.CurrentSearch = search;
 
                 return View(tours);
             }

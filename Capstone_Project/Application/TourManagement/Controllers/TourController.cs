@@ -261,7 +261,6 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
                 if (tour == null)
                     return NotFound(new { message = $"Không tìm thấy tour với id {tourId}" });
 
-                // Đảo ngược trạng thái
                 tour.TourStatus = !tour.TourStatus;
                 var newStatus = tour.TourStatus;
 
@@ -291,6 +290,45 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
                 return Ok(new { message = "No tours found", tours });
 
             return Ok(new { message = $"Found {tours.Count} tours", tours });
+        }
+
+        [HttpGet("GetFilteredTours")]
+        public async Task<IActionResult> GetFilteredTours(
+        int page = 1,
+        int pageSize = 10,
+        bool? status = null,  
+        int? startLocation = null,
+        int? endLocation = null,
+        int? category = null,
+        decimal? minPrice = null,
+        decimal? maxPrice = null,
+        string sort = null,
+        string search = null)
+        {
+            var tours = await _tourService.GetFilteredTours(
+                page, pageSize, status, startLocation, endLocation,
+                category, minPrice, maxPrice, sort, search);
+
+            if (tours == null || !tours.Any())
+                return Ok(new { message = "No tours found", tours });
+
+            return Ok(new { message = $"Found {tours.Count} tours", tours });
+        }
+
+        [HttpGet("GetFilteredTourCount")]
+        public async Task<IActionResult> GetFilteredTourCount(
+            bool? status = null,
+            int? startLocation = null,
+            int? endLocation = null,
+            int? category = null,
+            decimal? minPrice = null,
+            decimal? maxPrice = null,
+            string search = null)
+        {
+            var count = await _tourService.GetFilteredTourCount(
+                status, startLocation, endLocation, category, minPrice, maxPrice, search);
+
+            return Ok(new { message = $"Filtered tour count: {count}", tourCount = count });
         }
     }
 }
