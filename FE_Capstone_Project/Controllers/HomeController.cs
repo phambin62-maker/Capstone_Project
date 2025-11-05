@@ -1,21 +1,59 @@
+﻿using BE_Capstone_Project.Application.ReviewManagement.DTOs;
 using FE_Capstone_Project.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
+using System.Net.Http;
+using System.Text.Json;
 
 namespace FE_Capstone_Project.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-
-        public HomeController(ILogger<HomeController> logger)
+        private readonly HttpClient _httpClient;
+        private readonly string _baseUrl = "https://localhost:7160/api/review";
+        public HomeController(ILogger<HomeController> logger, HttpClient httpClient)
         {
             _logger = logger;
+            _httpClient = httpClient;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
+            var model = new HomePageViewModel();
+            var firstName = HttpContext.Session.GetString("FirstName");
+            ViewBag.FirstName = firstName;
+
+            try
+            {
+                // --- Gọi API review ---
+                var reviewResponse = await _httpClient.GetAsync($"{_baseUrl}/get-all");
+                if (reviewResponse.IsSuccessStatusCode)
+                {
+                    var json = await reviewResponse.Content.ReadAsStringAsync();
+                    model.Reviews = JsonSerializer.Deserialize<List<ReviewViewModel>>(json, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    }) ?? new();
+                }
+
+                // --- Gọi API rating ---
+                var ratingResponse = await _httpClient.GetAsync($"{_baseUrl}/tour-ratings");
+                if (ratingResponse.IsSuccessStatusCode)
+                {
+                    var json = await ratingResponse.Content.ReadAsStringAsync();
+                    model.TourRatings = JsonSerializer.Deserialize<List<TourRatingViewModel>>(json, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    }) ?? new();
+                }
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Error fetching data: {ex.Message}";
+            }
+
+            return View(model);
         }
 
         public IActionResult Privacy()

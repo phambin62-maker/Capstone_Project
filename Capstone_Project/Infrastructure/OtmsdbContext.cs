@@ -15,7 +15,24 @@ public partial class OtmsdbContext : DbContext
         : base(options)
     {
     }
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        if (!optionsBuilder.IsConfigured)
+        {
+            var config = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .Build();
 
+            var connectionString = config.GetConnectionString("DefaultConnection");
+
+            if (string.IsNullOrEmpty(connectionString))
+                throw new InvalidOperationException(" Connection string 'DefaultConnection' not found!");
+
+            optionsBuilder.UseSqlServer(connectionString);
+        }
+    }
+    public virtual DbSet<Company> Companies { get; set; }
     public virtual DbSet<Booking> Bookings { get; set; }
 
     public virtual DbSet<BookingCustomer> BookingCustomers { get; set; }
@@ -233,7 +250,6 @@ public partial class OtmsdbContext : DbContext
             entity.Property(e => e.CancelConditionId).HasColumnName("CancelConditionID");
             entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
             entity.Property(e => e.ChildDiscount).HasColumnType("decimal(5, 2)");
-            entity.Property(e => e.Duration).HasMaxLength(50);
             entity.Property(e => e.EndLocationId).HasColumnName("EndLocationID");
             entity.Property(e => e.GroupDiscount).HasColumnType("decimal(5, 2)");
             entity.Property(e => e.Name).HasMaxLength(100);

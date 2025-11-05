@@ -1,0 +1,168 @@
+﻿@model List<FE_Capstone_Project.Models.TourScheduleDTO>
+@{
+    ViewData["Title"] = "Danh sách Lịch trình Tour";
+    Layout = "~/Views/Shared/_StaffLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-dark">
+            @ViewData["Title"]
+            @if (ViewBag.TourId != null)
+            {
+                <small class="text-muted">- @ViewBag.TourName</small>
+            }
+        </h1>
+        <a href="@Url.Action("Create", "StaffSchedule")" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>Thêm Lịch trình
+        </a>
+    </div>
+
+    <!-- Filter section -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" asp-action="Schedules" class="row g-2 mb-3">
+                <div class="col-md-3">
+                    <input type="text" name="tourName" value="@ViewBag.TourName"
+                           class="form-control" placeholder="Tìm theo tên Tour..." />
+                </div>
+                <div class="col-md-3">
+                    <input type="text" name="location" value="@ViewBag.Location"
+                           class="form-control" placeholder="Tìm theo địa điểm..." />
+                </div>
+                <div class="col-md-3">
+                    <input type="text" name="category" value="@ViewBag.Category"
+                           class="form-control" placeholder="Tìm theo danh mục..." />
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+                    <a href="@Url.Action("Schedules")" class="btn btn-secondary">Làm mới</a>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            @if (Model == null || !Model.Any())
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-calendar-x display-1 text-muted mb-3"></i>
+                    <h5 class="text-muted">Không có lịch trình nào</h5>
+                    <a href="@Url.Action("Create", "StaffSchedule")" class="btn btn-primary mt-3">
+                        <i class="bi bi-plus-circle me-2"></i>Thêm lịch trình đầu tiên
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Tour</th>
+                                <th>Địa điểm khởi hành</th>
+                                <th>Địa điểm kết thúc</th>
+                                <th>Danh mục</th>
+                                <th>Ngày khởi hành</th>
+                                <th>Ngày kết thúc</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var schedule in Model)
+                            {
+                                <tr>
+                                    <td>@schedule.Id</td>
+                                    <td>
+                                        <a href="@Url.Action("Schedules", new { tourId = schedule.TourId })" 
+                                           class="text-decoration-none">
+                                            @(schedule.TourName ?? $"Tour #{schedule.TourId}")
+                                        </a>
+                                    </td>
+                                    <td>@schedule.StartLocation</td>
+                                    <td>@schedule.EndLocation</td>
+                                    <td>@schedule.CategoryName</td>
+                                    <td>@schedule.DepartureDate?.ToString("dd/MM/yyyy")</td>
+                                    <td>@schedule.ArrivalDate?.ToString("dd/MM/yyyy")</td>
+                                    <td>
+                                        <span class="badge @GetStatusBadgeClass(schedule.ScheduleStatus)">
+                                            @GetStatusText(schedule.ScheduleStatus)
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-1">
+                                            <a href="@Url.Action("Details", "StaffSchedule", new { id = schedule.Id })"
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="@Url.Action("Edit", "StaffSchedule", new { id = schedule.Id })"
+                                               class="btn btn-sm btn-outline-warning">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <form method="post" action="@Url.Action("Delete", "StaffSchedule")">
+                                                <input type="hidden" name="id" value="@schedule.Id" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                        onclick="return confirm('Bạn có chắc chắn muốn xóa lịch trình này?')">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+
+                    </table>
+                </div>
+
+                <!-- Phân trang -->
+                @if (ViewBag.TotalPages > 1)
+                {
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center mt-4">
+                            @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                            {
+                                <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                                    <a class="page-link" 
+                                       href="@Url.Action("Schedules", new { tourId = ViewBag.TourId, page = i, pageSize = ViewBag.PageSize })">
+                                        @i
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@functions {
+    public string GetStatusBadgeClass(ScheduleStatus? status)
+    {
+        return status switch
+        {
+            ScheduleStatus.Scheduled => "bg-primary",
+            ScheduleStatus.Ongoing => "bg-warning",
+            ScheduleStatus.Completed => "bg-success",
+            ScheduleStatus.Cancelled => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    public string GetStatusText(ScheduleStatus? status)
+    {
+        return status switch
+        {
+            ScheduleStatus.Scheduled => "Đã lên lịch",
+            ScheduleStatus.Ongoing => "Đang diễn ra",
+            ScheduleStatus.Completed => "Đã hoàn thành",
+            ScheduleStatus.Cancelled => "Đã hủy",
+            _ => "Không xác định"
+        };
+    }
+}

@@ -1,0 +1,148 @@
+﻿@model TourEditModel
+@{
+    ViewData["Title"] = "Edit Tour";
+    Layout = "~/Views/Shared/_StaffLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-dark">@ViewData["Title"]</h1>
+        <a href="@Url.Action("Tours")" class="btn btn-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Back
+        </a>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                <input type="hidden" asp-for="Id" />
+
+                <div class="row">
+                    <!-- Left column: Basic info + Description -->
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label">Tour Name *</label>
+                            <input asp-for="Name" class="form-control" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Price" class="form-label">Price (VND) *</label>
+                            <input asp-for="Price" type="number" class="form-control" />
+                            <span asp-validation-for="Price" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Duration" class="form-label">Duration (days) *</label>
+                            <input asp-for="Duration" type="number" class="form-control" />
+                            <span asp-validation-for="Duration" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">Description *</label>
+                            <textarea asp-for="Description" class="form-control" style="height: 350px;"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <!-- Right column: Dropdowns + Discounts + Seats -->
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="StartLocationId" class="form-label">Start Location *</label>
+                            <select asp-for="StartLocationId" class="form-select"
+                                    asp-items="@(new SelectList(ViewBag.Locations, "Id", "LocationName"))">
+                                <option value="">-- Select Start Location --</option>
+                            </select>
+                            <span asp-validation-for="StartLocationId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="EndLocationId" class="form-label">End Location *</label>
+                            <select asp-for="EndLocationId" class="form-select"
+                                    asp-items="@(new SelectList(ViewBag.Locations, "Id", "LocationName"))">
+                                <option value="">-- Select End Location --</option>
+                            </select>
+                            <span asp-validation-for="EndLocationId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="CategoryId" class="form-label">Category *</label>
+                            <select asp-for="CategoryId" class="form-select"
+                                    asp-items="@(new SelectList(ViewBag.Categories, "Id", "CategoryName"))">
+                                <option value="">-- Select Category --</option>
+                            </select>
+                            <span asp-validation-for="CategoryId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="CancelConditionId" class="form-label">Cancel Condition *</label>
+                            <select asp-for="CancelConditionId" class="form-select"
+                                    asp-items="@(new SelectList(ViewBag.CancelConditions, "Id", "Title"))">
+                                <option value="">-- Select Cancel Condition --</option>
+                            </select>
+                            <span asp-validation-for="CancelConditionId" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label asp-for="ChildDiscount" class="form-label">Child Discount (%)</label>
+                                <input asp-for="ChildDiscount" type="number" class="form-control" />
+                                <span asp-validation-for="ChildDiscount" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="GroupDiscount" class="form-label">Group Discount (%)</label>
+                                <input asp-for="GroupDiscount" type="number" class="form-control" />
+                                <span asp-validation-for="GroupDiscount" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="GroupNumber" class="form-label">Group Number</label>
+                                <input asp-for="GroupNumber" type="number" class="form-control" />
+                                <span asp-validation-for="GroupNumber" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <label asp-for="MinSeats" class="form-label">Minimum Seats</label>
+                                <input asp-for="MinSeats" type="number" class="form-control" />
+                                <span asp-validation-for="MinSeats" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="MaxSeats" class="form-label">Maximum Seats</label>
+                                <input asp-for="MaxSeats" type="number" class="form-control" />
+                                <span asp-validation-for="MaxSeats" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Image upload -->
+                <div class="mb-3 mt-3">
+                    <label asp-for="Images" class="form-label">New Tour Images (Optional)</label>
+                    <input asp-for="Images" type="file" multiple class="form-control" accept="image/*" />
+                    <small class="text-muted">Select new images to replace existing ones</small>
+                </div>
+
+                <!-- Submit / Cancel -->
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>Update Tour
+                    </button>
+                    <a href="@Url.Action("Tours")" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
