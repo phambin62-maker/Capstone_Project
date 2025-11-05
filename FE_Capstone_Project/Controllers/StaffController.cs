@@ -137,16 +137,16 @@ namespace FE_Capstone_Project.Controllers
             return tour;
         }
         public async Task<IActionResult> Tours(
-        int page = 1,
-        int pageSize = 5,
-        string status = null, 
-        int? startLocation = null,
-        int? endLocation = null,
-        int? category = null,
-        decimal? minPrice = null,
-        decimal? maxPrice = null,
-        string sort = null,
-        string search = null)
+            int page = 1,
+            int pageSize = 5,
+            string status = null, 
+            int? startLocation = null,
+            int? endLocation = null,
+            int? category = null,
+            decimal? minPrice = null,
+            decimal? maxPrice = null,
+            string sort = null,
+            string search = null)
         {
             ViewData["Title"] = "Quản lý Tour";
 
@@ -593,17 +593,10 @@ namespace FE_Capstone_Project.Controllers
             {
                 foreach (var image in model.Images.Where(img => img.Length > 0))
                 {
-                    using var memoryStream = new MemoryStream();
-                    image.CopyTo(memoryStream);
-                    var imageBytes = memoryStream.ToArray();
-                    var base64String = Convert.ToBase64String(imageBytes);
-                    var imageData = $"data:{image.ContentType};base64,{base64String}";
-                    formData.Add(new StringContent(imageData), "images");
+                    var imageContent = new StreamContent(image.OpenReadStream());
+                    imageContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(image.ContentType);
+                    formData.Add(imageContent, "images", image.FileName);
                 }
-            }
-            else
-            {
-                formData.Add(new StringContent(""), "images");
             }
 
             return formData;
@@ -913,6 +906,43 @@ namespace FE_Capstone_Project.Controllers
             }
 
             return RedirectToAction("News");
+        }
+        private string GetTourImageUrl(TourViewModel tour)
+        {
+            if (tour.TourImages != null && tour.TourImages.Any())
+            {
+                var firstImage = tour.TourImages.First();
+
+                // Nếu image là base64 string
+                if (firstImage.Image.StartsWith("data:image"))
+                {
+                    return firstImage.Image;
+                }
+                // Nếu image là đường dẫn tương đối
+                else if (!string.IsNullOrEmpty(firstImage.Image))
+                {
+                    // Sử dụng endpoint mới từ BE để lấy ảnh
+                    return $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(firstImage.Image)}";
+                }
+            }
+
+            // Trả về ảnh mặc định
+            return $"{BASE_API_URL}Tour/GetImage?path=images/default-tour.jpg";
+        }
+
+        // Phương thức helper để lấy URL ảnh từ đường dẫn
+        private string GetImageUrl(string imagePath)
+        {
+            if (string.IsNullOrEmpty(imagePath))
+                return $"{BASE_API_URL}Tour/GetImage?path=images/default-tour.jpg";
+
+            if (imagePath.StartsWith("data:image"))
+                return imagePath;
+
+            if (imagePath.StartsWith("http"))
+                return imagePath;
+
+            return $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(imagePath)}";
         }
     }
 }

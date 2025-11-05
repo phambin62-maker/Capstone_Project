@@ -10,7 +10,7 @@ public partial class TourImage
 
     public int TourId { get; set; }
 
-    public string? Image { get; set; }
+    public string? Image { get; set; } = null;
 
     [JsonIgnore]
     public virtual Tour Tour { get; set; } = null!;

@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Tour Management";
     Layout = "~/Views/Shared/_StaffLayout.cshtml";
+    var BASE_API_URL = "https://localhost:7160/api/";
     
     var totalTours = Model?.Count ?? 0;
     var activeTours = Model?.Count(t => t.TourStatus) ?? 0;
@@ -257,7 +258,7 @@
                     <table class="table table-hover table-striped" id="toursTable">
                         <thead class="table-light">
                             <tr>
-                                <th width="80" class="text-center">ID</th>
+                                <th width="100" class="text-center">Image</th>
                                 <th>Tour Name</th>
                                 <th width="150" class="text-center">Start Location</th>
                                 <th width="150" class="text-center">End Location</th>
@@ -276,14 +277,24 @@
                             {
                                 <tr>
                                     <td class="text-center">
-                                        <span class="badge bg-secondary">#@tour.Id</span>
+                                        @{
+                                            var tourImage = tour.TourImages?.FirstOrDefault()?.Image;
+                                            var imageUrl = !string.IsNullOrEmpty(tourImage) ? 
+                                                $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(tourImage)}" 
+                                                : $"{BASE_API_URL}Tour/GetImage?path=images/default-tour.jpg";
+                                        }
+                                        <div class="tour-image-container" style="width: 60px; height: 60px; margin: 0 auto;">
+                                            <img src="@imageUrl" 
+                                                 alt="@tour.Name" 
+                                                 class="img-fluid rounded border"
+                                                 style="width: 100%; height: 100%; object-fit: cover;"
+                                                 onerror="this.src='@($"{BASE_API_URL}Tour/GetImage?path=images/default-tour.jpg")'">
+                                        </div>
+                                        <small class="text-muted d-block mt-1">#@tour.Id</small>
                                     </td>
                                     <td>
                                         <div class="d-flex align-items-start">
-                                            <div class="tour-avatar me-3">
-                                                <i class="bi bi-map text-primary"></i>
-                                            </div>
-                                            <div>
+                                            <div class="me-3">
                                                 <strong class="text-dark d-block">@tour.Name</strong>
                                                 @if (!string.IsNullOrEmpty(tour.Description))
                                                 {
@@ -477,6 +488,67 @@
     </div>
 </div>
 
+@section Styles {
+    <style>
+        .tour-image-container {
+            transition: transform 0.2s ease-in-out;
+        }
+        
+        .tour-image-container:hover {
+            transform: scale(1.05);
+        }
+        
+        .stat-card {
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease-in-out;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+        .tour-image-container {
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .tour-image-container:hover {
+            transform: scale(1.05);
+        }
+
+        .stat-card {
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+    </style>
+}
+
 @section Scripts {
     <script>
         $(document).ready(function () {
@@ -563,4 +635,5 @@
             );
         });
     </script>
+
 }

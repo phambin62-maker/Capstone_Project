@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Tour Details";
     Layout = "~/Views/Shared/_StaffLayout.cshtml";
+    var BASE_API_URL = "https://localhost:7160/api/";
 }
 
 <div class="container-fluid">
@@ -27,35 +28,86 @@
     </div>
 
     <div class="row">
-        <!-- Left Column - Main Content -->
-        <div class="col-lg-8">
-            <!-- Tour Images -->
+        <div class="col-lg-8"> 
+            <!-- Main Tour Image & Gallery -->
             @if (Model.TourImages != null && Model.TourImages.Any())
             {
                 <div class="card mb-4">
-                    <div class="card-header bg-light">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
                         <h5 class="card-title mb-0">
-                            <i class="bi bi-images me-2"></i>Tour Images
+                            <i class="bi bi-images me-2"></i>Tour Gallery
+                            <span class="badge bg-primary ms-2">@Model.TourImages.Count</span>
                         </h5>
+                        <small class="text-muted">Click on images to view larger</small>
                     </div>
                     <div class="card-body">
-                        <div class="row g-3">
-                            @foreach (var image in Model.TourImages.Take(6))
+                        <!-- Main Featured Image -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                @{
+                                    var mainImage = Model.TourImages.First();
+                                    var mainImageUrl = $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(mainImage.Image)}";
+                                }
+                                <div class="main-image-container position-relative rounded border" style="height: 400px; overflow: hidden;">
+                                    <img id="mainImage" src="@mainImageUrl"
+                                         class="img-fluid w-100 h-100"
+                                         style="object-fit: cover; cursor: pointer;"
+                                         alt="Featured tour image"
+                                         data-bs-toggle="modal"
+                                         data-bs-target="#imageModal"
+                                         data-bs-slide-to="0"
+                                         onerror="this.src='@($"{BASE_API_URL}Tour/GetImage?path=images/default-tour.jpg")'">
+                                    <div class="position-absolute top-0 end-0 m-3">
+                                        <span class="badge bg-dark bg-opacity-75 text-white">
+                                            <i class="bi bi-star-fill me-1"></i>Featured
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Thumbnail Gallery -->
+                        <div class="row g-2">
+                            @for (int i = 0; i < Model.TourImages.Count; i++)
                             {
-                                <div class="col-md-4 col-sm-6">
-                                    <div class="image-container position-relative">
-                                        <img src="@image.Image" class="img-fluid rounded border"
-                                             alt="Tour image" style="height: 150px; width: 100%; object-fit: cover;">
+                                var image = Model.TourImages[i];
+                                var imageUrl = $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(image.Image)}";
+
+                                <div class="col-md-3 col-sm-4 col-6">
+                                    <div class="thumbnail-container position-relative rounded border"
+                                         style="height: 100px; overflow: hidden; cursor: pointer;"
+                                         onclick="changeMainImage('@imageUrl', @i)">
+                                        <img src="@imageUrl"
+                                             class="img-fluid w-100 h-100"
+                                             style="object-fit: cover;"
+                                             alt="Tour image @(i + 1)"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#imageModal"
+                                             data-bs-slide-to="@i"
+                                             onerror="this.src='@($"{BASE_API_URL}Tour/GetImage?path=images/default-tour.jpg")'">
+                                        @if (i == 0)
+                                        {
+                                            <div class="position-absolute top-0 start-0 m-1">
+                                                <span class="badge bg-primary" style="font-size: 0.6rem;">Main</span>
+                                            </div>
+                                        }
                                     </div>
                                 </div>
                             }
                         </div>
-                        @if (Model.TourImages.Count > 6)
-                        {
-                            <div class="mt-3 text-center">
-                                <small class="text-muted">+ @(Model.TourImages.Count - 6) more images</small>
-                            </div>
-                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="card mb-4">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-image display-1 text-muted mb-3"></i>
+                        <h5 class="text-muted">No Images Available</h5>
+                        <p class="text-muted mb-0">This tour doesn't have any images yet.</p>
+                        <a href="@Url.Action("Edit", "Staff", new { id = Model.Id })" class="btn btn-primary mt-3">
+                            <i class="bi bi-plus-circle me-2"></i>Add Images
+                        </a>
                     </div>
                 </div>
             }
@@ -361,7 +413,51 @@
         </div>
     </div>
 </div>
-
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">Tour Gallery - @Model.Name</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="imageCarousel" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        @if (Model.TourImages != null && Model.TourImages.Any())
+                        {
+                            @for (int i = 0; i < Model.TourImages.Count; i++)
+                            {
+                                var imageUrl = $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(Model.TourImages[i].Image)}";
+                                <div class="carousel-item @(i == 0 ? "active" : "")">
+                                    <img src="@imageUrl"
+                                         class="d-block w-100 rounded"
+                                         style="max-height: 70vh; object-fit: contain;"
+                                         alt="Tour image @(i + 1)"
+                                         onerror="this.src='@($"{BASE_API_URL}Tour/GetImage?path=images/default-tour.jpg")'">
+                                </div>
+                            }
+                        }
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#imageCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#imageCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <small class="text-muted me-auto">
+                    Image <span id="currentImageIndex">1</span> of @(Model.TourImages?.Count ?? 0)
+                </small>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 <style>
     .star-rating {
         display: inline-block;

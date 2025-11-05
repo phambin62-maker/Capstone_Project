@@ -281,16 +281,16 @@ namespace BE_Capstone_Project.DAO
         }
 
         public async Task<List<Tour>> GetFilteredToursAsync(
-        int page = 1,
-        int pageSize = 10,
-        bool? status = null,  
-        int? startLocation = null,
-        int? endLocation = null,
-        int? category = null,
-        decimal? minPrice = null,
-        decimal? maxPrice = null,
-        string sort = null,
-        string search = null)
+            int page = 1,
+            int pageSize = 10,
+            bool? status = null,  
+            int? startLocation = null,
+            int? endLocation = null,
+            int? category = null,
+            decimal? minPrice = null,
+            decimal? maxPrice = null,
+            string sort = null,
+            string search = null)
         {
             try
             {
@@ -302,7 +302,7 @@ namespace BE_Capstone_Project.DAO
                     .Include(t => t.Category)
                     .AsQueryable();
 
-                // Áp dụng các filter - đơn giản hóa vì status là bool?
+
                 if (status.HasValue)
                 {
                     query = query.Where(t => t.TourStatus == status.Value);
@@ -338,7 +338,6 @@ namespace BE_Capstone_Project.DAO
                     query = query.Where(t => t.Name.Contains(search) || t.Description.Contains(search));
                 }
 
-                // Áp dụng sorting
                 if (!string.IsNullOrEmpty(sort))
                 {
                     if (sort.ToLower() == "asc")
@@ -348,10 +347,9 @@ namespace BE_Capstone_Project.DAO
                 }
                 else
                 {
-                    query = query.OrderBy(t => t.Id); // Default sort
+                    query = query.OrderBy(t => t.Id);
                 }
 
-                // Áp dụng phân trang
                 var paginatedTours = await query
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
@@ -367,7 +365,7 @@ namespace BE_Capstone_Project.DAO
         }
 
         public async Task<int> GetFilteredTourCountAsync(
-            bool? status = null,  // Đổi từ string sang bool?
+            bool? status = null,
             int? startLocation = null,
             int? endLocation = null,
             int? category = null,

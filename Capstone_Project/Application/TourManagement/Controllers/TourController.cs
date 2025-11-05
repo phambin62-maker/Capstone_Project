@@ -9,6 +9,7 @@ using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.IO;
 
 namespace BE_Capstone_Project.Application.TourManagement.Controllers
 {
@@ -33,7 +34,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpPost("AddTour")]
-        public async Task<IActionResult> AddTour([FromForm] TourDTO tour, [FromForm] List<string?> images)
+        public async Task<IActionResult> AddTour([FromForm] TourDTO tour, [FromForm] List<IFormFile> images)
         {
             var tourToAdd = new Tour
             {
@@ -56,22 +57,48 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
 
             if (result == -1) return BadRequest(new { message = "Failed to add tour" });
 
-            foreach (var image in images)
+            // Xử lý upload ảnh
+            var imagePaths = new List<string>();
+            if (images != null && images.Count > 0)
             {
-                var imageToAdd = new TourImage
+                foreach (var image in images)
                 {
-                    TourId = result,
-                    Image = image,
-                };
+                    if (image.Length > 0)
+                    {
+                        var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(image.FileName)}";
+                        var imagesPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "tours");
 
-                await _tourImageService.AddTourImage(imageToAdd);
+                        if (!Directory.Exists(imagesPath))
+                        {
+                            Directory.CreateDirectory(imagesPath);
+                        }
+
+                        var fullPath = Path.Combine(imagesPath, fileName);
+
+                        using (var stream = new FileStream(fullPath, FileMode.Create))
+                        {
+                            await image.CopyToAsync(stream);
+                        }
+
+                        var relativePath = $"/images/tours/{fileName}";
+                        imagePaths.Add(relativePath);
+
+                        var imageToAdd = new TourImage
+                        {
+                            TourId = result,
+                            Image = relativePath,
+                        };
+
+                        await _tourImageService.AddTourImage(imageToAdd);
+                    }
+                }
             }
 
             return Ok(new { message = "Tour added successfully", tourId = result });
         }
 
         [HttpPost("UpdateTour")]
-        public async Task<IActionResult> UpdateTour([FromForm] TourDTO tour, [FromForm] List<string?> images)
+        public async Task<IActionResult> UpdateTour([FromForm] TourDTO tour, [FromForm] List<IFormFile> images)
         {
             var tourToUpdate = await _tourService.GetTourById(tour.Id.Value);
             if (tourToUpdate == null) return BadRequest(new { message = "Failed to update tour" });
@@ -96,29 +123,58 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
 
             var existingTourImages = await _tourImageService.GetTourImagesByTourId(tour.Id.Value);
 
-            if (existingTourImages != null && existingTourImages.Count > 0)
+            // Xóa ảnh cũ nếu có ảnh mới
+            if (images != null && images.Count > 0 && existingTourImages != null && existingTourImages.Count > 0)
             {
                 await _tourImageService.DeleteTourImagesByTourId(tour.Id.Value);
+
+                // Xóa file vật lý
+                foreach (var oldImage in existingTourImages)
+                {
+                    if (!string.IsNullOrEmpty(oldImage.Image))
+                    {
+                        var oldImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", oldImage.Image.TrimStart('/'));
+                        if (System.IO.File.Exists(oldImagePath))
+                        {
+                            System.IO.File.Delete(oldImagePath);
+                        }
+                    }
+                }
             }
 
-            var newImages = new List<TourImage>();
+            // Thêm ảnh mới
             if (images != null && images.Count > 0)
             {
                 foreach (var image in images)
                 {
-                    if (!string.IsNullOrEmpty(image))
+                    if (image.Length > 0)
                     {
-                        newImages.Add(new TourImage
+                        var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(image.FileName)}";
+                        var imagesPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "tours");
+
+                        if (!Directory.Exists(imagesPath))
+                        {
+                            Directory.CreateDirectory(imagesPath);
+                        }
+
+                        var fullPath = Path.Combine(imagesPath, fileName);
+
+                        using (var stream = new FileStream(fullPath, FileMode.Create))
+                        {
+                            await image.CopyToAsync(stream);
+                        }
+
+                        var relativePath = $"/images/tours/{fileName}";
+
+                        var imageToAdd = new TourImage
                         {
                             TourId = tour.Id.Value,
-                            Image = image
-                        });
+                            Image = relativePath
+                        };
+
+                        await _tourImageService.AddTourImage(imageToAdd);
                     }
                 }
-
-                var imgsResult = await _tourImageService.AddTourImages(newImages);
-                if (imgsResult == -1)
-                    return BadRequest(new { message = "Failed to update tour images" });
             }
 
             return Ok(new { message = "Tour updated successfully" });
@@ -329,6 +385,94 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
                 status, startLocation, endLocation, category, minPrice, maxPrice, search);
 
             return Ok(new { message = $"Filtered tour count: {count}", tourCount = count });
+        }
+
+        [HttpPost("UploadTourImages")]
+        public async Task<IActionResult> UploadTourImages(int tourId, List<IFormFile> images)
+        {
+            try
+            {
+                var uploadedImages = new List<string>();
+
+                foreach (var image in images)
+                {
+                    if (image.Length > 0)
+                    {
+                        var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(image.FileName)}";
+
+                        var imagesPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "tours");
+
+                        // Đảm bảo thư mục tồn tại
+                        if (!Directory.Exists(imagesPath))
+                        {
+                            Directory.CreateDirectory(imagesPath);
+                        }
+
+                        var fullPath = Path.Combine(imagesPath, fileName);
+
+                        // Lưu file
+                        using (var stream = new FileStream(fullPath, FileMode.Create))
+                        {
+                            await image.CopyToAsync(stream);
+                        }
+
+                        // Lưu đường dẫn tương đối để trả về frontend
+                        var relativePath = $"/images/tours/{fileName}";
+                        uploadedImages.Add(relativePath);
+                    }
+                }
+
+                return Ok(new { message = "Images uploaded successfully", images = uploadedImages });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Failed to upload images", error = ex.Message });
+            }
+        }
+        [HttpGet("GetImage")]
+        public IActionResult GetImage([FromQuery] string path)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(path))
+                    return NotFound(new { message = "Image path is required" });
+
+                // Xử lý đường dẫn an toàn
+                var safePath = path.TrimStart('/');
+                var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", safePath);
+
+                if (!System.IO.File.Exists(fullPath))
+                {
+                    // Trả về ảnh mặc định nếu không tìm thấy
+                    var defaultImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "default-tour.jpg");
+                    if (System.IO.File.Exists(defaultImagePath))
+                    {
+                        var defaultImageBytes = System.IO.File.ReadAllBytes(defaultImagePath);
+                        return File(defaultImageBytes, "image/jpeg");
+                    }
+                    return NotFound(new { message = "Image not found" });
+                }
+
+                var imageBytes = System.IO.File.ReadAllBytes(fullPath);
+                var contentType = GetContentType(fullPath);
+
+                return File(imageBytes, contentType);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Error loading image", error = ex.Message });
+            }
+        }
+
+        private string GetContentType(string path)
+        {
+            var extension = Path.GetExtension(path).ToLowerInvariant();
+            return extension switch
+            {
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".png" => "image/png",             
+                _ => "application/octet-stream"
+            };
         }
     }
 }
