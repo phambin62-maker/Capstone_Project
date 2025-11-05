@@ -2,7 +2,8 @@
 <html lang="en">
     @{
             var firstname = Context.Session.GetString("FirstName");
-                @model IEnumerable<FE_Capstone_Project.Models.ReviewViewModel>
+                    @model FE_Capstone_Project.Models.HomePageViewModel
+
 }
 <head>
     <meta charset="utf-8">
@@ -370,230 +371,101 @@
 
         </section><!-- /Featured Destinations Section -->
         <!-- Featured Tours Section -->
-        <section id="featured-tours" class="featured-tours section">
+        <section id="featured-destinations" class="featured-destinations section">
 
             <!-- Section Title -->
             <div class="container section-title" data-aos="fade-up">
-                <h2>Featured Tours</h2>
-                <div><span>Check Our</span> <span class="description-title">Featured Tours</span></div>
+                <h2>Điểm Đến Nổi Bật</h2>
+                <div><span>Khám Phá</span> <span class="description-title">Các Tour Du Lịch Hấp Dẫn</span></div>
             </div><!-- End Section Title -->
 
             <div class="container" data-aos="fade-up" data-aos-delay="100">
 
-                <div class="row gy-4">
-                    <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
-                        <div class="tour-card">
-                            <div class="tour-image">
-                                <img src="~/assets/img/travel/tour-1.webp" alt="Serene Beach Retreat" class="img-fluid" loading="lazy">
-                                <div class="tour-badge">Top Rated</div>
-                                <div class="tour-price">$2,150</div>
-                            </div>
-                            <div class="tour-content">
-                                <h4>Serene Beach Retreat</h4>
-                                <div class="tour-meta">
-                                    <span class="duration"><i class="bi bi-clock"></i> 8 Days</span>
-                                    <span class="group-size"><i class="bi bi-people"></i> Max 6</span>
-                                </div>
-                                <p>Mauris ipsum neque, cursus ac ipsum at, iaculis facilisis ligula. Suspendisse non sapien vel enim cursus semper.</p>
-                                <div class="tour-highlights">
-                                    <span>Maldives</span>
-                                    <span>Seychelles</span>
-                                    <span>Bora Bora</span>
-                                </div>
-                                <div class="tour-action">
-                                    <a href="booking.html" class="btn-book">Book Now</a>
-                                    <div class="tour-rating">
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-half"></i>
-                                        <span>4.8 (95)</span>
+                @if (Model.TourRatings != null && Model.TourRatings.Any())
+                {
+                    <div class="row">
+
+                        @* Tour nổi bật đầu tiên - Hiển thị lớn bên trái *@
+                        @if (Model.TourRatings.Count() > 0)
+                        {
+                            var featuredTour = Model.TourRatings.First();
+                            <div class="col-lg-6" data-aos="zoom-in" data-aos-delay="200">
+                                <div class="featured-destination">
+                                    <div class="destination-overlay">
+                                        <img src="@featuredTour.Image" alt="@featuredTour.TourName" class="img-fluid">
+                                        <div class="destination-info">
+                                            <span class="destination-tag">Phổ Biến Nhất</span>
+                                            <h3>@featuredTour.TourName</h3>
+                                            <p class="description">@featuredTour.Description</p>
+                                            <div class="destination-meta">
+                                                <div class="rating">
+                                                    <i class="bi bi-star-fill"></i>
+                                                    <span>@featuredTour.AverageRating.ToString("F1") (@featuredTour.ReviewCount)</span>
+                                                </div>
+                                            </div>
+                                            <div class="price-info">
+                                                <span class="starting-from">Chỉ từ</span>
+                                                <span class="amount">@featuredTour.Price.ToString("N0") đ</span>
+                                            </div>
+                                            <a href="/TourWeb/TourDetails?tourId=@featuredTour.TourId" class="explore-btn">
+                                                <span>Khám Phá Ngay</span>
+                                                <i class="bi bi-arrow-right"></i>
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div><!-- End Tour Item -->
+                        }
 
-                    <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
-                        <div class="tour-card">
-                            <div class="tour-image">
-                                <img src="~/assets/img/travel/tour-2.webp" alt="Arctic Expedition" class="img-fluid" loading="lazy">
-                                <div class="tour-badge limited">Only 3 Spots!</div>
-                                <div class="tour-price">$5,700</div>
-                            </div>
-                            <div class="tour-content">
-                                <h4>Arctic Wilderness Expedition</h4>
-                                <div class="tour-meta">
-                                    <span class="duration"><i class="bi bi-clock"></i> 10 Days</span>
-                                    <span class="group-size"><i class="bi bi-people"></i> Max 8</span>
-                                </div>
-                                <p>Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Donec dictum non massa nec fermentum.</p>
-                                <div class="tour-highlights">
-                                    <span>Greenland</span>
-                                    <span>Iceland</span>
-                                    <span>Norway</span>
-                                </div>
-                                <div class="tour-action">
-                                    <a href="booking.html" class="btn-book">Book Now</a>
-                                    <div class="tour-rating">
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star"></i>
-                                        <span>4.6 (55)</span>
+                        @* Các tour còn lại - Hiển thị compact bên phải *@
+                        <div class="col-lg-6">
+                            <div class="row g-3">
+
+                                @foreach (var tour in Model.TourRatings.Skip(1).Take(3))
+                                {
+                                    var delay = 300 + (Model.TourRatings.ToList().IndexOf(tour) * 100);
+                                    <div class="col-12" data-aos="fade-left" data-aos-delay="@delay">
+                                        <div class="compact-destination">
+                                            <div class="destination-image">
+                                                <img src="@tour.Image" alt="@tour.TourName" class="img-fluid">
+                                                @if (tour.AverageRating >= 4.8m)
+                                                {
+                                                    <div class="badge-offer">Đánh Giá Cao</div>
+                                                }
+                                            </div>
+                                            <div class="destination-details">
+                                                <h4>@tour.TourName</h4>
+                                                <p class="brief">@tour.Description</p>
+                                                <div class="stats-row">
+                                                    <span class="rating">
+                                                        <i class="bi bi-star-fill"></i>
+                                                        @tour.AverageRating.ToString("F1")
+                                                    </span>
+                                                    <span class="price">từ @tour.Price.ToString("N0") đ</span>
+                                                </div>
+                                                <a href="/TourWeb/TourDetails?tourId=@tour.TourId" class="quick-link">
+                                                    Xem Chi Tiết <i class="bi bi-chevron-right"></i>
+                                                </a>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
+                                }
+
                             </div>
                         </div>
-                    </div><!-- End Tour Item -->
 
-                    <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="400">
-                        <div class="tour-card">
-                            <div class="tour-image">
-                                <img src="~/assets/img/travel/tour-4.webp" alt="Desert Safari" class="img-fluid" loading="lazy">
-                                <div class="tour-badge new">Newly Added</div>
-                                <div class="tour-price">$1,400</div>
-                            </div>
-                            <div class="tour-content">
-                                <h4>Sahara Desert Discovery</h4>
-                                <div class="tour-meta">
-                                    <span class="duration"><i class="bi bi-clock"></i> 5 Days</span>
-                                    <span class="group-size"><i class="bi bi-people"></i> Max 10</span>
-                                </div>
-                                <p>Pellentesque euismod tincidunt turpis ac tristique. Phasellus vitae lacus in enim mollis facilisis vel quis ex. In hac habitasse platea dictumst.</p>
-                                <div class="tour-highlights">
-                                    <span>Morocco</span>
-                                    <span>Egypt</span>
-                                    <span>Dubai</span>
-                                </div>
-                                <div class="tour-action">
-                                    <a href="booking.html" class="btn-book">Book Now</a>
-                                    <div class="tour-rating">
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <span>4.9 (72)</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div><!-- End Tour Item -->
-
-                    <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
-                        <div class="tour-card">
-                            <div class="tour-image">
-                                <img src="~/assets/img/travel/tour-5.webp" alt="Coastal Explorer" class="img-fluid" loading="lazy">
-                                <div class="tour-badge">Popular Choice</div>
-                                <div class="tour-price">$1,980</div>
-                            </div>
-                            <div class="tour-content">
-                                <h4>Mediterranean Coastal Cruise</h4>
-                                <div class="tour-meta">
-                                    <span class="duration"><i class="bi bi-clock"></i> 9 Days</span>
-                                    <span class="group-size"><i class="bi bi-people"></i> Max 15</span>
-                                </div>
-                                <p>Nullam lacinia justo eget ex sodales, vel finibus orci aliquet. Donec auctor, elit ut molestie gravida, magna mi molestie nisi.</p>
-                                <div class="tour-highlights">
-                                    <span>Greece</span>
-                                    <span>Croatia</span>
-                                    <span>Italy</span>
-                                </div>
-                                <div class="tour-action">
-                                    <a href="booking.html" class="btn-book">Book Now</a>
-                                    <div class="tour-rating">
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-half"></i>
-                                        <span>4.7 (110)</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div><!-- End Tour Item -->
-
-                    <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
-                        <div class="tour-card">
-                            <div class="tour-image">
-                                <img src="~/assets/img/travel/tour-6.webp" alt="Rainforest Trek" class="img-fluid" loading="lazy">
-                                <div class="tour-badge cultural">Eco-Friendly</div>
-                                <div class="tour-price">$2,650</div>
-                            </div>
-                            <div class="tour-content">
-                                <h4>Amazon Rainforest Trek</h4>
-                                <div class="tour-meta">
-                                    <span class="duration"><i class="bi bi-clock"></i> 12 Days</span>
-                                    <span class="group-size"><i class="bi bi-people"></i> Max 10</span>
-                                </div>
-                                <p>Quisque dictum felis eu tortor mollis, quis tincidunt arcu pharetra. A pellentesque sit amet, consectetur adipiscing elit.</p>
-                                <div class="tour-highlights">
-                                    <span>Brazil</span>
-                                    <span>Ecuador</span>
-                                    <span>Peru</span>
-                                </div>
-                                <div class="tour-action">
-                                    <a href="booking.html" class="btn-book">Book Now</a>
-                                    <div class="tour-rating">
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star"></i>
-                                        <span>4.5 (88)</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div><!-- End Tour Item -->
-
-                    <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="400">
-                        <div class="tour-card">
-                            <div class="tour-image">
-                                <img src="~/assets/img/travel/tour-8.webp" alt="Patagonian Peaks" class="img-fluid" loading="lazy">
-                                <div class="tour-badge adventure">Adventure Seekers</div>
-                                <div class="tour-price">$3,950</div>
-                            </div>
-                            <div class="tour-content">
-                                <h4>Patagonian Peaks &amp; Glaciers</h4>
-                                <div class="tour-meta">
-                                    <span class="duration"><i class="bi bi-clock"></i> 14 Days</span>
-                                    <span class="group-size"><i class="bi bi-people"></i> Max 10</span>
-                                </div>
-                                <p>Vivamus eget semper neque. Ut porttitor mi at odio egestas, non vestibulum est malesuada. Nunc facilisis in felis eget efficitur.</p>
-                                <div class="tour-highlights">
-                                    <span>Argentina</span>
-                                    <span>Chile</span>
-                                    <span>Ushuaia</span>
-                                </div>
-                                <div class="tour-action">
-                                    <a href="booking.html" class="btn-book">Book Now</a>
-                                    <div class="tour-rating">
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <span>4.9 (60)</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div><!-- End Tour Item -->
-
-                </div>
-
-                <div class="text-center mt-5" data-aos="fade-up" data-aos-delay="500">
-                    <a href="tours.html" class="btn-view-all">View All Tours</a>
-                </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info text-center">
+                        <i class="bi bi-info-circle"></i> Hiện chưa có tour nào.
+                    </div>
+                }
 
             </div>
 
-        </section><!-- /Featured Tours Section -->
+        </section><!-- /Featured Destinations Section -->
         <!-- Testimonials Home Section -->
         <section id="testimonials-home" class="testimonials-home section">
 
@@ -632,7 +504,7 @@
                         }
                     </script>
                     <div class="swiper-wrapper">
-                        @foreach (var review in Model)
+                        @foreach (var review in Model.Reviews)
                         {
                             <div class="swiper-slide">
                                 <div class="testimonial-item">

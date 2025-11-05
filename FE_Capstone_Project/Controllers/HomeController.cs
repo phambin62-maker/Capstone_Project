@@ -18,42 +18,42 @@ namespace FE_Capstone_Project.Controllers
             _httpClient = httpClient;
         }
 
-        public  async Task<IActionResult> IndexAsync()
+        public async Task<IActionResult> Index()
         {
+            var model = new HomePageViewModel();
             var firstName = HttpContext.Session.GetString("FirstName");
             ViewBag.FirstName = firstName;
-            List<ReviewViewModel> reviews = new();
 
             try
             {
-                var response = await _httpClient.GetAsync($"{_baseUrl}/get-all");
-                if (response.IsSuccessStatusCode)
+                // --- Gọi API review ---
+                var reviewResponse = await _httpClient.GetAsync($"{_baseUrl}/get-all");
+                if (reviewResponse.IsSuccessStatusCode)
                 {
-                    var json = await response.Content.ReadAsStringAsync();
-                    reviews = JsonSerializer.Deserialize<List<ReviewViewModel>>(json, new JsonSerializerOptions
+                    var json = await reviewResponse.Content.ReadAsStringAsync();
+                    model.Reviews = JsonSerializer.Deserialize<List<ReviewViewModel>>(json, new JsonSerializerOptions
                     {
                         PropertyNameCaseInsensitive = true
-                    });
-
-                    reviews = reviews?.OrderByDescending(r => r.CreatedDate)
-                                     
-                                     .ToList() ?? new();
+                    }) ?? new();
                 }
-                else
+
+                // --- Gọi API rating ---
+                var ratingResponse = await _httpClient.GetAsync($"{_baseUrl}/tour-ratings");
+                if (ratingResponse.IsSuccessStatusCode)
                 {
-                    ViewBag.Error = "Không thể tải bình luận.";
+                    var json = await ratingResponse.Content.ReadAsStringAsync();
+                    model.TourRatings = JsonSerializer.Deserialize<List<TourRatingViewModel>>(json, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    }) ?? new();
                 }
             }
             catch (Exception ex)
             {
-                ViewBag.Error = $"Lỗi khi gọi API review: {ex.Message}";
+                ViewBag.Error = $"Error fetching data: {ex.Message}";
             }
 
-            // 🔹 Truyền thêm danh sách review sang View (qua ViewBag hoặc ViewModel)
-            ViewBag.Reviews = reviews;
-
-            return View(reviews);
-
+            return View(model);
         }
 
         public IActionResult Privacy()

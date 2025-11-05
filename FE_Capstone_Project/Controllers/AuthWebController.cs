@@ -43,6 +43,7 @@ namespace FE_Capstone_Project.Controllers
         [HttpPost]
         public async Task<IActionResult> Login(AuthViewModel model)
         {
+            ViewData["HideHeader"] = true;
             if (!ModelState.IsValid)
                 return View(model);
             var json = JsonSerializer.Serialize(model);

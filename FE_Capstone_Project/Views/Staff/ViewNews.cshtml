@@ -1,0 +1,74 @@
+﻿@model FE_Capstone_Project.Models.EditNewsModel
+@{
+    ViewData["Title"] = $"View News details - {Model?.Title}";
+    Layout = "~/Views/Shared/_StaffLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-dark">@ViewData["Title"]</h1>
+        <div>
+            <a href="@Url.Action("EditNews", "Staff", new { id = Model.Id })" class="btn btn-warning me-2">
+                <i class="bi bi-pencil-square me-2"></i>Edit
+            </a>
+            <a href="@Url.Action("News", "Staff")" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Back
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="Title" class="form-label fw-bold">Title</label>
+                            <input asp-for="Title" class="form-control" disabled />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="UserId" class="form-label fw-bold">User ID</label>
+                            <input asp-for="UserId" type="number" class="form-control" disabled />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="NewsStatus" class="form-label fw-bold">Status</label>
+                            <p class="form-control-plaintext fw-bold">
+                                @(Model.NewsStatus == "Published" ? "" : (Model.NewsStatus == "Draft" ? "" : "Hidden"))
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Iamge </label>
+                            <small class="form-text text-muted">Cannot change image.</small>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                        {
+                            <div class="mb-3 text-center">
+                                <label class="form-label fw-bold">Current image</label><br />
+                                <img src="@Model.ImageUrl" alt="Current image" class="img-thumbnail rounded" style="max-height: 200px;" />
+                            </div>
+                        }
+
+                        <div class="mb-3">
+                            <label asp-for="Content" class="form-label fw-bold">Current image</label>
+                            <textarea asp-for="Content" class="form-control" rows="6" disabled></textarea>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

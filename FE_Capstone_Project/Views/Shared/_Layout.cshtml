@@ -58,7 +58,7 @@
                         @* <li><a href="about.html">About</a></li>
                         <li><a href="destinations.html">Destinations</a></li> *@
                         <li><a asp-controller="TourWeb" asp-action="Tours">Tours</a></li>
-                        <li><a asp-controller="Staff" asp-action="Blog">Blog</a></li>
+                        <li><a asp-controller="Blog" asp-action="Blog">Blog</a></li>
                         @* <li><a href="blog.html">Blog</a></li> *@
                         @* <li class="dropdown">
                             <a href="#"><span>More Pages</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
@@ -96,27 +96,24 @@
                     </ul>
                     <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
                 </nav>
+                <nav id="navmenu" class="navmenu">
+                    <ul>
                 @if (!string.IsNullOrEmpty(firstname))
                 {
-
-                    <a class="btn-getstarted" href="/AuthWeb/profile" style="display: flex; flex-direction: column; align-items: center; text-align: center;">
-                        <span>Welcome </span>
-                        <span>@firstname</span>
-                    </a>
-                    <form asp-controller="AuthWeb" asp-action="Logout" method="post" style="margin: 0;">
-                        <button type="submit" style="background: none; border: none; cursor: pointer;">
-                            <img src="~/assets/img/icon/exit.png" alt="Logout"
-                                 style="width: 45px; height: 45px; vertical-align: middle;"
-                                 title="Logout" />
-                        </button>
-                    </form>
+                        <li class="dropdown">
+                            <a href="#"><span>Welcome, @firstname</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+                            <ul>
+                                <li><a asp-action="Profile" asp-controller="AuthWeb">Profile</a></li>
+                                <li><a asp-action="Wishlist" asp-controller="Profile">Wishlist</a></li>
+                                <li><a asp-action="Logout" asp-controller="AuthWeb">Logout</a></li>
+                            </ul>
+                        </li>
                 }else
                 {
-                    <a class="btn-getstarted" href="/AuthWeb/login">
-
-                        <span>Login</span>
-                    </a>
+                        <li><a asp-action="Login" asp-controller="AuthWeb">Login</a></li>
                 }
+                    </ul>
+                </nav>
             </div>
         </header>
         <main role="main" class="container">

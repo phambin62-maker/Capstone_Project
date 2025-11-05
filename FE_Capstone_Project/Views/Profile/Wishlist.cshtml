@@ -1,0 +1,119 @@
+@model List<WishlistModels.WishlistData>
+<body class="tours-page">
+    <main class="main">
+        <!-- Page Title -->
+        <div class="page-title dark-background" data-aos="fade" style="background-image: url(~/assets/img/travel/showcase-8.webp);">
+            <div class="container position-relative">
+                <h1>Wishlist</h1>
+                <p>
+                    Save your dream adventures for later. <br />
+                    Create your personalized wishlist of tours across Vietnam — from hidden gems to iconic destinations — and revisit them anytime when you're ready to explore.
+                </p>
+                <nav class="breadcrumbs">
+                    <ol>
+                        <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                        <li class="current">Wishlist</li>
+                    </ol>
+                </nav>
+            </div>
+        </div><!-- End Page Title -->
+        <!-- Travel Tours Section -->
+        <section id="travel-tours" class="travel-tours section">
+
+            <div class="container" data-aos="fade-up" data-aos-delay="100">
+                <!-- Tour Grid -->
+                <div class="row" data-aos="fade-up" data-aos-delay="600">
+                    <div class="col-12">
+                        <h3 class="section-subtitle mb-4">Saved Tours</h3>
+                        <div id="tour-list-container">
+                            <div class="row">
+                                @foreach (WishlistModels.WishlistData tour in Model)
+                                {
+                                    <div class="col-lg-4 col-md-6 mb-4">
+                                        <div class="tour-card">
+                                            <div class="tour-image">
+                                                <img src="@(tour.TourImage != null ? tour.TourImage : "/images/default-tour.jpg")"
+                                                    class="img-fluid w-100" />
+                                                <div class="tour-price">@string.Format("{0:N0} VND", tour.TourPrice)</div>
+                                            </div>
+                                            <div class="tour-content">
+                                                <h4>@tour.TourName</h4>
+                                                <div class="tour-details">
+                                                    <span><i class="bi bi-clock"></i> @tour.Duration Day@(tour.Duration == 1 ? "" : "s")</span>
+                                                    <span><a asp-action="TourDetails" asp-controller="TourWeb" asp-route-tourId="@tour.TourId" class="btn btn-outline-primary">View Tour</a></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pagination 2 Section -->
+                <section id="pagination-2" class="pagination-2 section">
+
+                    <div class="container">
+                        <div class="d-flex justify-content-center">
+                            <ul class="pagination">
+                                <!-- Previous Button -->
+                                <li class="@(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                                    <a href="@Url.Action("Wishlist", new {
+                                            page = ViewBag.CurrentPage - 1
+                                        })">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </a>
+                                </li>
+
+                                <!-- Page Numbers -->
+                                @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                                {
+                                    <li>
+                                        <a href="@Url.Action("Wishlist", new {
+                                                page = i
+                                            })"
+                                        class="@(i == ViewBag.CurrentPage ? "active disabled" : "")">
+                                            @i
+                                        </a>
+                                    </li>
+                                }
+
+                                <!-- Next Button -->
+                                <li class="@(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                                    <a href="@Url.Action("Wishlist", new {
+                                            page = ViewBag.CurrentPage + 1
+                                        })">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </section><!-- /Pagination 2 Section -->
+            </div>
+
+        </section><!-- /Travel Tours Section -->
+
+    </main>
+
+    <!-- Scroll Top -->
+    <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
+    <!-- Preloader -->
+    <div id="preloader"></div>
+
+    <!-- Vendor JS Files -->
+    <script src="~/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/assets/vendor/php-email-form/validate.js"></script>
+    <script src="~/assets/vendor/aos/aos.js"></script>
+    <script src="~/assets/vendor/purecounter/purecounter_vanilla.js"></script>
+    <script src="~/assets/vendor/swiper/swiper-bundle.min.js"></script>
+    <script src="~/assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
+    <script src="~/assets/vendor/imagesloaded/imagesloaded.pkgd.min.js"></script>
+    <script src="~/assets/vendor/glightbox/js/glightbox.min.js"></script>
+
+    <!-- Main JS File -->
+    <script src="~/assets/js/main.js"></script>
+
+</body>

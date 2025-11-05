@@ -170,7 +170,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
                 }
             }
 
-            return Ok(new { message = $"Tour with id {id} found successfully", tour, CanComment = canComment });
+            return Ok(new { message = $"Tour with id {id} found successfully", tour, canComment });
         }
 
         [HttpGet("GetToursByCategoryId")]

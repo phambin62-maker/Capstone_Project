@@ -20,19 +20,19 @@ public partial class OtmsdbContext : DbContext
         if (!optionsBuilder.IsConfigured)
         {
             var config = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())  // ✅ thư mục hiện tại chính là BE_Capstone_Project
+                .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .Build();
 
             var connectionString = config.GetConnectionString("DefaultConnection");
 
             if (string.IsNullOrEmpty(connectionString))
-                throw new InvalidOperationException("⚠️ Connection string 'DefaultConnection' not found!");
+                throw new InvalidOperationException(" Connection string 'DefaultConnection' not found!");
 
             optionsBuilder.UseSqlServer(connectionString);
         }
     }
-
+    public virtual DbSet<Company> Companies { get; set; }
     public virtual DbSet<Booking> Bookings { get; set; }
 
     public virtual DbSet<BookingCustomer> BookingCustomers { get; set; }

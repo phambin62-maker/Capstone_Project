@@ -2,9 +2,11 @@
 using BE_Capstone_Project.DAO;
 using BE_Capstone_Project.Domain.Enums;
 using BE_Capstone_Project.Domain.Models;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace BE_Capstone_Project.Application.Newses.Services
-
 {
     public class NewsService
     {
@@ -15,7 +17,6 @@ namespace BE_Capstone_Project.Application.Newses.Services
             _newsDAO = newsDAO;
         }
 
-        // 🔹 Lấy tất cả tin tức (trả DTO)
         public async Task<IEnumerable<NewsDTO>> GetAllAsync()
         {
             var newsList = await _newsDAO.GetAllNewsAsync();
@@ -26,11 +27,11 @@ namespace BE_Capstone_Project.Application.Newses.Services
                 Image = n.Image,
                 CreatedDate = n.CreatedDate,
                 NewsStatus = n.NewsStatus,
-                AuthorName = n.User?.Username
+                AuthorName = n.User?.Username,
+                Content = n.Content
             });
         }
 
-        // 🔹 Lấy tin theo ID (trả DTO)
         public async Task<NewsDTO?> GetByIdAsync(int id)
         {
             var n = await _newsDAO.GetNewsByIdAsync(id);
@@ -43,11 +44,11 @@ namespace BE_Capstone_Project.Application.Newses.Services
                 Image = n.Image,
                 CreatedDate = n.CreatedDate,
                 NewsStatus = n.NewsStatus,
-                AuthorName = n.User?.Username
+                AuthorName = n.User?.Username,
+                Content = n.Content
             };
         }
 
-        // 🔹 Thêm mới tin tức
         public async Task<int> CreateAsync(CreateNewsDTO dto)
         {
             var news = new News
@@ -63,7 +64,6 @@ namespace BE_Capstone_Project.Application.Newses.Services
             return await _newsDAO.AddNewsAsync(news);
         }
 
-        // 🔹 Cập nhật tin tức
         public async Task<bool> UpdateAsync(int id, CreateNewsDTO dto)
         {
             var existing = await _newsDAO.GetNewsByIdAsync(id);
@@ -78,13 +78,11 @@ namespace BE_Capstone_Project.Application.Newses.Services
             return await _newsDAO.UpdateNewsAsync(existing);
         }
 
-        // 🔹 Xóa tin tức
         public async Task<bool> DeleteAsync(int id)
         {
             return await _newsDAO.DeleteNewsByIdAsync(id);
         }
 
-        // 🔹 Lọc tin theo trạng thái
         public async Task<IEnumerable<NewsDTO>> GetByStatusAsync(NewsStatus status)
         {
             var newsList = await _newsDAO.GetNewsByStatusAsync(status);
@@ -95,7 +93,8 @@ namespace BE_Capstone_Project.Application.Newses.Services
                 Image = n.Image,
                 CreatedDate = n.CreatedDate,
                 NewsStatus = n.NewsStatus,
-                AuthorName = n.User?.Username
+                AuthorName = n.User?.Username,
+                Content = n.Content
             });
         }
     }

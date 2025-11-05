@@ -1,5 +1,6 @@
-﻿using BE_Capstone_Project.Infrastructure;
+﻿using BE_Capstone_Project.Application.ReviewManagement.DTOs;
 using BE_Capstone_Project.Domain.Models;
+using BE_Capstone_Project.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
 namespace BE_Capstone_Project.DAO
@@ -62,19 +63,19 @@ namespace BE_Capstone_Project.DAO
         public async Task<List<Review>> GetAllReviewsAsync()
         {
             return await _context.Reviews
-     .Include(r => r.User)
-     .Include(r => r.Tour)
-     .Select(r => new Review
-     {
-         Id = r.Id,
-         Comment = r.Comment,
-         Stars = r.Stars,
-         CreatedDate = r.CreatedDate,
-         ReviewStatus = r.ReviewStatus,
-         User = new User { Username = r.User.Username },
-         Tour = new Tour { Name = r.Tour.Name }
-     })
-     .ToListAsync();
+             .Include(r => r.User)
+             .Include(r => r.Tour)
+             .Select(r => new Review
+             {
+                 Id = r.Id,
+                 Comment = r.Comment,
+                 Stars = r.Stars,
+                 CreatedDate = r.CreatedDate,
+                 ReviewStatus = r.ReviewStatus,
+                 User = new User { Username = r.User.Username },
+                 Tour = new Tour { Name = r.Tour.Name }
+             })
+             .ToListAsync();
         }
     
 
@@ -96,10 +97,20 @@ namespace BE_Capstone_Project.DAO
         {
             try
             {
-                return await _context.Reviews
+                 return await _context.Reviews
                     .Where(r => r.TourId == tourId)
                     .Include(r => r.User)
-                    .ToListAsync();
+                    .Select(r => new Review
+                    {
+                        Id = r.Id,
+                        Comment = r.Comment,
+                        Stars = r.Stars,
+                        CreatedDate = r.CreatedDate,
+                        ReviewStatus = r.ReviewStatus,
+                        User = new User { Username = r.User.Username },
+                        Tour = new Tour { Name = r.Tour.Name }
+                    })
+     .ToListAsync();
             }
             catch (Exception ex)
             {
@@ -137,6 +148,55 @@ namespace BE_Capstone_Project.DAO
                 return new List<Review>();
             }
         }
+        public async Task<decimal> GetAverageRatingAsync()
+        {
+            try
+            {
+                if (!await _context.Reviews.AnyAsync())
+                    return 0m;
+                var averageNullable = await _context.Reviews
+                    .AverageAsync(r => (decimal?)r.Stars);
+                var average = averageNullable ?? 0m;
+                return Math.Round(average, 2);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error while calculating average rating: {ex.Message}");
+                return 0m;
+            }
+        }
+        public async Task<List<TourRatingDTO>> GetTourRatingsAsync()
+        {
+            try
+            {
+                var result = await _context.Tours
+                    .Select(t => new TourRatingDTO
+                    {
+                        TourId = t.Id,
+                        TourName = t.Name,
+                        Description = t.Description,
+                        Price = t.Price,
+                        AverageRating = t.Reviews.Any()
+                            ? Math.Round(t.Reviews.Average(r => (decimal?)r.Stars) ?? 0m, 2)
+                            : 0m,
+                        ReviewCount = t.Reviews.Count(),
+                        Image = t.TourImages
+                            .Select(img => img.Image)
+                            .FirstOrDefault()
+                    })
+                    .OrderByDescending(x => x.AverageRating)
+                    .ThenByDescending(x => x.ReviewCount)
+                    .ToListAsync();
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error calculating tour ratings: {ex.Message}");
+                return new List<TourRatingDTO>();
+            }
+        }
+
 
         public async Task<int> GetReviewCountByTourIdAsync(int tourId)
         {
