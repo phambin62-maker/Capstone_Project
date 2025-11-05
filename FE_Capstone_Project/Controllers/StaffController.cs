@@ -553,12 +553,6 @@ namespace FE_Capstone_Project.Controllers
         }
 
 
-        public IActionResult Blog()
-        {
-            ViewData["Title"] = "Hồ sơ cá nhân";
-            return View();
-        }
-
         private string NormalizeString(string? text)
         {
             if (string.IsNullOrWhiteSpace(text))
@@ -627,7 +621,8 @@ namespace FE_Capstone_Project.Controllers
                     filteredNews = filteredNews.Where(n => n.NewsStatus != null && n.NewsStatus.ToLowerInvariant() == lowerStatus);
                 }
 
-                var finalNewsList = filteredNews.ToList();
+                var sortedNews = filteredNews.OrderByDescending(n => n.CreatedDate);
+                var finalNewsList = sortedNews.ToList();
                 int totalItems = finalNewsList.Count;
                 int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
                 var pagedNews = finalNewsList.Skip((page - 1) * pageSize).Take(pageSize).ToList();

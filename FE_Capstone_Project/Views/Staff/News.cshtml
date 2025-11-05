@@ -113,7 +113,15 @@
                                         }
                                     </td>
 
-                                    <td class="fw-semibold">@news.Title</td>
+                                    <td class="fw-semibold text-truncate-custom" style="max-width: 150px;">
+                                        @{
+                                            string fullTitle = news.Title ?? "";
+                                            // Cắt chuỗi sau 10 ký tự
+                                            string displayTitle = fullTitle.Length > 20 ? fullTitle.Substring(0, 20) + "..." : fullTitle;
+                                        }
+                                        <span title="@fullTitle" data-bs-toggle="tooltip">@displayTitle</span>
+                                    </td>
+
                                     <td>@news.AuthorName</td>
                                     <td>@news.CreatedDate?.ToString("dd/MM/yyyy HH:mm")</td>
 
@@ -128,7 +136,6 @@
                                                 _ => "badge bg-light text-dark"
                                             };
 
-                                            // FIX: Assign meaningful text values
                                             string badgeText = status switch
                                             {
                                                 "published" => "Published",
@@ -222,3 +229,34 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Kích hoạt Bootstrap Tooltips
+        document.addEventListener('DOMContentLoaded', function () {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            })
+        });
+
+        // Đảm bảo Spinner hoạt động
+        const form = document.querySelector(".card-body form");
+        const spinner = document.getElementById("loadingSpinner");
+        const table = document.querySelector(".table-responsive");
+
+        if (form && table) {
+            form.addEventListener("submit", () => {
+                spinner.style.display = "block";
+                table.style.opacity = "0.3";
+            });
+        }
+    </script>
+
+    @*
+    <div id="loadingSpinner" class="text-center my-5" style="display:none;">
+         <div class="spinner-border text-primary" role="status"></div>
+         <p class="mt-2 text-muted">Loading news...</p>
+    </div>
+    *@
+}
