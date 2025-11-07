@@ -77,5 +77,34 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
         {
             return await _tourDAO.GetTopToursByEachCategoriesAsync();
         }
+        public async Task<List<Tour>> GetFilteredTours(
+        int page = 1,
+        int pageSize = 10,
+        bool? status = null,  // Đổi từ string sang bool?
+        int? startLocation = null,
+        int? endLocation = null,
+        int? category = null,
+        decimal? minPrice = null,
+        decimal? maxPrice = null,
+        string sort = null,
+        string search = null)
+        {
+            return await _tourDAO.GetFilteredToursAsync(
+                page, pageSize, status, startLocation, endLocation,
+                category, minPrice, maxPrice, sort, search);
+        }
+
+        public async Task<int> GetFilteredTourCount(
+            bool? status = null,  // Đổi từ string sang bool?
+            int? startLocation = null,
+            int? endLocation = null,
+            int? category = null,
+            decimal? minPrice = null,
+            decimal? maxPrice = null,
+            string search = null)
+        {
+            return await _tourDAO.GetFilteredTourCountAsync(
+                status, startLocation, endLocation, category, minPrice, maxPrice, search);
+        }
     }
 }

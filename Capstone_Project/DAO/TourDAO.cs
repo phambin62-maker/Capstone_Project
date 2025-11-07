@@ -279,5 +279,147 @@ namespace BE_Capstone_Project.DAO
                 return new List<Tour>();
             }
         }
+
+        public async Task<List<Tour>> GetFilteredToursAsync(
+            int page = 1,
+            int pageSize = 10,
+            bool? status = null,  
+            int? startLocation = null,
+            int? endLocation = null,
+            int? category = null,
+            decimal? minPrice = null,
+            decimal? maxPrice = null,
+            string sort = null,
+            string search = null)
+        {
+            try
+            {
+                var query = _context.Tours
+                    .Include(t => t.TourImages)
+                    .Include(t => t.Reviews)
+                    .Include(t => t.StartLocation)
+                    .Include(t => t.EndLocation)
+                    .Include(t => t.Category)
+                    .AsQueryable();
+
+
+                if (status.HasValue)
+                {
+                    query = query.Where(t => t.TourStatus == status.Value);
+                }
+
+                if (startLocation.HasValue)
+                {
+                    query = query.Where(t => t.StartLocationId == startLocation.Value);
+                }
+
+                if (endLocation.HasValue)
+                {
+                    query = query.Where(t => t.EndLocationId == endLocation.Value);
+                }
+
+                if (category.HasValue)
+                {
+                    query = query.Where(t => t.CategoryId == category.Value);
+                }
+
+                if (minPrice.HasValue)
+                {
+                    query = query.Where(t => t.Price >= minPrice.Value);
+                }
+
+                if (maxPrice.HasValue)
+                {
+                    query = query.Where(t => t.Price <= maxPrice.Value);
+                }
+
+                if (!string.IsNullOrEmpty(search))
+                {
+                    query = query.Where(t => t.Name.Contains(search) || t.Description.Contains(search));
+                }
+
+                if (!string.IsNullOrEmpty(sort))
+                {
+                    if (sort.ToLower() == "asc")
+                        query = query.OrderBy(t => t.Price);
+                    else if (sort.ToLower() == "desc")
+                        query = query.OrderByDescending(t => t.Price);
+                }
+                else
+                {
+                    query = query.OrderBy(t => t.Id);
+                }
+
+                var paginatedTours = await query
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                return paginatedTours;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while retrieving filtered tours: {ex.Message}");
+                return new List<Tour>();
+            }
+        }
+
+        public async Task<int> GetFilteredTourCountAsync(
+            bool? status = null,
+            int? startLocation = null,
+            int? endLocation = null,
+            int? category = null,
+            decimal? minPrice = null,
+            decimal? maxPrice = null,
+            string search = null)
+        {
+            try
+            {
+                var query = _context.Tours.AsQueryable();
+
+                // Áp dụng các filter (giống như trong GetFilteredToursAsync)
+                if (status.HasValue)
+                {
+                    query = query.Where(t => t.TourStatus == status.Value);
+                }
+
+                if (startLocation.HasValue)
+                {
+                    query = query.Where(t => t.StartLocationId == startLocation.Value);
+                }
+
+                if (endLocation.HasValue)
+                {
+                    query = query.Where(t => t.EndLocationId == endLocation.Value);
+                }
+
+                if (category.HasValue)
+                {
+                    query = query.Where(t => t.CategoryId == category.Value);
+                }
+
+                if (minPrice.HasValue)
+                {
+                    query = query.Where(t => t.Price >= minPrice.Value);
+                }
+
+                if (maxPrice.HasValue)
+                {
+                    query = query.Where(t => t.Price <= maxPrice.Value);
+                }
+
+                if (!string.IsNullOrEmpty(search))
+                {
+                    query = query.Where(t => t.Name.Contains(search) || t.Description.Contains(search));
+                }
+
+                return await query.CountAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while counting filtered tours: {ex.Message}");
+                return 0;
+            }
+        }
     }
 }

@@ -8,6 +8,8 @@ using BE_Capstone_Project.Application.Locations.Services;
 using BE_Capstone_Project.Application.Locations.Services.Interfaces;
 using BE_Capstone_Project.Application.Newses.Services;
 using BE_Capstone_Project.Application.Notifications.Services;
+using BE_Capstone_Project.Application.Payment.VnPayService;
+using BE_Capstone_Project.Application.Payment.VnPayService.Interfaces;
 using BE_Capstone_Project.Application.Report.Services;
 using BE_Capstone_Project.Application.Report.Services.Interfaces;
 using BE_Capstone_Project.Application.ReviewManagement.Services;
@@ -45,6 +47,7 @@ builder.Services.AddScoped<BookingService>();
 builder.Services.AddScoped<ILocationService, LocationService>();
 builder.Services.AddScoped<ITourCategoryService, TourCategoryService>();
 builder.Services.AddScoped<ICancelConditionService, CancelConditionService>();
+builder.Services.AddScoped<IVnPayService, VnPayService>();
 
 //DAO
 builder.Services.AddScoped<BookingCustomerDAO>();
@@ -109,7 +112,24 @@ builder.Services.AddControllers()
 
 var app = builder.Build();
 app.UseCors("AllowAll");
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/api/payment/payment-callback"))
+    {
+        // Enable buffering for request body
+        context.Request.EnableBuffering();
 
+        // Log raw request data
+        using var reader = new StreamReader(context.Request.Body, leaveOpen: true);
+        var bodyStr = await reader.ReadToEndAsync();
+        context.Request.Body.Position = 0; // Reset position
+
+        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+        logger.LogInformation("Payment callback raw data: {Data}", bodyStr);
+    }
+
+    await next();
+});
 if (app.Environment.IsDevelopment())
 {
 

@@ -1,13 +1,21 @@
 ﻿using BE_Capstone_Project.Domain.Models;
 using FE_Capstone_Project.Models;
 using FE_Capstone_Project.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Threading.Tasks;
+using System.Globalization;
 using System.Text.Json.Serialization;
 
 namespace FE_Capstone_Project.Controllers
 {
+    //[Authorize(Roles = "Staff")]
     public class StaffController : Controller
     {
         private readonly HttpClient _httpClient;
@@ -128,13 +136,54 @@ namespace FE_Capstone_Project.Controllers
 
             return tour;
         }
-        public async Task<IActionResult> Tours(int page = 1, int pageSize = 10)
+        public async Task<IActionResult> Tours(
+            int page = 1,
+            int pageSize = 5,
+            string status = null, 
+            int? startLocation = null,
+            int? endLocation = null,
+            int? category = null,
+            decimal? minPrice = null,
+            decimal? maxPrice = null,
+            string sort = null,
+            string search = null)
         {
             ViewData["Title"] = "Quản lý Tour";
 
             try
             {
-                var (success, toursResponse, error) = await CallApiAsync<TourListResponse>($"Tour/GetPaginatedTours?page={page}&pageSize={pageSize}");
+                // Chuyển đổi string status sang bool?
+                bool? statusFilter = null;
+                if (!string.IsNullOrEmpty(status))
+                {
+                    if (status.ToLower() == "active")
+                        statusFilter = true;
+                    else if (status.ToLower() == "inactive")
+                        statusFilter = false;
+                }
+
+                // Xây dựng URL API với các tham số filter
+                var apiUrl = $"Tour/GetFilteredTours?page={page}&pageSize={pageSize}";
+
+                // Thêm các tham số filter nếu có
+                if (statusFilter.HasValue)
+                    apiUrl += $"&status={statusFilter.Value}";
+                if (startLocation.HasValue)
+                    apiUrl += $"&startLocation={startLocation.Value}";
+                if (endLocation.HasValue)
+                    apiUrl += $"&endLocation={endLocation.Value}";
+                if (category.HasValue)
+                    apiUrl += $"&category={category.Value}";
+                if (minPrice.HasValue)
+                    apiUrl += $"&minPrice={minPrice.Value}";
+                if (maxPrice.HasValue)
+                    apiUrl += $"&maxPrice={maxPrice.Value}";
+                if (!string.IsNullOrEmpty(sort))
+                    apiUrl += $"&sort={sort}";
+                if (!string.IsNullOrEmpty(search))
+                    apiUrl += $"&search={search}";
+
+                var (success, toursResponse, error) = await CallApiAsync<TourListResponse>(apiUrl);
 
                 if (!success)
                 {
@@ -144,16 +193,46 @@ namespace FE_Capstone_Project.Controllers
 
                 var tours = toursResponse?.Tours ?? new List<TourViewModel>();
                 tours = await LoadToursWithDetails(tours);
+
                 var (locSuccess, locations, _) = await CallApiAsync<List<Location>>("Locations");
                 var (catSuccess, categories, _) = await CallApiAsync<List<TourCategory>>("TourCategories");
-                var (countSuccess, countResponse, countError) = await CallApiAsync<TourCountResponse>("Tour/GetTotalTourCount");
+
+                // Lấy tổng số count với filter
+                var countApiUrl = "Tour/GetFilteredTourCount";
+                if (statusFilter.HasValue)
+                    countApiUrl += $"?status={statusFilter.Value}";
+                if (startLocation.HasValue)
+                    countApiUrl += $"&startLocation={startLocation.Value}";
+                if (endLocation.HasValue)
+                    countApiUrl += $"&endLocation={endLocation.Value}";
+                if (category.HasValue)
+                    countApiUrl += $"&category={category.Value}";
+                if (minPrice.HasValue)
+                    countApiUrl += $"&minPrice={minPrice.Value}";
+                if (maxPrice.HasValue)
+                    countApiUrl += $"&maxPrice={maxPrice.Value}";
+                if (!string.IsNullOrEmpty(search))
+                    countApiUrl += $"&search={search}";
+
+                var (countSuccess, countResponse, countError) = await CallApiAsync<TourCountResponse>(countApiUrl);
                 var totalCount = countSuccess ? countResponse?.TourCount ?? tours.Count : tours.Count;
+
                 ViewBag.Locations = locSuccess ? locations : new List<Location>();
                 ViewBag.Categories = catSuccess ? categories : new List<TourCategory>();
                 ViewBag.CurrentPage = page;
                 ViewBag.PageSize = pageSize;
                 ViewBag.TotalCount = totalCount;
                 ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+                // Lưu các tham số filter hiện tại để hiển thị trong view
+                ViewBag.CurrentStatus = status;
+                ViewBag.CurrentStartLocation = startLocation;
+                ViewBag.CurrentEndLocation = endLocation;
+                ViewBag.CurrentCategory = category;
+                ViewBag.CurrentMinPrice = minPrice;
+                ViewBag.CurrentMaxPrice = maxPrice;
+                ViewBag.CurrentSort = sort;
+                ViewBag.CurrentSearch = search;
 
                 return View(tours);
             }
@@ -514,17 +593,10 @@ namespace FE_Capstone_Project.Controllers
             {
                 foreach (var image in model.Images.Where(img => img.Length > 0))
                 {
-                    using var memoryStream = new MemoryStream();
-                    image.CopyTo(memoryStream);
-                    var imageBytes = memoryStream.ToArray();
-                    var base64String = Convert.ToBase64String(imageBytes);
-                    var imageData = $"data:{image.ContentType};base64,{base64String}";
-                    formData.Add(new StringContent(imageData), "images");
+                    var imageContent = new StreamContent(image.OpenReadStream());
+                    imageContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(image.ContentType);
+                    formData.Add(imageContent, "images", image.FileName);
                 }
-            }
-            else
-            {
-                formData.Add(new StringContent(""), "images");
             }
 
             return formData;
@@ -547,41 +619,98 @@ namespace FE_Capstone_Project.Controllers
         }
 
 
-        public IActionResult Blog()
+        private string NormalizeString(string? text)
         {
-            ViewData["Title"] = "Hồ sơ cá nhân";
-            return View();
+            if (string.IsNullOrWhiteSpace(text))
+                return string.Empty;
+
+            string normalized = new string(text
+                .Normalize(NormalizationForm.FormD)
+                .Where(c => Char.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                .ToArray());
+
+            return normalized.ToLowerInvariant().Trim();
         }
 
-
-
-
-        [HttpGet]
-        public async Task<IActionResult> News()
+        public async Task<IActionResult> News(int page = 1, int pageSize = 10, string? search = null, DateTime? fromDate = null, DateTime? toDate = null, string? status = null)
         {
             ViewData["Title"] = "Quản lý Tin tức";
 
             try
             {
-                var response = await _httpClient.GetAsync("News");
+                var response = await _httpClient.GetAsync($"News");
+
                 if (!response.IsSuccessStatusCode)
                 {
                     TempData["ErrorMessage"] = "Không thể tải danh sách tin tức.";
-                    return View(new List<NewsViewModel>());
+                    return View(new NewsListViewModel { NewsList = new List<NewsViewModel>() });
                 }
 
                 var content = await response.Content.ReadAsStringAsync();
+
                 var newsList = JsonSerializer.Deserialize<List<NewsViewModel>>(content, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
-                });
+                }) ?? new List<NewsViewModel>();
 
-                return View(newsList ?? new List<NewsViewModel>());
+                IEnumerable<NewsViewModel> filteredNews = newsList;
+
+                if (!string.IsNullOrWhiteSpace(search))
+                {
+                    string normalizedSearch = NormalizeString(search);
+
+                    filteredNews = filteredNews.Where(n =>
+                    {
+                        string normalizedTitle = NormalizeString(n.Title);
+                        string normalizedAuthor = NormalizeString(n.AuthorName);
+                        string normalizedContent = NormalizeString(n.Content);
+
+                        return normalizedTitle.Contains(normalizedSearch) ||
+                               normalizedAuthor.Contains(normalizedSearch) ||
+                               normalizedContent.Contains(normalizedSearch);
+                    }).ToList();
+                }
+
+                if (fromDate.HasValue)
+                {
+                    filteredNews = filteredNews.Where(n => n.CreatedDate?.Date >= fromDate.Value.Date);
+                }
+
+                if (toDate.HasValue)
+                {
+                    filteredNews = filteredNews.Where(n => n.CreatedDate?.Date <= toDate.Value.Date);
+                }
+
+                if (!string.IsNullOrWhiteSpace(status))
+                {
+                    string lowerStatus = status.ToLowerInvariant();
+                    filteredNews = filteredNews.Where(n => n.NewsStatus != null && n.NewsStatus.ToLowerInvariant() == lowerStatus);
+                }
+
+                var sortedNews = filteredNews.OrderByDescending(n => n.CreatedDate);
+                var finalNewsList = sortedNews.ToList();
+                int totalItems = finalNewsList.Count;
+                int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+                var pagedNews = finalNewsList.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+
+                var viewModel = new NewsListViewModel
+                {
+                    NewsList = pagedNews,
+                    CurrentPage = page,
+                    TotalPages = totalPages,
+                    Search = search,
+                    FromDate = fromDate,
+                    ToDate = toDate,
+                    Status = status
+                };
+
+                return View(viewModel);
             }
             catch (Exception ex)
             {
                 TempData["ErrorMessage"] = "Lỗi kết nối đến server: " + ex.Message;
-                return View(new List<NewsViewModel>());
+                return View(new NewsListViewModel { NewsList = new List<NewsViewModel>() });
             }
         }
 
@@ -640,6 +769,35 @@ namespace FE_Capstone_Project.Controllers
             {
                 TempData["ErrorMessage"] = "Lỗi hệ thống: " + ex.Message;
                 return View(model);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ViewNews(int id)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"News/{id}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    TempData["ErrorMessage"] = "Không tìm thấy tin tức.";
+                    return RedirectToAction("News");
+                }
+
+                var content = await response.Content.ReadAsStringAsync();
+
+                var newsItem = JsonSerializer.Deserialize<EditNewsModel>(content, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                ViewData["Title"] = $"Xem chi tiết Tin - {newsItem?.Title}";
+                return View("ViewNews", newsItem);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Lỗi kết nối đến server: " + ex.Message;
+                return RedirectToAction("News");
             }
         }
 
@@ -743,6 +901,43 @@ namespace FE_Capstone_Project.Controllers
             }
 
             return RedirectToAction("News");
+        }
+        private string GetTourImageUrl(TourViewModel tour)
+        {
+            if (tour.TourImages != null && tour.TourImages.Any())
+            {
+                var firstImage = tour.TourImages.First();
+
+                // Nếu image là base64 string
+                if (firstImage.Image.StartsWith("data:image"))
+                {
+                    return firstImage.Image;
+                }
+                // Nếu image là đường dẫn tương đối
+                else if (!string.IsNullOrEmpty(firstImage.Image))
+                {
+                    // Sử dụng endpoint mới từ BE để lấy ảnh
+                    return $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(firstImage.Image)}";
+                }
+            }
+
+            // Trả về ảnh mặc định
+            return $"{BASE_API_URL}Tour/GetImage?path=images/default-tour.jpg";
+        }
+
+        // Phương thức helper để lấy URL ảnh từ đường dẫn
+        private string GetImageUrl(string imagePath)
+        {
+            if (string.IsNullOrEmpty(imagePath))
+                return $"{BASE_API_URL}Tour/GetImage?path=images/default-tour.jpg";
+
+            if (imagePath.StartsWith("data:image"))
+                return imagePath;
+
+            if (imagePath.StartsWith("http"))
+                return imagePath;
+
+            return $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(imagePath)}";
         }
     }
 }

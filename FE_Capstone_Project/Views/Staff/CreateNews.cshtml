@@ -1,6 +1,6 @@
 ﻿@model FE_Capstone_Project.Models.NewsCreateModel
 @{
-    ViewData["Title"] = "Tạo Tin tức Mới";
+    ViewData["Title"] = "Create News";
     Layout = "~/Views/Shared/_StaffLayout.cshtml";
 }
 
@@ -9,11 +9,8 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0 text-dark">@ViewData["Title"]</h1>
         <div>
-            <a href="@Url.Action("TestApi", "Staff")" class="btn btn-info me-2" target="_blank">
-                <i class="bi bi-bug me-2"></i>Test API
-            </a>
             <a href="@Url.Action("News")" class="btn btn-secondary">
-                <i class="bi bi-arrow-left me-2"></i>Quay lại
+                <i class="bi bi-arrow-left me-2"></i>Come back
             </a>
         </div>
     </div>
@@ -35,8 +32,8 @@
                     <!-- Left column -->
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label asp-for="Title" class="form-label fw-bold">Tiêu đề *</label>
-                            <input asp-for="Title" class="form-control" placeholder="Nhập tiêu đề bài viết..." />
+                            <label asp-for="Title" class="form-label fw-bold">Title *</label>
+                            <input asp-for="Title" class="form-control" placeholder="Enter the article title..." />
                             <span asp-validation-for="Title" class="text-danger"></span>
                         </div>
 
@@ -47,12 +44,12 @@
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="NewsStatus" class="form-label fw-bold">Trạng thái *</label>
+                            <label asp-for="NewsStatus" class="form-label fw-bold">Status *</label>
                             <select asp-for="NewsStatus" class="form-select">
-                                <option value="">-- Chọn trạng thái --</option>
-                                <option value="0">Draft (Nháp)</option>
-                                <option value="1">Published (Đã đăng)</option>
-                                <option value="2">Archived (Lưu trữ)</option>
+                                <option value="">-- Select status --</option>
+                                <option value="0">Hidden</option>
+                                <option value="1">Published</option>
+                                <option value="2">Draft</option>
                             </select>
                             <span asp-validation-for="NewsStatus" class="text-danger"></span>
                         </div>
@@ -61,14 +58,14 @@
                     <!-- Right column -->
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label asp-for="Image" class="form-label fw-bold">Ảnh đại diện (Tùy chọn)</label>
+                            <label asp-for="Image" class="form-label fw-bold">Image (Optional)</label>
                             <input asp-for="Image" type="file" class="form-control" accept="image/*" name="imageFile" />
-                            <small class="text-muted">Chọn ảnh để hiển thị cùng bài viết.</small>
+                            <small class="text-muted">Select an image to display with the article.</small>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="Content" class="form-label fw-bold">Nội dung *</label>
-                            <textarea asp-for="Content" class="form-control" rows="6" placeholder="Nhập nội dung chi tiết..."></textarea>
+                            <label asp-for="Content" class="form-label fw-bold">Contents*</label>
+                            <textarea asp-for="Content" class="form-control" rows="6" placeholder="Enter details..."></textarea>
                             <span asp-validation-for="Content" class="text-danger"></span>
                         </div>
                     </div>
@@ -77,10 +74,10 @@
                 <!-- Buttons -->
                 <div class="d-flex gap-2 mt-3">
                     <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-circle me-2"></i>Tạo Tin Tức
+                        <i class="bi bi-check-circle me-2"></i>Create News
                     </button>
                     <a href="@Url.Action("News")" class="btn btn-secondary">
-                        <i class="bi bi-x-circle me-2"></i>Hủy
+                        <i class="bi bi-x-circle me-2"></i>Cancel
                     </a>
                 </div>
             </form>
