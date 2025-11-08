@@ -325,7 +325,14 @@ namespace FE_Capstone_Project.Controllers
                 ViewBag.Locations = locSuccess ? locations : new List<Location>();
                 ViewBag.Categories = catSuccess ? categories : new List<TourCategory>();
                 ViewBag.CancelConditions = cancelSuccess ? cancelConditions : new List<CancelCondition>();
-
+                ViewBag.BaseApiUrl = BASE_API_URL;
+                var currentTourImages = result.Tour.TourImages?.Select(img => new TourImageViewModel
+                {
+                    Id = img.Id,
+                    Image = img.Image,
+                    TourId = img.TourId
+                }).ToList() ?? new List<TourImageViewModel>();
+                ViewBag.CurrentTourImages = currentTourImages;
                 var editModel = new TourEditModel
                 {
                     Id = result.Tour.Id,
@@ -375,7 +382,6 @@ namespace FE_Capstone_Project.Controllers
             {
                 var formData = CreateTourFormData(model);
 
-                // SỬA: Gọi API UpdateTour
                 var response = await _httpClient.PostAsync("Tour/UpdateTour", formData);
                 var responseContent = await response.Content.ReadAsStringAsync();
 
@@ -384,7 +390,7 @@ namespace FE_Capstone_Project.Controllers
                 if (response.IsSuccessStatusCode)
                 {
                     TempData["SuccessMessage"] = "Cập nhật tour thành công!";
-                    return RedirectToAction("Tours");
+                    return RedirectToAction("Edit");
                 }
                 else
                 {
@@ -908,24 +914,19 @@ namespace FE_Capstone_Project.Controllers
             {
                 var firstImage = tour.TourImages.First();
 
-                // Nếu image là base64 string
                 if (firstImage.Image.StartsWith("data:image"))
                 {
                     return firstImage.Image;
                 }
-                // Nếu image là đường dẫn tương đối
                 else if (!string.IsNullOrEmpty(firstImage.Image))
                 {
-                    // Sử dụng endpoint mới từ BE để lấy ảnh
                     return $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(firstImage.Image)}";
                 }
             }
 
-            // Trả về ảnh mặc định
             return $"{BASE_API_URL}Tour/GetImage?path=images/default-tour.jpg";
         }
 
-        // Phương thức helper để lấy URL ảnh từ đường dẫn
         private string GetImageUrl(string imagePath)
         {
             if (string.IsNullOrEmpty(imagePath))

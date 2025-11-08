@@ -253,7 +253,6 @@ namespace FE_Capstone_Project.Controllers
             }
         }
 
-        // POST: Xóa lịch trình
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
