@@ -67,7 +67,37 @@ namespace BE_Capstone_Project.DAO
                 return false;
             }
         }
+        public async Task<bool> UpdateStaff(User updatedStaff)
+        {
+            try
+            {
+                var existingStaff = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Id == updatedStaff.Id && u.RoleId == (int)RoleType.Staff);
 
+                if (existingStaff == null)
+                    return false;
+
+                existingStaff.FirstName = updatedStaff.FirstName ?? existingStaff.FirstName;
+                existingStaff.LastName = updatedStaff.LastName ?? existingStaff.LastName;
+                existingStaff.Email = updatedStaff.Email ?? existingStaff.Email;
+                existingStaff.PhoneNumber = updatedStaff.PhoneNumber ?? existingStaff.PhoneNumber;
+                existingStaff.Image = updatedStaff.Image ?? existingStaff.Image;
+                if (!string.IsNullOrEmpty(updatedStaff.PasswordHash))
+                    existingStaff.PasswordHash = updatedStaff.PasswordHash;
+                if (updatedStaff.UserStatus.HasValue)
+                    existingStaff.UserStatus = updatedStaff.UserStatus;
+
+                _context.Users.Update(existingStaff);
+                await _context.SaveChangesAsync();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[UserDAO] UpdateStaff error: {ex.Message}");
+                return false;
+            }
+        }
         public async Task<bool> DeleteUserById(int userId)
         {
             try
@@ -96,10 +126,13 @@ namespace BE_Capstone_Project.DAO
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"An error occurred while retrieving all users: {ex.Message}");
+                Console.WriteLine($"❌ [UserDAO] Error in GetAllUsers: {ex.Message}");
+                if (ex.InnerException != null)
+                    Console.WriteLine($"🔍 Inner: {ex.InnerException.Message}");
                 return new List<User>();
             }
         }
+
 
         public async Task<User?> GetUserById(int userId)
         {
