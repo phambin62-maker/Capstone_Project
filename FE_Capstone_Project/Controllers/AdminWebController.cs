@@ -17,6 +17,13 @@ namespace FE_Capstone_Project.Controllers
             _httpClient = httpClientFactory.CreateClient();
 
         }
-        
+        public IActionResult Account()
+        {
+            return View();
+        }
+        public IActionResult Report()
+        {
+            return View();
+        }
     }
 }
