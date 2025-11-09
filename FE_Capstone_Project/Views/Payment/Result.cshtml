@@ -1,0 +1,21 @@
+﻿@model PaymentResultViewModel
+
+<h2>Payment Result</h2>
+
+@if (Model.Success)
+{
+    <div class="alert alert-success">
+        <p><strong>Payment Successful!</strong></p>
+        <p><strong>Order:</strong> @Model.OrderDescription</p>
+        <p><strong>Amount:</strong> @Model.Amount</p>
+        <p><strong>Transaction ID:</strong> @Model.TransactionId</p>
+        <p><strong>Method:</strong> @Model.PaymentMethod</p>
+    </div>
+}
+else
+{
+    <div class="alert alert-danger">
+        <p><strong>Payment Failed!</strong></p>
+        <p>@Model.Error</p>
+    </div>
+}

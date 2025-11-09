@@ -39,16 +39,27 @@ namespace FE_Capstone_Project.Controllers
             if (!ModelState.IsValid)
                 return BadRequest("Invalid booking data.");
 
-            // Example: Save booking to database
-            // var booking = new Booking { ... };
-            // await _context.Bookings.AddAsync(booking);
-            // await _context.SaveChangesAsync();
+            var username = HttpContext.Session.GetString("UserName");
 
-            // For now, just confirm receipt
-            Console.WriteLine($"request: {request.ToString()}");
+            var bookingResponse = await _apiHelper.PostAsync<BookingRequest, BookingResponse>($"Booking?username={username}", request);
+            
+            if (bookingResponse == null || !bookingResponse.Success)
+                return BadRequest("Booking failed.");
 
-            // Redirect or return confirmation
-            return RedirectToAction("Tours", "TourWeb");
+            var paymentRequest = new PaymentRequest()
+            {
+                OrderType = "Tour",
+                Amount = bookingResponse.TotalPrice,
+                OrderDescription = $"Booking #{bookingResponse.BookingId} - {bookingResponse.TourName}",
+                Name = $"{bookingResponse.FirstName} {bookingResponse.LastName}",
+            };
+
+            var paymentResponse = await _apiHelper.PostAsync<PaymentRequest, PaymentResponse>($"Payment/create-payment", paymentRequest);
+
+            if (paymentResponse == null || string.IsNullOrEmpty(paymentResponse.PaymentUrl))
+                return BadRequest("Failed to create payment URL.");
+
+            return Redirect(paymentResponse.PaymentUrl);
         }
     }
 }

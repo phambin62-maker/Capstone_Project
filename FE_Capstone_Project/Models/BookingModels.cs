@@ -4,11 +4,11 @@ namespace FE_Capstone_Project.Models
 {
     public class TravelerDTO
     {
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public string Email { get; set; }
-        public string PhoneNumber { get; set; }
-        public string IdentityID { get; set; }
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string PhoneNumber { get; set; } = string.Empty;
+        public string IdentityID { get; set; } = string.Empty;
         public CustomerType CustomerType { get; set; }
 
         public override string ToString()
@@ -25,13 +25,13 @@ namespace FE_Capstone_Project.Models
         public int Children { get; set; }
         public int Infants { get; set; }
 
-        public string First_Name { get; set; }
-        public string Last_Name { get; set; }
-        public string Email { get; set; }
-        public string Phone { get; set; }
-        public string Certificate_Id { get; set; }
+        public string First_Name { get; set; } = string.Empty;
+        public string Last_Name { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
+        public string Certificate_Id { get; set; } = string.Empty;
 
-        public List<TravelerDTO> Travelers { get; set; }
+        public List<TravelerDTO> Travelers { get; set; } = new();
 
         public override string ToString()
         {
@@ -46,6 +46,27 @@ namespace FE_Capstone_Project.Models
                    $"  Email: {Email}, Phone: {Phone}\n" +
                    $"  Certificate ID: {Certificate_Id}\n" +
                    $"  Travelers:\n  {travelerInfo}";
+        }
+    }
+
+    public class BookingResponse
+    {
+        public int BookingId { get; set; }
+        public int TotalPrice { get; set; }
+        public string TourName { get; set; } = string.Empty;
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+        public bool Success { get; set; }
+
+        public override string ToString()
+        {
+            return $"Booking Success: {Success}\n" +
+                   $"Booking ID: {BookingId}\n" +
+                   $"Tour Name: {TourName}\n" +
+                   $"Customer: {FirstName} {LastName}\n" +
+                   $"Total Price: {TotalPrice:C}\n" +
+                   $"Message: {Message}";
         }
     }
 }
