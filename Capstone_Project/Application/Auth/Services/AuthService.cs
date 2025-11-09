@@ -34,6 +34,16 @@ namespace BE_Capstone_Project.Application.Auth.Services
                 : (user.Email ?? $"User_{user.Id}");
 
             var email = user.Email ?? "";
+            
+            // Convert roleId to role name for authorization
+            var roleName = user.RoleId switch
+            {
+                1 => "Admin",
+                2 => "Staff",
+                3 => "Customer",
+                _ => "Customer"
+            };
+            
             var roleId = user.RoleId > 0 ? user.RoleId.ToString() : ((int)RoleType.Customer).ToString();
 
             var claims = new List<Claim>
@@ -41,7 +51,8 @@ namespace BE_Capstone_Project.Application.Auth.Services
         new Claim("UserId", user.Id.ToString()),
         new Claim(JwtRegisteredClaimNames.UniqueName, username),
         new Claim(JwtRegisteredClaimNames.Email, email),
-        new Claim(ClaimTypes.Role, roleId),
+        new Claim(ClaimTypes.Role, roleName), // Use role name for authorization
+        new Claim("RoleId", roleId), // Keep roleId for reference
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
     };
 

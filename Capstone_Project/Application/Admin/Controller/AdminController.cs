@@ -8,6 +8,7 @@ namespace BE_Capstone_Project.Application.Admin.Controller
 {
     [ApiController]
     [Route("api/admin")]
+    [Authorize(Roles = "Admin")] // Chỉ Admin mới được truy cập
     public class AdminController : ControllerBase
     {
         private readonly IAdminService _adminService;
@@ -78,6 +79,137 @@ namespace BE_Capstone_Project.Application.Admin.Controller
                 return BadRequest(new { result.Message });
 
             return Ok(new { result.Message });
+        }
+
+        // Get account statistics
+        [HttpGet("accounts/statistics")]
+        public async Task<IActionResult> GetAccountStatistics()
+        {
+            try
+            {
+                var statistics = await _adminService.GetAccountStatisticsAsync();
+                return Ok(statistics);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ [GetAccountStatistics] Failed to retrieve statistics");
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
+
+        // Get filtered accounts with pagination
+        [HttpGet("accounts")]
+        public async Task<IActionResult> GetFilteredAccounts(
+            [FromQuery] int? roleId,
+            [FromQuery] string? status,
+            [FromQuery] string? search,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
+        {
+            try
+            {
+                var result = await _adminService.GetFilteredAccountsAsync(roleId, status, search, page, pageSize);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ [GetFilteredAccounts] Failed to retrieve accounts");
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
+
+        // Get account by ID
+        [HttpGet("account/{id}")]
+        public async Task<IActionResult> GetAccountById(int id)
+        {
+            try
+            {
+                var account = await _adminService.GetAccountByIdAsync(id);
+                if (account == null)
+                    return NotFound(new { Message = "Account not found" });
+
+                return Ok(new
+                {
+                    id = account.Id,
+                    firstName = account.FirstName,
+                    lastName = account.LastName,
+                    email = account.Email,
+                    phoneNumber = account.PhoneNumber,
+                    roleId = account.RoleId,
+                    role = account.RoleId switch
+                    {
+                        1 => "Admin",
+                        2 => "Staff",
+                        _ => "Customer"
+                    },
+                    userStatus = account.UserStatus?.ToString() ?? "Unknown"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ [GetAccountById] Failed to retrieve account");
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
+
+        // Update account
+        [HttpPut("account/{id}")]
+        public async Task<IActionResult> UpdateAccount(int id, [FromBody] UpdateAccountDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var result = await _adminService.UpdateAccountAsync(id, dto);
+                if (!result.Success)
+                    return BadRequest(new { result.Message });
+
+                return Ok(new { result.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ [UpdateAccount] Failed to update account");
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
+
+        // Delete account
+        [HttpDelete("account/{id}")]
+        public async Task<IActionResult> DeleteAccount(int id)
+        {
+            try
+            {
+                var result = await _adminService.DeleteAccountAsync(id);
+                if (!result.Success)
+                    return BadRequest(new { result.Message });
+
+                return Ok(new { result.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ [DeleteAccount] Failed to delete account");
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
+
+        // Set account status (for all account types)
+        [HttpPut("account/{id}/status")]
+        public async Task<IActionResult> SetAccountStatus(int id, [FromQuery] bool isActive)
+        {
+            try
+            {
+                var result = await _adminService.SetAccountStatusAsync(id, isActive);
+                if (!result.Success)
+                    return BadRequest(new { result.Message });
+
+                return Ok(new { result.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ [SetAccountStatus] Failed to update account status");
+                return StatusCode(500, "Internal Server Error");
+            }
         }
     }
 }

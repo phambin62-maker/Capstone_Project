@@ -81,8 +81,36 @@ public async Task<IActionResult> Register([FromBody] RegisterDto request)
         public async Task<IActionResult> Login([FromBody] LoginDto request)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
-            if (user == null || !VerifyPassword(request.Password, user.PasswordHash))
+            
+            // Check if user exists
+            if (user == null)
                 return Unauthorized("Invalid username or password");
+
+            // Check if password is correct
+            if (!VerifyPassword(request.Password, user.PasswordHash))
+                return Unauthorized("Invalid username or password");
+
+            // Check if account is banned
+            if (user.UserStatus == UserStatus.Banned)
+            {
+                return Unauthorized(new 
+                { 
+                    message = "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên để được hỗ trợ.",
+                    error = "AccountBanned",
+                    status = "Banned"
+                });
+            }
+
+            // Check if account is active
+            if (user.UserStatus != UserStatus.Active)
+            {
+                return Unauthorized(new 
+                { 
+                    message = "Tài khoản của bạn chưa được kích hoạt. Vui lòng liên hệ quản trị viên.",
+                    error = "AccountInactive",
+                    status = user.UserStatus?.ToString() ?? "Unknown"
+                });
+            }
 
             var token = _authService.GenerateJwtToken(user);
             return Ok(new {user.FirstName,user.RoleId, token });
@@ -132,7 +160,21 @@ public async Task<IActionResult> Register([FromBody] RegisterDto request)
             var result = await _userService.SyncGoogleUserAsync(dto);
 
             if (!result.Success)
-                return StatusCode(500, new { result.Message });
+            {
+                // Check if it's a banned account error
+                if (result.Message.Contains("bị khóa") || result.Message.Contains("banned"))
+                {
+                    return Unauthorized(new 
+                    { 
+                        message = result.Message,
+                        error = "AccountBanned",
+                        status = "Banned"
+                    });
+                }
+                
+                // Other errors return 500
+                return StatusCode(500, new { message = result.Message });
+            }
 
             return Ok(new
             {

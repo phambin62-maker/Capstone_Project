@@ -60,6 +60,20 @@ namespace BE_Capstone_Project.Application.Services
                 {
                     _logger.LogInformation($"User Google đã tồn tại: {dto.Email} (ID={existingUser.Id})");
 
+                    // Check if account is banned
+                    if (existingUser.UserStatus == UserStatus.Banned)
+                    {
+                        _logger.LogWarning($"User Google bị banned cố gắng đăng nhập: {dto.Email}");
+                        return (false, "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên để được hỗ trợ.", null, null);
+                    }
+
+                    // Check if account is active
+                    if (existingUser.UserStatus != UserStatus.Active)
+                    {
+                        _logger.LogWarning($"User Google chưa được kích hoạt: {dto.Email}");
+                        return (false, "Tài khoản của bạn chưa được kích hoạt. Vui lòng liên hệ quản trị viên.", null, null);
+                    }
+
                     // Sinh token JWT cho user đã tồn tại
                     var existingToken = _authService.GenerateJwtToken(existingUser);
 
