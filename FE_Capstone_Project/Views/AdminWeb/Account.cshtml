@@ -93,7 +93,7 @@
                 <div class="row mb-3">
                     <div class="col-md-3">
                         <label class="form-label">Vai trò</label>
-                        <select class="form-select">
+                        <select id="filterRole" class="form-select">
                             <option value="">Tất cả vai trò</option>
                             <option value="Admin">Admin</option>
                             <option value="Staff">Staff</option>
@@ -102,7 +102,7 @@
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Trạng thái</label>
-                        <select class="form-select">
+                        <select id="filterStatus" class="form-select">
                             <option value="">Tất cả trạng thái</option>
                             <option value="Active">Đang hoạt động</option>
                             <option value="Inactive">Bị khóa</option>
@@ -110,10 +110,10 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Tìm kiếm</label>
-                        <input type="text" class="form-control" placeholder="Tìm theo tên, email...">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Tìm theo tên, email..." onkeypress="handleSearchKeyPress(event)">
                     </div>
                     <div class="col-md-2 d-flex align-items-end">
-                        <button class="btn btn-secondary w-100">
+                        <button class="btn btn-secondary w-100" onclick="applyFilters()">
                             <i class="bi bi-funnel me-2"></i>Lọc
                         </button>
                     </div>
@@ -182,11 +182,11 @@
                        @*  <td>@user..ToString("dd/MM/yyyy")</td>
                         <td>@user.crea.ToString("dd/MM/yyyy HH:mm")</td> *@
                         <td class="text-center">
-                            <button class="btn btn-sm btn-info" title="Xem chi tiết">
+                            <button class="btn btn-sm btn-info" title="Xem chi tiết" onclick="viewAccountDetail(@user.Id)">
                                 <i class="bi bi-eye"></i>
                             </button>
                             <button class="btn btn-sm btn-warning" title="Chỉnh sửa"
-                                    data-bs-toggle="modal" data-bs-target="#editAccountModal">
+                                    onclick="loadAccountForEdit(@user.Id)" data-bs-toggle="modal" data-bs-target="#editAccountModal">
                                 <i class="bi bi-pencil"></i>
                             </button>
                             <button class="btn btn-sm btn-danger" title="Xóa"
@@ -313,35 +313,41 @@
             </div>
             <div class="modal-body">
                 <form id="editAccountForm">
+                    <input type="hidden" name="Id" id="editAccountId">
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Họ <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" value="Nguyễn Văn" required>
+                            <input type="text" class="form-control" name="FirstName" required>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Tên <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" value="A" required>
+                            <input type="text" class="form-control" name="LastName" required>
                         </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Email <span class="text-danger">*</span></label>
-                        <input type="email" class="form-control" value="nguyenvana@example.com" required>
+                        <input type="email" class="form-control" name="Email" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Số điện thoại</label>
-                        <input type="tel" class="form-control" value="0123456789">
+                        <input type="tel" class="form-control" name="PhoneNumber">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Vai trò <span class="text-danger">*</span></label>
-                        <select class="form-select" required>
-                            <option value="Admin" selected>Admin</option>
+                        <select class="form-select" name="Role" required>
+                            <option value="">Chọn vai trò</option>
+                            <option value="Admin">Admin</option>
                             <option value="Staff">Staff</option>
                             <option value="Customer">Customer</option>
                         </select>
                     </div>
+                    <div class="mb-3" id="passwordResetSection" style="display: none;">
+                        <label class="form-label">Mật khẩu mới <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" name="Password" id="editPassword">
+                    </div>
                     <div class="mb-3">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="resetPassword">
+                            <input class="form-check-input" type="checkbox" id="resetPassword" onchange="togglePasswordField()">
                             <label class="form-check-label" for="resetPassword">
                                 Đặt lại mật khẩu
                             </label>

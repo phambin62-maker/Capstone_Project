@@ -34,6 +34,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpPost("AddTour")]
+        [Authorize(Roles = "Admin,Staff")] // Chỉ Admin và Staff mới được thêm tour
         public async Task<IActionResult> AddTour([FromForm] TourDTO tour, [FromForm] List<IFormFile> images)
         {
             var tourToAdd = new Tour
@@ -98,6 +99,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpPost("UpdateTour")]
+        [Authorize(Roles = "Admin,Staff")] // Chỉ Admin và Staff mới được cập nhật tour
         public async Task<IActionResult> UpdateTour([FromForm] TourDTO tour, [FromForm] List<IFormFile> images)
         {
             var tourToUpdate = await _tourService.GetTourById(tour.Id.Value);
@@ -181,6 +183,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpDelete("DeleteTour")]
+        [Authorize(Roles = "Admin,Staff")] // Chỉ Admin và Staff mới được xóa tour
         public async Task<IActionResult> DeleteTour(int tourId)
         {
             var imagesToDelete = await _tourImageService.GetTourImagesByTourId(tourId);
@@ -197,6 +200,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpGet("GetAllTours")]
+        [AllowAnonymous] // Tất cả đều có thể xem danh sách tour
         public async Task<IActionResult> GetAllTours()
         {
             var tours = await _tourService.GetAllTours();
@@ -208,6 +212,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpGet("GetTourById/{id}")]
+        [AllowAnonymous] // Tất cả đều có thể xem chi tiết tour
         public async Task<IActionResult> GetTourById(int id, [FromQuery] string? username)
         {
             var tour = await _tourService.GetTourById(id);

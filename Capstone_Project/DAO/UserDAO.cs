@@ -1,4 +1,5 @@
-﻿using BE_Capstone_Project.Domain.Enums;
+﻿using System;
+using BE_Capstone_Project.Domain.Enums;
 using BE_Capstone_Project.Domain.Models;
 using BE_Capstone_Project.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -98,22 +99,99 @@ namespace BE_Capstone_Project.DAO
                 return false;
             }
         }
+        public async Task<bool> HasRelatedBookings(int userId)
+        {
+            try
+            {
+                return await _context.Bookings.AnyAsync(b => b.UserId == userId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[UserDAO] Error checking related bookings: {ex.Message}");
+                return false;
+            }
+        }
+
         public async Task<bool> DeleteUserById(int userId)
         {
             try
             {
                 var user = await _context.Users.FindAsync(userId);
-                if (user != null)
+                if (user == null)
+                    return false;
+
+                
+                
+                // Delete Reviews (has FK to Booking, so delete first)
+                var reviews = await _context.Reviews.Where(r => r.UserId == userId).ToListAsync();
+                if (reviews.Any())
                 {
-                    _context.Users.Remove(user);
-                    await _context.SaveChangesAsync();
-                    return true;
+                    _context.Reviews.RemoveRange(reviews);
                 }
-                return false;
+
+                //  Delete Bookings (has FK to TourSchedule, but we only delete user's bookings)
+                var bookings = await _context.Bookings.Where(b => b.UserId == userId).ToListAsync();
+                if (bookings.Any())
+                {
+                    // Delete BookingCustomers related to these bookings
+                    var bookingIds = bookings.Select(b => b.Id).ToList();
+                    var bookingCustomers = await _context.BookingCustomers
+                        .Where(bc => bookingIds.Contains(bc.BookingId))
+                        .ToListAsync();
+                    if (bookingCustomers.Any())
+                    {
+                        _context.BookingCustomers.RemoveRange(bookingCustomers);
+                    }
+                    
+                    _context.Bookings.RemoveRange(bookings);
+                }
+
+                //  Delete Notifications
+                var notifications = await _context.Notifications.Where(n => n.UserId == userId).ToListAsync();
+                if (notifications.Any())
+                {
+                    _context.Notifications.RemoveRange(notifications);
+                }
+
+                // Delete News
+                var news = await _context.News.Where(n => n.UserId == userId).ToListAsync();
+                if (news.Any())
+                {
+                    _context.News.RemoveRange(news);
+                }
+
+                //  Delete Wishlists
+                var wishlists = await _context.Wishlists.Where(w => w.UserId == userId).ToListAsync();
+                if (wishlists.Any())
+                {
+                    _context.Wishlists.RemoveRange(wishlists);
+                }
+
+                //  Delete Chats (both as Customer and Staff)
+                var chats = await _context.Chats
+                    .Where(c => c.CustomerId == userId || c.StaffId == userId)
+                    .ToListAsync();
+                if (chats.Any())
+                {
+                    _context.Chats.RemoveRange(chats);
+                }
+
+                // Save all deletions
+                await _context.SaveChangesAsync();
+
+                //  Finally, delete the User
+                _context.Users.Remove(user);
+                await _context.SaveChangesAsync();
+
+                return true;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"An error occurred while deleting the user with ID {userId}: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                }
                 return false;
             }
         }
@@ -221,6 +299,132 @@ namespace BE_Capstone_Project.DAO
             catch (Exception ex)
             {
                 Console.WriteLine($"An error occurred while checking if email {email} exists: {ex.Message}");
+                return false;
+            }
+        }
+        
+
+        // Get account statistics
+        public async Task<(int Total, int Active, int Inactive)> GetAccountStatisticsAsync()
+        {
+            try
+            {
+                var now = DateTime.Now;
+                var startOfMonth = new DateTime(now.Year, now.Month, 1);
+
+                var total = await _context.Users.CountAsync();
+                var active = await _context.Users.CountAsync(u => u.UserStatus == UserStatus.Active);
+                var inactive = await _context.Users.CountAsync(u => u.UserStatus == UserStatus.Banned);
+                return (total, active, inactive);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[UserDAO] Error in GetAccountStatisticsAsync: {ex.Message}");
+                return (0, 0, 0);
+            }
+        }
+
+        // Get filtered accounts with pagination
+        public async Task<(List<User> Users, int TotalCount)> GetFilteredAccountsAsync(
+            int? roleId = null,
+            UserStatus? status = null,
+            string? search = null,
+            int page = 1,
+            int pageSize = 10)
+        {
+            try
+            {
+                var query = _context.Users.AsQueryable();
+
+                // Filter by role
+                if (roleId.HasValue)
+                {
+                    query = query.Where(u => u.RoleId == roleId.Value);
+                }
+
+                // Filter by status
+                if (status.HasValue)
+                {
+                    query = query.Where(u => u.UserStatus == status.Value);
+                }
+
+                // Search by name or email
+                if (!string.IsNullOrWhiteSpace(search))
+                {
+                    search = search.ToLower();
+                    query = query.Where(u =>
+                        (u.FirstName != null && u.FirstName.ToLower().Contains(search)) ||
+                        (u.LastName != null && u.LastName.ToLower().Contains(search)) ||
+                        (u.Email != null && u.Email.ToLower().Contains(search)) ||
+                        (u.Username != null && u.Username.ToLower().Contains(search))
+                    );
+                }
+
+                var totalCount = await query.CountAsync();
+
+                var users = await query
+                    .OrderByDescending(u => u.Id)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                return (users, totalCount);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[UserDAO] Error in GetFilteredAccountsAsync: {ex.Message}");
+                return (new List<User>(), 0);
+            }
+        }
+
+        // Update account
+        public async Task<bool> UpdateAccountAsync(User user)
+        {
+            try
+            {
+                var existingUser = await _context.Users.FindAsync(user.Id);
+                if (existingUser == null)
+                    return false;
+
+                existingUser.FirstName = user.FirstName ?? existingUser.FirstName;
+                existingUser.LastName = user.LastName ?? existingUser.LastName;
+                existingUser.Email = user.Email ?? existingUser.Email;
+                existingUser.PhoneNumber = user.PhoneNumber ?? existingUser.PhoneNumber;
+                existingUser.RoleId = user.RoleId;
+                
+                if (!string.IsNullOrEmpty(user.PasswordHash))
+                    existingUser.PasswordHash = user.PasswordHash;
+
+                _context.Users.Update(existingUser);
+                await _context.SaveChangesAsync();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[UserDAO] Error in UpdateAccountAsync: {ex.Message}");
+                return false;
+            }
+        }
+
+        // Set account status (for all account types, not just staff)
+        public async Task<bool> SetAccountStatusAsync(int userId, bool isActive)
+        {
+            try
+            {
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null)
+                    return false;
+
+                user.UserStatus = isActive ? UserStatus.Active : UserStatus.Banned;
+                _context.Users.Update(user);
+                await _context.SaveChangesAsync();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[UserDAO] Error in SetAccountStatusAsync: {ex.Message}");
                 return false;
             }
         }
