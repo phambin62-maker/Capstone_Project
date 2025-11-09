@@ -1,6 +1,7 @@
 ﻿@{
     ViewData["Title"] = "Quản lý tài khoản";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    @model List<FE_Capstone_Project.Models.AccountViewModel>
 }
 
 <div class="row mb-4">
@@ -119,135 +120,93 @@
                 </div>
 
                 <!-- Table -->
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead>
-                            <tr>
-                                <th>#ID</th>
-                                <th>Họ tên</th>
-                                <th>Email</th>
-                                <th>Vai trò</th>
-                                <th>Trạng thái</th>
-                                <th>Ngày tạo</th>
-                                <th class="text-center">Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>#001</td>
-                                <td>
-                                    <div class="avatar-sm">
-                                        <img src="https://ui-avatars.com/api/?name=Nguyen+Van+A&background=0D8ABC&color=fff"
-                                             class="rounded-circle" alt="Avatar">
-                                    </div>
-                                </td>
-                                <td>
-                                    <strong>Nguyễn Văn A</strong>
-                                </td>
-                                <td>nguyenvana@example.com</td>
-                                <td><span class="badge bg-danger">Admin</span></td>
-                                <td>
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" checked
-                                               onchange="toggleAccountStatus(this, 1)">
-                                        <label class="form-check-label text-success">
-                                            <small>Hoạt động</small>
-                                        </label>
-                                    </div>
-                                </td>
-                                <td>15/01/2024</td>
-                                <td>07/11/2025 14:30</td>
-                                <td class="text-center">
-                                    <button class="btn btn-sm btn-info" title="Xem chi tiết">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-warning" title="Chỉnh sửa"
-                                            data-bs-toggle="modal" data-bs-target="#editAccountModal">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-danger" title="Xóa"
-                                            onclick="confirmDelete(1)">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>#002</td>
-                                <td>
-                                    <div class="avatar-sm">
-                                        <img src="https://ui-avatars.com/api/?name=Tran+Thi+B&background=28A745&color=fff"
-                                             class="rounded-circle" alt="Avatar">
-                                    </div>
-                                </td>
-                                <td>
-                                    <strong>Trần Thị B</strong>
-                                </td>
-                                <td>tranthib@example.com</td>
-                                <td><span class="badge bg-primary">Staff</span></td>
-                                <td>
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" checked
-                                               onchange="toggleAccountStatus(this, 2)">
-                                        <label class="form-check-label text-success">
-                                            <small>Hoạt động</small>
-                                        </label>
-                                    </div>
-                                </td>
-                                <td>20/02/2024</td>
-                                <td>08/11/2025 09:15</td>
-                                <td class="text-center">
-                                    <button class="btn btn-sm btn-info" title="Xem chi tiết">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-warning" title="Chỉnh sửa">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-danger" title="Xóa"
-                                            onclick="confirmDelete(2)">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>#003</td>
-                                <td>
-                                    <div class="avatar-sm">
-                                        <img src="https://ui-avatars.com/api/?name=Le+Van+C&background=6C757D&color=fff"
-                                             class="rounded-circle" alt="Avatar">
-                                    </div>
-                                </td>
-                                <td>
-                                    <strong>Lê Văn C</strong>
-                                </td>
-                                <td>levanc@example.com</td>
-                                <td><span class="badge bg-secondary">Customer</span></td>
-                                <td>
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox"
-                                               onchange="toggleAccountStatus(this, 3)">
-                                        <label class="form-check-label text-danger">
-                                            <small>Bị khóa</small>
-                                        </label>
-                                    </div>
-                                </td>
-                                <td>10/03/2024</td>
-                                <td>05/11/2025 16:45</td>
-                                <td class="text-center">
-                                    <button class="btn btn-sm btn-info" title="Xem chi tiết">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-warning" title="Chỉnh sửa">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-danger" title="Xóa"
-                                            onclick="confirmDelete(3)">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>#ID</th>
+                <th>Họ tên</th>
+                <th>Email</th>
+                <th>Vai trò</th>
+                <th>Trạng thái</th>
+@*                 <th>Ngày tạo</th>
+                <th>Cập nhật</th> *@
+                <th class="text-center">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                @foreach (var user in Model)
+                                {var fullName = $"{user.LastName} {user.FirstName}";
+    var roleName = user.RoleId switch
+    {
+        1 => "Admin",
+        2 => "Staff",
+        _ => "Customer"
+    };
+
+                                    var bgColor = user.RoleId switch
+    {
+        1 => "bg-danger",
+        2 => "bg-primary",
+        _ => "bg-secondary"
+    };
+
+
+                    var active = user.UserStatus == "Active";
+                    var avatarUrl = $"https://ui-avatars.com/api/?name={user.FirstName}+{user.LastName}&background=0D8ABC&color=fff";
+                    <tr>
+                        <td>#@user.Id</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <img src="@avatarUrl" class="rounded-circle" style="width:40px;height:40px;" alt="Avatar">
+                                <strong>@fullName</strong>
+                            </div>
+                        </td>
+                        <td>@user.Email</td>
+                                        <td>
+                                            <span class="badge @bgColor">@roleName</span>
+                                        </td>
+                        <td>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       @(active ? "checked" : "")
+                                       onchange="toggleAccountStatus(this, @user.Id)">
+                                <label class="form-check-label @(active ? "text-success" : "text-danger")">
+                                    <small>@(active ? "Hoạt động" : "Bị khóa")</small>
+                                </label>
+                            </div>
+                        </td>
+                       @*  <td>@user..ToString("dd/MM/yyyy")</td>
+                        <td>@user.crea.ToString("dd/MM/yyyy HH:mm")</td> *@
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-info" title="Xem chi tiết">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-warning" title="Chỉnh sửa"
+                                    data-bs-toggle="modal" data-bs-target="#editAccountModal">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" title="Xóa"
+                                    onclick="confirmDelete(@user.Id)">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="8" class="text-center text-muted">Không có tài khoản nào.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
 
                 <!-- Pagination -->
                 <nav aria-label="Page navigation" class="mt-3">
