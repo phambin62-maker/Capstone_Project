@@ -42,5 +42,9 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
         {
             return await _tourImageDAO.GetTourImagesByTourIdAsync(tourId);
         }
+        public async Task<TourImage?> GetTourImageById(int id)
+        {
+            return await _tourImageDAO.GetTourImageByIdAsync(id);
+        }
     }
 }

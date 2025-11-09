@@ -1,4 +1,4 @@
-﻿using BE_Capstone_Project.Application.Bookings.Services;
+﻿using BE_Capstone_Project.Application.BookingManagement.Services.Interfaces;
 using BE_Capstone_Project.Application.Services;
 using BE_Capstone_Project.Application.TourManagement.DTOs;
 using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
@@ -21,16 +21,19 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         private readonly ITourImageService _tourImageService;
         private readonly IUserService _userService;
         private readonly BookingService _bookingService;
+        private readonly ILogger<TourController> _logger;
         public TourController(
             ITourService tourService, 
             ITourImageService tourImageService, 
             IUserService userService, 
-            BookingService bookingService)
+            BookingService bookingService,
+            ILogger<TourController> logger)
         {
             _tourService = tourService;
             _tourImageService = tourImageService;
             _userService = userService;
             _bookingService = bookingService;
+            _logger = logger; 
         }
 
         [HttpPost("AddTour")]
@@ -123,28 +126,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
 
             if (!result) return BadRequest(new { message = "Failed to update tour" });
 
-            var existingTourImages = await _tourImageService.GetTourImagesByTourId(tour.Id.Value);
-
-            // Xóa ảnh cũ nếu có ảnh mới
-            if (images != null && images.Count > 0 && existingTourImages != null && existingTourImages.Count > 0)
-            {
-                await _tourImageService.DeleteTourImagesByTourId(tour.Id.Value);
-
-                // Xóa file vật lý
-                foreach (var oldImage in existingTourImages)
-                {
-                    if (!string.IsNullOrEmpty(oldImage.Image))
-                    {
-                        var oldImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", oldImage.Image.TrimStart('/'));
-                        if (System.IO.File.Exists(oldImagePath))
-                        {
-                            System.IO.File.Delete(oldImagePath);
-                        }
-                    }
-                }
-            }
-
-            // Thêm ảnh mới
+            // CHỈ THÊM: Thêm ảnh mới vào ảnh cũ, không xóa ảnh cũ
             if (images != null && images.Count > 0)
             {
                 foreach (var image in images)
@@ -278,7 +260,14 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
             return Ok(new { message = $"Tours in price range {minPrice}-{maxPrice} found successfully", tours });
         }
 
-
+        [HttpGet("GetToursByScheduleId/{scheduleId}")]
+        public async Task<IActionResult> GetTourByScheduleId(int scheduleId)
+        {
+            var tour = await _tourService.GetTourByScheduleId(scheduleId);
+            if (tour == null)
+                return NotFound(new { message = $"No tour found with schedule id {scheduleId}" });
+            return Ok(new { message = $"Tour with schedule id {scheduleId} found successfully", tour });
+        }
 
         [HttpGet("SearchTourByName")]
         public async Task<IActionResult> SearchTourByName(string name)
@@ -478,6 +467,104 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
                 ".png" => "image/png",             
                 _ => "application/octet-stream"
             };
+        }
+
+        [HttpDelete("DeleteTourImage")]
+        public async Task<IActionResult> DeleteTourImage(int imageId)
+        {
+            try
+            {
+                _logger.LogInformation($"Attempting to delete tour image with ID: {imageId}");
+
+                // Lấy thông tin image từ database
+                var image = await _tourImageService.GetTourImageById(imageId);
+
+                if (image == null)
+                {
+                    _logger.LogWarning($"Image not found with ID: {imageId}");
+                    return NotFound(new
+                    {
+                        success = false,
+                        message = "Image not found"
+                    });
+                }
+
+                _logger.LogInformation($"Found image: {image.Image}");
+
+                // Xóa file vật lý nếu tồn tại
+                if (!string.IsNullOrEmpty(image.Image))
+                {
+                    try
+                    {
+                        var imagePath = Path.Combine(
+                            Directory.GetCurrentDirectory(),
+                            "wwwroot",
+                            image.Image.TrimStart('/')
+                        );
+
+                        _logger.LogInformation($"Attempting to delete physical file: {imagePath}");
+
+                        if (System.IO.File.Exists(imagePath))
+                        {
+                            System.IO.File.Delete(imagePath);
+                            _logger.LogInformation($"Physical file deleted successfully");
+                        }
+                        else
+                        {
+                            _logger.LogWarning($"Physical file not found: {imagePath}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, $"Error deleting physical file: {image.Image}");
+                        // Tiếp tục xóa record trong database dù file vật lý không xóa được
+                    }
+                }
+
+                // Xóa record trong database
+                var result = await _tourImageService.DeleteTourImage(imageId);
+
+                if (!result)
+                {
+                    _logger.LogError($"Failed to delete image record from database: {imageId}");
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Failed to delete image from database"
+                    });
+                }
+
+                _logger.LogInformation($"Image deleted successfully: {imageId}");
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "Image deleted successfully"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Exception while deleting image: {imageId}");
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = "Error deleting image",
+                    error = ex.Message
+                });
+            }
+        }
+        [HttpGet("GetActiveTours")]
+        public async Task<ActionResult<ApiResponse<List<Tour>>>> GetActiveTours([FromQuery] string search = "")
+        {
+            try
+            {
+                var tours = await _tourService.GetActiveTours(search);
+                return Ok(new ApiResponse<List<Tour>>(true, "Active tours retrieved successfully", tours));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ApiResponse<List<Tour>>(false, $"An error occurred: {ex.Message}", new List<Tour>()));
+            }
         }
     }
 }

@@ -219,13 +219,78 @@
                                 </h6>
                             </div>
                             <div class="card-body">
-                                <div class="mb-3">
-                                    <label asp-for="Images" class="form-label">Update Tour Images</label>
-                                    <input asp-for="Images" type="file" multiple class="form-control" accept="image/*" />
-                                    <div class="form-text">
-                                        <i class="bi bi-info-circle me-1"></i>Select new images to replace existing ones. Leave empty to keep current images.
+                                <!-- Current Images -->
+                                <div class="mb-4">
+                                    <label class="form-label">Current Images</label>
+                                    <div class="row g-2" id="currentImagesContainer">
+                                        @if (ViewBag.CurrentTourImages != null && ((List<TourImageViewModel>)ViewBag.CurrentTourImages).Count > 0)
+                                        {
+                                            @for (int i = 0; i < ((List<TourImageViewModel>)ViewBag.CurrentTourImages).Count; i++)
+                                            {
+                                                var image = ((List<TourImageViewModel>)ViewBag.CurrentTourImages)[i];
+                                                var imageUrl = $"{ViewBag.BaseApiUrl}Tour/GetImage?path={Uri.EscapeDataString(image.Image)}";
+
+                                                <div class="col-md-3 col-sm-4 col-6">
+                                                    <div class="current-image-container position-relative">
+                                                        <img src="@imageUrl"
+                                                             class="img-fluid rounded border preview-image"
+                                                             style="height: 120px; width: 100%; object-fit: cover; cursor: zoom-in;"
+                                                             alt="Current tour image @(i + 1)"
+                                                             data-image-src="@imageUrl"
+                                                             data-image-index="@i"
+                                                             data-image-name="Image @(i + 1)"
+                                                             onerror="this.src='@($"{ViewBag.BaseApiUrl}Tour/GetImage?path=images/default-tour.jpg")'">
+                                                        <div class="position-absolute top-0 end-0 m-1">
+                                                            <span class="badge bg-dark bg-opacity-75" style="font-size: 0.6rem;">
+                                                                @(i == 0 ? "Main" : (i + 1).ToString())
+                                                            </span>
+                                                        </div>
+                                                        <!-- Nút xóa ảnh -->
+                                                        <div class="position-absolute top-0 start-0 m-1">
+                                                            <button type="button" class="btn btn-danger btn-sm delete-image-btn"
+                                                                    data-image-id="@image.Id"
+                                                                    data-image-name="Image @(i + 1)"
+                                                                    style="padding: 0.1rem 0.3rem; font-size: 0.6rem;">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <div class="col-12 text-center py-4">
+                                                <i class="bi bi-image display-4 text-muted"></i>
+                                                <p class="text-muted mt-2">No images available for this tour</p>
+                                            </div>
+                                        }
                                     </div>
                                 </div>
+
+                                <!-- Update Images -->
+                                <div class="mb-3">
+                                    <label asp-for="Images" class="form-label">Add More Images</label>
+                                    <input asp-for="Images" type="file" multiple class="form-control" accept="image/*"
+                                           id="imageInput" />
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle me-1"></i>Select multiple images to add to existing ones.
+                                        Hold Ctrl/Cmd to select multiple files.
+                                        <br>
+                                        <small class="text-muted" id="imageCountInfo">
+                                            Current: <span id="currentImageCount">@(((List<TourImageViewModel>)ViewBag.CurrentTourImages).Count)</span> images
+                                        </small>
+                                    </div>
+                                    <div class="drop-message text-center mt-2 p-2 border rounded bg-light">
+                                        <i class="bi bi-cloud-arrow-up display-6 text-muted mb-2"></i>
+                                        <p class="mb-1">Drag and drop images here</p>
+                                        <small class="text-muted">or click to browse</small>
+                                    </div>
+                                    <span asp-validation-for="Images" class="text-danger small"></span>
+                                    <div id="imagePreview" class="row g-2 mt-3" style="display: none;">
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
 
@@ -250,9 +315,45 @@
     </div>
 </div>
 
+<!-- Image Preview Modal -->
+<div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="imagePreviewModalLabel">Image Preview</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-0">
+                <img id="previewModalImage" src="" alt="Preview" class="img-fluid" style="max-height: 70vh; object-fit: contain;">
+            </div>
+            <div class="modal-footer bg-light">
+                <div class="me-auto">
+                    <span id="currentImageIndex" class="badge bg-primary">1</span>
+                    <span id="totalImages" class="text-muted">/ 0</span>
+                </div>
+                <button type="button" class="btn btn-outline-secondary" id="prevImage">
+                    <i class="bi bi-chevron-left"></i> Previous
+                </button>
+                <button type="button" class="btn btn-outline-secondary" id="nextImage">
+                    Next <i class="bi bi-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
+        // Biến toàn cục để theo dõi số lượng ảnh
+        let currentImageCount = @(((List<TourImageViewModel>)ViewBag.CurrentTourImages).Count);
+        const MAX_TOTAL_IMAGES = 10;
+
+        // Biến cho chức năng preview ảnh
+        let currentPreviewIndex = 0;
+        let previewImages = [];
+        let newPreviewImages = []; // Ảnh mới upload
+
         $(document).ready(function () {
             // Auto-select current values in dropdowns
             @if (Model.StartLocationId > 0)
@@ -272,11 +373,463 @@
                     <text>$('#CancelConditionId').val('@Model.CancelConditionId');</text>
             }
 
+            // Handle image file selection
+            $('#imageInput').on('change', function(e) {
+                handleImageSelection(e);
+            });
+
             // Real-time validation
             $('input, select, textarea').on('blur', function () {
                 $(this).addClass('validated');
             });
+
+            // Cập nhật thông tin số lượng ảnh
+            updateImageCountInfo();
+
+            // Thêm drag and drop functionality
+            setupDragAndDrop();
+
+            // Khởi tạo chức năng preview ảnh
+            initializeImagePreview();
         });
+
+        // Khởi tạo chức năng preview ảnh
+        function initializeImagePreview() {
+            // Thu thập tất cả ảnh hiện có
+            previewImages = [];
+            $('.current-image-container .preview-image').each(function(index) {
+                previewImages.push({
+                    src: $(this).data('image-src'),
+                    index: index,
+                    name: $(this).data('image-name'),
+                    type: 'existing'
+                });
+            });
+
+            // Cập nhật tổng số ảnh trong modal
+            updateTotalImagesCount();
+
+            // Xử lý click vào ảnh để preview
+            $(document).on('click', '.preview-image', function() {
+                const imageSrc = $(this).attr('src');
+                const imageName = $(this).data('image-name') || $(this).attr('alt');
+                openImagePreview(imageSrc, imageName);
+            });
+
+            // Navigation controls
+            $('#prevImage').on('click', function() {
+                navigateImage(-1);
+            });
+
+            $('#nextImage').on('click', function() {
+                navigateImage(1);
+            });
+
+            // Keyboard navigation
+            $(document).on('keydown', function(e) {
+                if ($('#imagePreviewModal').hasClass('show')) {
+                    switch(e.key) {
+                        case 'ArrowLeft':
+                            navigateImage(-1);
+                            break;
+                        case 'ArrowRight':
+                            navigateImage(1);
+                            break;
+                        case 'Escape':
+                            $('#imagePreviewModal').modal('hide');
+                            break;
+                    }
+                }
+            });
+
+            // Reset modal khi đóng
+            $('#imagePreviewModal').on('hidden.bs.modal', function() {
+                currentPreviewIndex = 0;
+                $('#prevImage').show();
+                $('#nextImage').show();
+            });
+        }
+
+        // Mở preview ảnh
+        function openImagePreview(imageSrc, imageName) {
+            // Tìm index của ảnh trong cả hai mảng
+            const allImages = [...previewImages, ...newPreviewImages];
+            currentPreviewIndex = allImages.findIndex(img => img.src === imageSrc);
+
+            if (currentPreviewIndex === -1) {
+                // Nếu không tìm thấy, xem như ảnh đơn lẻ
+                currentPreviewIndex = 0;
+                $('#prevImage').hide();
+                $('#nextImage').hide();
+                $('#totalImages').text('/ 1');
+            } else {
+                // Nếu tìm thấy, hiển thị navigation
+                $('#prevImage').show();
+                $('#nextImage').show();
+                updateTotalImagesCount();
+            }
+
+            $('#previewModalImage').attr('src', imageSrc);
+            $('#currentImageIndex').text(currentPreviewIndex + 1);
+            $('#imagePreviewModalLabel').text(imageName || 'Image Preview');
+
+            // Cập nhật trạng thái nút navigation
+            updateNavigationButtons();
+
+            $('#imagePreviewModal').modal('show');
+        }
+
+        // Điều hướng giữa các ảnh
+        function navigateImage(direction) {
+            const allImages = [...previewImages, ...newPreviewImages];
+            const newIndex = currentPreviewIndex + direction;
+
+            if (newIndex >= 0 && newIndex < allImages.length) {
+                currentPreviewIndex = newIndex;
+                const image = allImages[newIndex];
+
+                $('#previewModalImage').attr('src', image.src);
+                $('#currentImageIndex').text(currentPreviewIndex + 1);
+                $('#imagePreviewModalLabel').text(image.name);
+
+                updateNavigationButtons();
+            }
+        }
+
+        // Cập nhật trạng thái nút navigation
+        function updateNavigationButtons() {
+            const allImages = [...previewImages, ...newPreviewImages];
+            $('#prevImage').prop('disabled', currentPreviewIndex === 0);
+            $('#nextImage').prop('disabled', currentPreviewIndex === allImages.length - 1);
+        }
+
+        // Cập nhật tổng số ảnh
+        function updateTotalImagesCount() {
+            const totalImages = previewImages.length + newPreviewImages.length;
+            $('#totalImages').text('/ ' + totalImages);
+        }
+
+        // Setup drag and drop
+        function setupDragAndDrop() {
+            const dropArea = $('#imageInput').closest('.card-body');
+            const input = $('#imageInput')[0];
+
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.on(eventName, preventDefaults);
+            });
+
+            // Highlight drop area when item is dragged over it
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.on(eventName, function() {
+                    $(this).addClass('highlight');
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.on(eventName, function() {
+                    $(this).removeClass('highlight');
+                });
+            });
+
+            // Handle dropped files
+            dropArea.on('drop', function(e) {
+                const dt = e.originalEvent.dataTransfer;
+                const files = dt.files;
+
+                // Update file input
+                input.files = files;
+
+                // Trigger change event
+                $('#imageInput').trigger('change');
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }
+
+        // Cập nhật thông tin số lượng ảnh
+        function updateImageCountInfo() {
+            $('#currentImageCount').text(currentImageCount);
+
+            if (currentImageCount >= MAX_TOTAL_IMAGES) {
+                $('#imageCountInfo').addClass('text-danger');
+                $('#imageInput').prop('disabled', true);
+                $('.drop-message').hide();
+            } else {
+                $('#imageCountInfo').removeClass('text-danger');
+                $('#imageInput').prop('disabled', false);
+                $('.drop-message').show();
+            }
+        }
+
+        // Xử lý xóa ảnh
+        $(document).on('click', '.delete-image-btn', function() {
+            const imageId = $(this).data('image-id');
+            const imageName = $(this).data('image-name');
+            const button = $(this);
+            const imageContainer = button.closest('.col-md-3, .col-sm-4, .col-6');
+
+            if (!confirm(`Are you sure you want to delete ${imageName}?`)) {
+                return;
+            }
+
+            // Hiển thị loading state
+            button.html('<span class="spinner-border spinner-border-sm"></span>').prop('disabled', true);
+
+            let baseUrl = '@ViewBag.BaseApiUrl';
+            if (baseUrl.endsWith('/')) {
+                baseUrl = baseUrl.slice(0, -1);
+            }
+            const apiUrl = `${baseUrl}/Tour/DeleteTourImage?imageId=${imageId}`;
+
+            fetch(apiUrl, {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                const contentType = response.headers.get("content-type");
+                return response.text().then(text => {
+                    if (!contentType || !contentType.includes("application/json")) {
+                        throw new Error(`Response is not JSON. Content-Type: ${contentType}, Body: ${text.substring(0, 200)}`);
+                    }
+                    try {
+                        const data = JSON.parse(text);
+                        return { status: response.status, ok: response.ok, data: data };
+                    } catch (e) {
+                        throw new Error(`Failed to parse JSON: ${text.substring(0, 200)}`);
+                    }
+                });
+            })
+            .then(result => {
+                if (result.ok && result.data.success) {
+                    showSuccessMessage(result.data.message || 'Image deleted successfully!');
+
+                    currentImageCount--;
+                    updateImageCountInfo();
+
+                    // Cập nhật lại danh sách preview images
+                    const deletedImageSrc = $(imageContainer).find('.preview-image').data('image-src');
+                    previewImages = previewImages.filter(img => img.src !== deletedImageSrc);
+                    updateTotalImagesCount();
+
+                    imageContainer.fadeOut(300, function() {
+                        $(this).remove();
+
+                        const remainingImages = $('.current-image-container').length;
+                        if (remainingImages === 0) {
+                            $('#currentImagesContainer').html(`
+                                <div class="col-12 text-center py-4">
+                                    <i class="bi bi-image display-4 text-muted"></i>
+                                    <p class="text-muted mt-2">No images available for this tour</p>
+                                </div>
+                            `);
+                        }
+                    });
+                } else {
+                    throw new Error(result.data?.message || 'Failed to delete image');
+                }
+            })
+            .catch(error => {
+                console.error('Delete image error:', error);
+                showErrorMessage('Failed to delete image: ' + error.message);
+                button.html('<i class="bi bi-trash"></i>').prop('disabled', false);
+            });
+        });
+
+        // Handle new image selection với multiple files
+        function handleImageSelection(e) {
+            const files = e.target.files;
+            const previewContainer = $('#imagePreview');
+            previewContainer.empty().hide();
+            newPreviewImages = []; // Reset ảnh mới
+
+            if (!files || files.length === 0) {
+                return;
+            }
+
+            // Kiểm tra tổng số ảnh
+            const totalAfterUpload = currentImageCount + files.length;
+            if (totalAfterUpload > MAX_TOTAL_IMAGES) {
+                alert(`Cannot upload ${files.length} images. You currently have ${currentImageCount} images. Maximum total is ${MAX_TOTAL_IMAGES} images.`);
+                e.target.value = '';
+                return;
+            }
+
+            let validFiles = true;
+            let errorMessage = '';
+
+            // Validate all files
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+
+                // Check file size (5MB limit)
+                if (file.size > 5 * 1024 * 1024) {
+                    errorMessage = `File "${file.name}" is too large. Maximum size is 5MB.`;
+                    validFiles = false;
+                    break;
+                }
+
+                // Check file type
+                if (!file.type.startsWith('image/')) {
+                    errorMessage = `File "${file.name}" is not an image. Please select image files only.`;
+                    validFiles = false;
+                    break;
+                }
+            }
+
+            if (!validFiles) {
+                alert(errorMessage);
+                e.target.value = '';
+                return;
+            }
+
+            // Show file count info
+            $('#selectedFilesCount').remove();
+            $('#imageInput').after(`<div id="selectedFilesCount" class="text-success small mt-1"><i class="bi bi-check-circle me-1"></i>Selected ${files.length} file(s)</div>`);
+
+            // Show preview for all valid files
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                    const previewIndex = newPreviewImages.length;
+
+                    // Thêm vào danh sách ảnh mới
+                    newPreviewImages.push({
+                        src: e.target.result,
+                        index: previewImages.length + previewIndex,
+                        name: file.name,
+                        type: 'new'
+                    });
+
+                    const previewHtml = `
+                        <div class="col-md-3 col-sm-4 col-6">
+                            <div class="preview-image-container position-relative">
+                                <img src="${e.target.result}"
+                                     class="img-fluid rounded border preview-image"
+                                     style="height: 120px; width: 100%; object-fit: cover; cursor: zoom-in;"
+                                     alt="Preview ${file.name}"
+                                     data-file-index="${i}">
+                                <div class="position-absolute top-0 end-0 m-1">
+                                    <span class="badge bg-success" style="font-size: 0.6rem;">${previewIndex + 1}</span>
+                                </div>
+                                <div class="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-75 text-white text-center py-1">
+                                    <small class="d-block text-truncate px-1">${file.name}</small>
+                                    <small class="d-block">${fileSize} MB</small>
+                                </div>
+                                <div class="position-absolute top-0 start-0 m-1">
+                                    <button type="button" class="btn btn-warning btn-sm remove-preview-btn"
+                                            data-file-index="${i}"
+                                            style="padding: 0.1rem 0.3rem; font-size: 0.6rem;">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    previewContainer.append(previewHtml).show();
+                };
+                reader.readAsDataURL(file);
+            }
+
+            // Cập nhật thông tin tổng số ảnh sau khi upload
+            updateTotalAfterUpload(totalAfterUpload);
+            updateTotalImagesCount();
+        }
+
+        // Cập nhật thông tin tổng số ảnh sau khi upload
+        function updateTotalAfterUpload(totalAfterUpload) {
+            $('#totalAfterUpload').remove();
+            $('#imageCountInfo').after(
+                `<small class="text-success" id="totalAfterUpload"><i class="bi bi-arrow-right me-1"></i>Will be <strong>${totalAfterUpload}</strong> after upload</small>`
+            );
+        }
+
+        // Xử lý xóa preview ảnh
+        $(document).on('click', '.remove-preview-btn', function() {
+            const fileIndex = parseInt($(this).data('file-index'));
+            const input = $('#imageInput')[0];
+            const dt = new DataTransfer();
+
+            // Tạo new FileList không bao gồm file bị xóa
+            for (let i = 0; i < input.files.length; i++) {
+                if (i !== fileIndex) {
+                    dt.items.add(input.files[i]);
+                }
+            }
+
+            input.files = dt.files;
+
+            // Xóa khỏi danh sách ảnh mới
+            newPreviewImages = newPreviewImages.filter((img, index) => index !== fileIndex);
+            updateTotalImagesCount();
+
+            // Reload preview
+            handleImageSelection({ target: input });
+        });
+
+        // Form validation before submit
+        $('#tourForm').on('submit', function(e) {
+            const files = $('#imageInput')[0].files;
+            const totalAfterUpload = currentImageCount + files.length;
+
+            // Kiểm tra tổng số ảnh
+            if (totalAfterUpload > MAX_TOTAL_IMAGES) {
+                e.preventDefault();
+                alert(`Cannot upload ${files.length} images. Total would be ${totalAfterUpload}, maximum allowed is ${MAX_TOTAL_IMAGES}.`);
+                return;
+            }
+
+            // Validate file sizes
+            for (let i = 0; i < files.length; i++) {
+                if (files[i].size > 5 * 1024 * 1024) {
+                    e.preventDefault();
+                    alert(`File "${files[i].name}" is too large. Maximum size is 5MB.`);
+                    return;
+                }
+            }
+
+            // Show loading state
+            $('button[type="submit"]').html(`
+                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Updating Tour...
+            `).prop('disabled', true);
+        });
+
+        // Helper functions for messages
+        function showSuccessMessage(message) {
+            $('.custom-alert').remove();
+            const alertHtml = `
+                <div class="alert alert-success alert-dismissible fade show custom-alert position-fixed"
+                     style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                    <i class="bi bi-check-circle me-2"></i>${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            $('body').append(alertHtml);
+            setTimeout(() => $('.custom-alert').alert('close'), 5000);
+        }
+
+        function showErrorMessage(message) {
+            $('.custom-alert').remove();
+            const alertHtml = `
+                <div class="alert alert-danger alert-dismissible fade show custom-alert position-fixed"
+                     style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                    <i class="bi bi-exclamation-triangle me-2"></i>${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            $('body').append(alertHtml);
+            setTimeout(() => $('.custom-alert').alert('close'), 5000);
+        }
     </script>
 
     <style>
@@ -312,11 +865,24 @@
             font-size: 0.875rem;
             color: #6c757d;
         }
-    </style>
-    <style>
-        .description-container {
-            position: relative;
+
+        .current-image-container, .preview-image-container {
+            transition: transform 0.2s ease;
         }
+
+            .current-image-container:hover, .preview-image-container:hover {
+                transform: scale(1.05);
+            }
+
+        .preview-image {
+            cursor: zoom-in;
+            transition: all 0.3s ease;
+        }
+
+            .preview-image:hover {
+                opacity: 0.8;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            }
 
         .description-textarea {
             min-height: 400px;
@@ -339,53 +905,120 @@
                 border-color: #adb5bd;
             }
 
-        .description-tools {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.5rem 0;
+        /* Image Preview Modal Styles */
+        #imagePreviewModal .modal-content {
+            border: none;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #imagePreviewModal .modal-header {
+            border-bottom: 1px solid #444;
+        }
+
+        #imagePreviewModal .modal-footer {
+            border-top: 1px solid #dee2e6;
+        }
+
+        #previewModalImage {
+            border-radius: 5px;
+            max-width: 100%;
         }
 
         /* Responsive adjustments */
         @@media (max-width: 768px) {
             .description-textarea {
                 min-height: 300px;
-                font-size: 16px; /* Larger text on mobile for better readability */
+                font-size: 16px;
             }
 
-            .description-tools {
-                flex-direction: column;
-                align-items: flex-start;
+            #imagePreviewModal .modal-dialog {
+                margin: 10px;
+            }
+
+            #imagePreviewModal .modal-footer .btn {
+                font-size: 0.875rem;
+                padding: 0.375rem 0.75rem;
+            }
+
+            #imagePreviewModal .modal-footer {
+                flex-wrap: wrap;
                 gap: 0.5rem;
             }
+
+                #imagePreviewModal .modal-footer .btn {
+                    flex: 1;
+                    min-width: 100px;
+                }
         }
 
-        /* Character count color indicators */
-        #charCount.low {
-            color: #dc3545;
-            font-weight: bold;
+        /* Custom alert styles */
+        .custom-alert {
+            animation: slideInRight 0.3s ease-out;
         }
 
-        #charCount.medium {
-            color: #ffc107;
-            font-weight: bold;
+        @@keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
 
-        #charCount.high {
-            color: #198754;
-            font-weight: bold;
+        .remove-preview-btn {
+            background: rgba(255, 193, 7, 0.9);
+            border: none;
+            color: #000;
         }
 
-        .required::after {
-            content: " *";
-            color: #dc3545;
+            .remove-preview-btn:hover {
+                background: rgba(255, 193, 7, 1);
+            }
+
+        /* Style cho thông tin số lượng ảnh */
+        #imageCountInfo {
+            font-weight: 500;
         }
 
-        .form-label {
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 0.75rem;
-            font-size: 1.1rem;
+        .card-body.highlight {
+            background-color: rgba(0, 123, 255, 0.1);
+            border: 2px dashed #007bff;
+        }
+
+        .drop-message {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-top: 0.5rem;
+        }
+
+        /* Style cho preview images */
+        .preview-image-container {
+            transition: all 0.3s ease;
+        }
+
+            .preview-image-container:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            }
+
+        /* Style cho file input */
+        #imageInput {
+            cursor: pointer;
+        }
+
+        #selectedFilesCount {
+            font-weight: 500;
+        }
+
+        /* Navigation button styles */
+        #prevImage:disabled,
+        #nextImage:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
     </style>
 }

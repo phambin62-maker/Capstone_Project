@@ -176,6 +176,23 @@ namespace BE_Capstone_Project.DAO
             }
         }
 
+        public async Task<Tour?> GetTourByScheduleIdAsync(int tourScheduleId)
+        {
+            try
+            {
+                var tourSchedule = await _context.TourSchedules
+                    .Include(ts => ts.Tour)
+                    .ThenInclude(t => t.TourImages)
+                    .FirstOrDefaultAsync(ts => ts.Id == tourScheduleId);
+                return tourSchedule?.Tour;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while retrieving the tour for schedule ID {tourScheduleId}: {ex.Message}");
+                return null;
+            }
+        }
+
         public async Task<List<Tour>> SearchToursByNameAsync(string name)
         {
             try
@@ -419,6 +436,35 @@ namespace BE_Capstone_Project.DAO
             {
                 Console.WriteLine($"An error occurred while counting filtered tours: {ex.Message}");
                 return 0;
+            }
+        }
+        // Thêm method này vào TourDAO
+        public async Task<List<Tour>> GetActiveTours(string search = "")
+        {
+            try
+            {
+                var query = _context.Tours
+                    .Where(t => t.TourStatus == true) // Only active tours
+                    .Include(t => t.StartLocation)
+                    .Include(t => t.EndLocation)
+                    .Include(t => t.Category)
+                    .AsQueryable();
+
+                // Apply search filter
+                if (!string.IsNullOrEmpty(search))
+                {
+                    query = query.Where(t =>
+                        t.Name.Contains(search) ||
+                        (t.Description != null && t.Description.Contains(search))
+                    );
+                }
+
+                return await query.ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in TourDAO.GetActiveTours: {ex.Message}");
+                return new List<Tour>();
             }
         }
     }

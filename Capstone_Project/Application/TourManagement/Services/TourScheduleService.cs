@@ -77,7 +77,54 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
             var tourSchedules = await _tourScheduleDAO.GetPaginatedTourSchedulesByTourId(tourId, page, pageSize);
             return tourSchedules.Select(MapToDTO).ToList();
         }
+        public async Task<List<TourScheduleDTO>> GetFilteredTourSchedules(
+            int? tourId = null,
+            string? tourName = null,
+            string? location = null,
+            string? category = null,
+            string? status = null,
+            string? sort = null,
+            string? search = null,
+            string? fromDate = null,
+            string? toDate = null,
+            int page = 1,
+            int pageSize = 10)
+        {
+            try
+            {
+                var tourSchedules = await _tourScheduleDAO.GetFilteredTourSchedules(
+                    tourId, tourName, location, category, status, sort, search, fromDate, toDate, page, pageSize);
 
+                return tourSchedules.Select(ts => MapToDTO(ts)).ToList();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in TourScheduleService.GetFilteredTourSchedules: {ex.Message}");
+                return new List<TourScheduleDTO>();
+            }
+        }
+
+        public async Task<int> GetFilteredTourScheduleCount(
+            int? tourId = null,
+            string? tourName = null,
+            string? location = null,
+            string? category = null,
+            string? status = null,
+            string? search = null,
+            string? fromDate = null,
+            string? toDate = null)
+        {
+            try
+            {
+                return await _tourScheduleDAO.GetFilteredTourScheduleCount(
+                    tourId, tourName, location, category, status, search, fromDate, toDate);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in TourScheduleService.GetFilteredTourScheduleCount: {ex.Message}");
+                return 0;
+            }
+        }
         private TourScheduleDTO MapToDTO(TourSchedule tourSchedule)
         {
             if (tourSchedule == null) return null;
@@ -85,14 +132,16 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
             {
                 Id = tourSchedule.Id,
                 TourId = tourSchedule.TourId,
+                TourName = tourSchedule.Tour?.Name,
                 StartLocation = tourSchedule.Tour?.StartLocation?.LocationName,
                 EndLocation = tourSchedule.Tour?.EndLocation?.LocationName,
                 CategoryName = tourSchedule.Tour?.Category?.CategoryName,
                 DepartureDate = tourSchedule.DepartureDate,
                 ArrivalDate = tourSchedule.ArrivalDate,
                 ScheduleStatus = tourSchedule.ScheduleStatus,
-                TourName = tourSchedule.Tour?.Name
+
             };
         }
+
     }
 }

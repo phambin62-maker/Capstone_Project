@@ -12,6 +12,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Globalization;
 using System.Text.Json.Serialization;
+using System.Security.Claims;
 
 namespace FE_Capstone_Project.Controllers
 {
@@ -325,7 +326,14 @@ namespace FE_Capstone_Project.Controllers
                 ViewBag.Locations = locSuccess ? locations : new List<Location>();
                 ViewBag.Categories = catSuccess ? categories : new List<TourCategory>();
                 ViewBag.CancelConditions = cancelSuccess ? cancelConditions : new List<CancelCondition>();
-
+                ViewBag.BaseApiUrl = BASE_API_URL;
+                var currentTourImages = result.Tour.TourImages?.Select(img => new TourImageViewModel
+                {
+                    Id = img.Id,
+                    Image = img.Image,
+                    TourId = img.TourId
+                }).ToList() ?? new List<TourImageViewModel>();
+                ViewBag.CurrentTourImages = currentTourImages;
                 var editModel = new TourEditModel
                 {
                     Id = result.Tour.Id,
@@ -375,7 +383,6 @@ namespace FE_Capstone_Project.Controllers
             {
                 var formData = CreateTourFormData(model);
 
-                // SỬA: Gọi API UpdateTour
                 var response = await _httpClient.PostAsync("Tour/UpdateTour", formData);
                 var responseContent = await response.Content.ReadAsStringAsync();
 
@@ -384,7 +391,7 @@ namespace FE_Capstone_Project.Controllers
                 if (response.IsSuccessStatusCode)
                 {
                     TempData["SuccessMessage"] = "Cập nhật tour thành công!";
-                    return RedirectToAction("Tours");
+                    return RedirectToAction("Edit");
                 }
                 else
                 {
@@ -718,12 +725,41 @@ namespace FE_Capstone_Project.Controllers
         public IActionResult CreateNews()
         {
             ViewData["Title"] = "Tạo Tin tức Mới";
-            return View();
+
+            // 2. LẤY USER ID TỪ CLAIMS (HOẶC SESSION)
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // Nếu dùng Session:
+            // var userIdString = HttpContext.Session.GetString("UserId");
+
+            if (!int.TryParse(userIdString, out int userId))
+            {
+                // Nếu không tìm thấy ID (chưa đăng nhập hoặc cookie lỗi)
+                TempData["ErrorMessage"] = "Không thể xác định người dùng. Vui lòng đăng nhập lại.";
+                return RedirectToAction("News");
+            }
+
+            // 3. TRUYỀN ID VÀO MODEL
+            var model = new NewsCreateModel
+            {
+                UserId = userId // Tự động gán UserId vào Model
+            };
+
+            return View(model); // Trả về View với Model đã có UserId
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateNews(NewsCreateModel model, IFormFile? imageFile)
         {
+            // Lấy UserId an toàn từ Claims/Session (ĐOẠN NÀY BẠN ĐÃ LÀM ĐÚNG)
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!int.TryParse(userIdString, out int staffUserId))
+            {
+                TempData["ErrorMessage"] = "Không thể xác định người dùng. Vui lòng đăng nhập lại.";
+                return View(model);
+            }
+
             try
             {
                 if (!ModelState.IsValid)
@@ -741,10 +777,9 @@ namespace FE_Capstone_Project.Controllers
                     imageBase64 = $"data:{imageFile.ContentType};base64,{Convert.ToBase64String(imageBytes)}";
                 }
 
-
                 var dto = new
                 {
-                    UserId = model.UserId,
+                    UserId = staffUserId, // (Đúng: Sử dụng staffUserId đã xác thực)
                     Title = model.Title,
                     Content = model.Content,
                     Image = imageBase64,
@@ -771,6 +806,7 @@ namespace FE_Capstone_Project.Controllers
                 return View(model);
             }
         }
+
 
         [HttpGet]
         public async Task<IActionResult> ViewNews(int id)
@@ -829,7 +865,6 @@ namespace FE_Capstone_Project.Controllers
                 return RedirectToAction("News");
             }
         }
-
 
         [HttpPost]
         public async Task<IActionResult> EditNews(int id, NewsCreateModel model, IFormFile? imageFile)
@@ -908,24 +943,19 @@ namespace FE_Capstone_Project.Controllers
             {
                 var firstImage = tour.TourImages.First();
 
-                // Nếu image là base64 string
                 if (firstImage.Image.StartsWith("data:image"))
                 {
                     return firstImage.Image;
                 }
-                // Nếu image là đường dẫn tương đối
                 else if (!string.IsNullOrEmpty(firstImage.Image))
                 {
-                    // Sử dụng endpoint mới từ BE để lấy ảnh
                     return $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(firstImage.Image)}";
                 }
             }
 
-            // Trả về ảnh mặc định
             return $"{BASE_API_URL}Tour/GetImage?path=images/default-tour.jpg";
         }
 
-        // Phương thức helper để lấy URL ảnh từ đường dẫn
         private string GetImageUrl(string imagePath)
         {
             if (string.IsNullOrEmpty(imagePath))

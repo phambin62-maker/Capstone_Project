@@ -32,6 +32,8 @@
                 </div>
                 <div class="card-body">
                     <form asp-action="Create" method="post" enctype="multipart/form-data" id="tourForm">
+                        <div id="formAlertContainer"></div>
+
                         <div class="row">
                             <!-- Basic Information -->
                             <div class="col-lg-6">
@@ -53,7 +55,7 @@
                                                 <div class="mb-3">
                                                     <label asp-for="Price" class="form-label required">Price (VND)</label>
                                                     <div class="input-group">
-                                                        <input asp-for="Price" type="number" class="form-control" placeholder="0" />
+                                                        <input asp-for="Price" type="number" class="form-control" placeholder="0" min="0" step="1000" />
                                                         <span class="input-group-text">VND</span>
                                                     </div>
                                                     <span asp-validation-for="Price" class="text-danger small"></span>
@@ -63,7 +65,7 @@
                                                 <div class="mb-3">
                                                     <label asp-for="Duration" class="form-label required">Duration</label>
                                                     <div class="input-group">
-                                                        <input asp-for="Duration" type="number" class="form-control" placeholder="0" />
+                                                        <input asp-for="Duration" type="number" class="form-control" placeholder="0" min="1" max="365" />
                                                         <span class="input-group-text">days</span>
                                                     </div>
                                                     <span asp-validation-for="Duration" class="text-danger small"></span>
@@ -72,11 +74,11 @@
                                         </div>
 
                                         <div class="mb-3">
-                                            <label asp-for="Description" class="form-label required">Tour Description</label>
-                                            <textarea asp-for="Description" class="form-control"
-                                                      style="min-height: 400px; resize: vertical; font-size: 14px; line-height: 1.6; padding: 1rem;"
-                                                      placeholder="Enter detailed tour description..."></textarea>
-                                            <span asp-validation-for="Description" class="text-danger small"></span>
+                                            <label asp-for="Description" class="form-label required" style="font-size: 1.1rem; font-weight: 600;">Tour Description</label>
+                                            <textarea asp-for="Description" class="form-control description-textarea"
+                                                      placeholder="Enter detailed tour description..."
+                                                      style="min-height: 500px; font-size: 16px; line-height: 1.8; padding: 1.5rem;"></textarea>
+                                            <span asp-validation-for="Description" class="text-danger small" style="font-size: 1rem;"></span>
                                         </div>
                                     </div>
                                 </div>
@@ -209,11 +211,33 @@
                             </div>
                             <div class="card-body">
                                 <div class="mb-3">
-                                    <label asp-for="Images" class="form-label">Upload Tour Images</label>
-                                    <input asp-for="Images" type="file" multiple class="form-control" accept="image/*" />
-                                    <div class="form-text">
-                                        <i class="bi bi-info-circle me-1"></i>You can select multiple images. Supported formats: JPG, PNG, GIF.
+                                    <label asp-for="Images" class="form-label required">Upload Tour Images</label>
+                                    <input asp-for="Images" type="file" multiple class="form-control visually-hidden"
+                                           accept="image/*" id="imageInput" />
+
+                                    <div class="drop-zone border rounded bg-light p-4 text-center" id="dropZone">
+                                        <i class="bi bi-cloud-arrow-up display-6 text-muted mb-2"></i>
+                                        <p class="mb-1 fw-medium">Drag and drop images here</p>
+                                        <small class="text-muted d-block mb-2">or</small>
+                                        <button type="button" class="btn btn-primary btn-sm" id="browseButton">
+                                            <i class="bi bi-folder2-open me-1"></i>Browse Files
+                                        </button>
+                                        <div class="mt-2">
+                                            <small class="text-muted">Supported formats: JPG, PNG, GIF. Max 5MB per file.</small>
+                                        </div>
                                     </div>
+
+                                    <div class="image-info mt-3">
+                                        <small class="text-muted" id="imageCountInfo">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            Selected: <span id="selectedImageCount">0</span> images •
+                                            Maximum: <span id="maxImageCount">10</span> images
+                                        </small>
+                                        <div id="uploadInfo" class="mt-1"></div>
+                                    </div>
+
+                                    <span asp-validation-for="Images" class="text-danger small"></span>
+                                    <div id="imagePreview" class="row g-2 mt-3"></div>
                                 </div>
                             </div>
                         </div>
@@ -223,7 +247,7 @@
                             <a href="@Url.Action("Tours")" class="btn btn-outline-secondary">
                                 <i class="bi bi-x-circle me-2"></i>Cancel
                             </a>
-                            <button type="submit" class="btn btn-primary px-4">
+                            <button type="submit" class="btn btn-primary px-4" id="submitButton">
                                 <i class="bi bi-plus-circle me-2"></i>Create Tour
                             </button>
                         </div>
@@ -234,33 +258,465 @@
     </div>
 </div>
 
+<!-- Image Preview Modal -->
+<div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="imagePreviewModalLabel">Image Preview</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-0">
+                <img id="previewModalImage" src="" alt="Preview" class="img-fluid" style="max-height: 70vh; object-fit: contain;">
+            </div>
+            <div class="modal-footer bg-light">
+                <div class="me-auto">
+                    <span id="currentImageIndex" class="badge bg-primary">1</span>
+                    <span id="totalImages" class="text-muted">/ 0</span>
+                </div>
+                <button type="button" class="btn btn-outline-secondary" id="prevImage">
+                    <i class="bi bi-chevron-left"></i> Previous
+                </button>
+                <button type="button" class="btn btn-outline-secondary" id="nextImage">
+                    Next <i class="bi bi-chevron-right"></i>
+                </button>
+                <button type="button" class="btn btn-primary" id="downloadImage">
+                    <i class="bi bi-download me-1"></i> Download
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        $(document).ready(function () {
-            // Real-time validation feedback
-            $('input, select, textarea').on('blur', function () {
-                $(this).addClass('validated');
-            });
+        // Configuration
+        const CONFIG = {
+            maxFileSize: 5 * 1024 * 1024, // 5MB
+            maxTotalImages: 10,
+            allowedTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif']
+        };
 
-            // Prevent form submission if required fields are empty
-            $('#tourForm').on('submit', function (e) {
-                let isValid = true;
-                $('.required').each(function () {
-                    const input = $(this).closest('.mb-3').find('input, select, textarea');
-                    if (!input.val().trim()) {
-                        isValid = false;
-                        input.addClass('is-invalid');
+        // State management
+        const state = {
+            selectedFiles: [],
+            isSubmitting: false,
+            previewImages: []
+        };
+
+        // DOM Elements
+        const elements = {
+            form: document.getElementById('tourForm'),
+            imageInput: document.getElementById('imageInput'),
+            dropZone: document.getElementById('dropZone'),
+            browseButton: document.getElementById('browseButton'),
+            imagePreview: document.getElementById('imagePreview'),
+            selectedImageCount: document.getElementById('selectedImageCount'),
+            uploadInfo: document.getElementById('uploadInfo'),
+            charCount: document.getElementById('charCount'),
+            wordCount: document.getElementById('wordCount'),
+            submitButton: document.getElementById('submitButton'),
+            formAlertContainer: document.getElementById('formAlertContainer'),
+            descriptionTextarea: document.querySelector('#Description')
+        };
+
+        // Utility Functions
+        const utils = {
+            showAlert(message, type = 'success') {
+                const alertHtml = `
+                    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        <i class="bi ${type === 'success' ? 'bi-check-circle' : 'bi-exclamation-triangle'} me-2"></i>
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+                elements.formAlertContainer.innerHTML = alertHtml;
+
+                if (type === 'success') {
+                    setTimeout(() => {
+                        const alert = elements.formAlertContainer.querySelector('.alert');
+                        if (alert) alert.remove();
+                    }, 5000);
+                }
+            },
+
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            },
+
+            debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            },
+
+            validateFile(file) {
+                const errors = [];
+
+                if (!CONFIG.allowedTypes.includes(file.type)) {
+                    errors.push(`"${file.name}" is not a supported image format.`);
+                }
+
+                if (file.size > CONFIG.maxFileSize) {
+                    errors.push(`"${file.name}" exceeds 5MB size limit.`);
+                }
+
+                return errors;
+            },
+
+            countWords(text) {
+                return text.trim() ? text.trim().split(/\s+/).length : 0;
+            },
+
+            updateCharCount() {
+                const text = elements.descriptionTextarea.value;
+                const charCount = text.length;
+                const wordCount = this.countWords(text);
+
+                elements.charCount.textContent = charCount;
+                elements.wordCount.textContent = wordCount;
+
+                // Update color based on character count
+                elements.charCount.className = '';
+                if (charCount < 100) {
+                    elements.charCount.classList.add('low');
+                } else if (charCount < 500) {
+                    elements.charCount.classList.add('medium');
+                } else {
+                    elements.charCount.classList.add('high');
+                }
+            }
+        };
+
+        // Image Management
+        const imageManager = {
+            updateImageCount() {
+                elements.selectedImageCount.textContent = state.selectedFiles.length;
+                this.updateUploadInfo();
+            },
+
+            updateUploadInfo() {
+                const remaining = CONFIG.maxTotalImages - state.selectedFiles.length;
+                const uploadInfo = elements.uploadInfo;
+
+                if (state.selectedFiles.length >= CONFIG.maxTotalImages) {
+                    uploadInfo.innerHTML = `<small class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>Maximum image limit reached</small>`;
+                    elements.imageInput.disabled = true;
+                    elements.dropZone.classList.add('disabled');
+                } else {
+                    uploadInfo.innerHTML = `<small class="text-success">You can upload up to ${remaining} more images</small>`;
+                    elements.imageInput.disabled = false;
+                    elements.dropZone.classList.remove('disabled');
+                }
+            },
+
+            handleImageSelection(files) {
+                const validFiles = [];
+                const errors = [];
+
+                // Validate all files
+                Array.from(files).forEach(file => {
+                    const fileErrors = utils.validateFile(file);
+                    if (fileErrors.length > 0) {
+                        errors.push(...fileErrors);
+                    } else {
+                        validFiles.push(file);
                     }
                 });
 
-                if (!isValid) {
-                    e.preventDefault();
-                    $('html, body').animate({
-                        scrollTop: $('.is-invalid').first().offset().top - 100
-                    }, 500);
+                // Show errors if any
+                if (errors.length > 0) {
+                    utils.showAlert(errors.join('<br>'), 'danger');
                 }
-            });
+
+                // Check total image count
+                const totalAfterUpload = state.selectedFiles.length + validFiles.length;
+                if (totalAfterUpload > CONFIG.maxTotalImages) {
+                    utils.showAlert(`Cannot upload ${validFiles.length} images. Maximum total is ${CONFIG.maxTotalImages} images.`, 'danger');
+                    return;
+                }
+
+                if (validFiles.length > 0) {
+                    // Add to existing files
+                    state.selectedFiles = [...state.selectedFiles, ...validFiles];
+                    this.showPreviews(validFiles);
+                    this.updateImageCount();
+                }
+            },
+
+            showPreviews(files) {
+                files.forEach((file, index) => {
+                    const reader = new FileReader();
+
+                    reader.onload = (e) => {
+                        const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                        const previewIndex = state.previewImages.length;
+
+                        // Thêm vào danh sách preview images
+                        state.previewImages.push({
+                            src: e.target.result,
+                            index: previewIndex,
+                            name: file.name,
+                            type: 'new'
+                        });
+
+                        const previewHtml = `
+                            <div class="col-md-3 col-sm-4 col-6" data-file-index="${previewIndex}">
+                                <div class="preview-image-container position-relative">
+                                    <img src="${e.target.result}"
+                                         class="img-fluid rounded border preview-image"
+                                         style="height: 120px; width: 100%; object-fit: cover; cursor: zoom-in;"
+                                         alt="Preview ${file.name}">
+                                    <div class="position-absolute top-0 end-0 m-1">
+                                        <span class="badge bg-success image-badge">${previewIndex + 1}</span>
+                                    </div>
+                                    <div class="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-75 text-white text-center py-1">
+                                        <small class="d-block text-truncate px-1">${file.name}</small>
+                                        <small class="d-block">${fileSize} MB</small>
+                                    </div>
+                                    <div class="position-absolute top-0 start-0 m-1">
+                                        <button type="button" class="btn btn-warning btn-sm remove-preview-btn"
+                                                data-file-index="${previewIndex}">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        elements.imagePreview.insertAdjacentHTML('beforeend', previewHtml);
+                    };
+
+                    reader.readAsDataURL(file);
+                });
+            },
+
+            removePreview(index) {
+                // Remove from selected files
+                state.selectedFiles.splice(index, 1);
+                // Remove from preview images
+                state.previewImages.splice(index, 1);
+
+                // Remove from DOM
+                elements.imagePreview.querySelector(`[data-file-index="${index}"]`)?.remove();
+
+                // Reindex remaining previews
+                elements.imagePreview.querySelectorAll('[data-file-index]').forEach((element, newIndex) => {
+                    element.setAttribute('data-file-index', newIndex);
+                    const badge = element.querySelector('.image-badge');
+                    if (badge) badge.textContent = newIndex + 1;
+                });
+
+                // Reindex preview images
+                state.previewImages.forEach((img, newIndex) => {
+                    img.index = newIndex;
+                });
+
+                this.updateImageCount();
+            },
+
+            clearAllPreviews() {
+                state.selectedFiles = [];
+                state.previewImages = [];
+                elements.imagePreview.innerHTML = '';
+                elements.imageInput.value = '';
+                this.updateImageCount();
+            }
+        };
+
+        // Preview Modal Management
+        const previewModal = {
+            currentPreviewIndex: 0,
+
+            openImagePreview(imageSrc, imageName) {
+                const allImages = state.previewImages;
+                this.currentPreviewIndex = allImages.findIndex(img => img.src === imageSrc);
+
+                $('#previewModalImage').attr('src', imageSrc);
+                $('#currentImageIndex').text(this.currentPreviewIndex + 1);
+                $('#totalImages').text('/ ' + allImages.length);
+                $('#imagePreviewModalLabel').text(imageName || 'Image Preview');
+
+                this.updateNavigationButtons();
+                $('#imagePreviewModal').modal('show');
+            },
+
+            navigateImage(direction) {
+                const allImages = state.previewImages;
+                const newIndex = this.currentPreviewIndex + direction;
+
+                if (newIndex >= 0 && newIndex < allImages.length) {
+                    this.currentPreviewIndex = newIndex;
+                    const image = allImages[newIndex];
+
+                    $('#previewModalImage').attr('src', image.src);
+                    $('#currentImageIndex').text(this.currentPreviewIndex + 1);
+                    $('#imagePreviewModalLabel').text(image.name);
+
+                    this.updateNavigationButtons();
+                }
+            },
+
+            updateNavigationButtons() {
+                const allImages = state.previewImages;
+                $('#prevImage').prop('disabled', this.currentPreviewIndex === 0);
+                $('#nextImage').prop('disabled', this.currentPreviewIndex === allImages.length - 1);
+
+                // Hide navigation if only one image
+                if (allImages.length <= 1) {
+                    $('#prevImage').hide();
+                    $('#nextImage').hide();
+                } else {
+                    $('#prevImage').show();
+                    $('#nextImage').show();
+                }
+            },
+
+            downloadCurrentImage() {
+                const imageSrc = $('#previewModalImage').attr('src');
+                const link = document.createElement('a');
+                link.href = imageSrc;
+
+                const fileName = `tour-image-${this.currentPreviewIndex + 1}.jpg`;
+                link.download = fileName;
+
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        };
+
+        // Event Handlers
+        const eventHandlers = {
+            init() {
+                // File input events
+                elements.imageInput.addEventListener('change', (e) => {
+                    imageManager.handleImageSelection(e.target.files);
+                });
+
+                elements.browseButton.addEventListener('click', () => {
+                    elements.imageInput.click();
+                });
+
+                // Drag and drop events
+                elements.dropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    elements.dropZone.classList.add('dragover');
+                });
+
+                elements.dropZone.addEventListener('dragleave', () => {
+                    elements.dropZone.classList.remove('dragover');
+                });
+
+                elements.dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    elements.dropZone.classList.remove('dragover');
+                    imageManager.handleImageSelection(e.dataTransfer.files);
+                });
+
+                // Dynamic event listeners
+                elements.imagePreview.addEventListener('click', (e) => {
+                    if (e.target.closest('.remove-preview-btn')) {
+                        const index = parseInt(e.target.closest('.remove-preview-btn').dataset.fileIndex);
+                        imageManager.removePreview(index);
+                    }
+
+                    if (e.target.closest('.preview-image')) {
+                        const imageSrc = e.target.closest('.preview-image').src;
+                        const imageName = e.target.closest('.preview-image').alt;
+                        previewModal.openImagePreview(imageSrc, imageName);
+                    }
+                });
+
+                // Form events
+                elements.form.addEventListener('submit', this.handleFormSubmit);
+
+                // Description character count
+                if (elements.descriptionTextarea) {
+                    elements.descriptionTextarea.addEventListener('input', utils.debounce(() => {
+                        utils.updateCharCount();
+                    }, 300));
+                    // Initialize character count
+                    utils.updateCharCount();
+                }
+
+                // Preview modal events
+                $('#prevImage').on('click', () => previewModal.navigateImage(-1));
+                $('#nextImage').on('click', () => previewModal.navigateImage(1));
+                $('#downloadImage').on('click', () => previewModal.downloadCurrentImage());
+
+                // Keyboard navigation
+                $(document).on('keydown', (e) => {
+                    if ($('#imagePreviewModal').hasClass('show')) {
+                        switch(e.key) {
+                            case 'ArrowLeft':
+                                previewModal.navigateImage(-1);
+                                break;
+                            case 'ArrowRight':
+                                previewModal.navigateImage(1);
+                                break;
+                            case 'Escape':
+                                $('#imagePreviewModal').modal('hide');
+                                break;
+                        }
+                    }
+                });
+
+                // Reset modal when closed
+                $('#imagePreviewModal').on('hidden.bs.modal', () => {
+                    previewModal.currentPreviewIndex = 0;
+                });
+
+                // Initialize image count
+                imageManager.updateImageCount();
+            },
+
+            handleFormSubmit(e) {
+                if (state.isSubmitting) {
+                    e.preventDefault();
+                    return;
+                }
+
+                // Validate required images
+                if (state.selectedFiles.length === 0) {
+                    e.preventDefault();
+                    utils.showAlert('Please upload at least one image for the tour.', 'danger');
+                    elements.imageInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return;
+                }
+
+                // Validate file sizes
+                for (const file of state.selectedFiles) {
+                    if (file.size > CONFIG.maxFileSize) {
+                        e.preventDefault();
+                        utils.showAlert(`File "${file.name}" is too large. Maximum size is 5MB.`, 'danger');
+                        return;
+                    }
+                }
+
+                // Show loading state
+                state.isSubmitting = true;
+                elements.submitButton.innerHTML = `
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Creating Tour...
+                `;
+                elements.submitButton.disabled = true;
+            }
+        };
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', () => {
+            eventHandlers.init();
         });
     </script>
 
@@ -279,11 +735,12 @@
         .card {
             border: 1px solid #e3e6f0;
             box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            transition: box-shadow 0.15s ease;
         }
 
-        .card-header {
-            border-bottom: 1px solid #e3e6f0;
-        }
+            .card:hover {
+                box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
+            }
 
         input.validated:invalid {
             border-color: #dc3545;
@@ -297,80 +754,182 @@
             font-size: 0.875rem;
             color: #6c757d;
         }
-    </style>
-    <style>
-    .description-container {
-        position: relative;
-    }
 
-    .description-textarea {
-        min-height: 400px;
-        resize: vertical;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        font-size: 14px;
-        line-height: 1.6;
-        padding: 1rem;
-        border: 2px solid #e9ecef;
-        transition: all 0.3s ease;
-    }
-
-    .description-textarea:focus {
-        border-color: #86b7fe;
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-        background-color: #f8f9fa;
-    }
-
-    .description-textarea:hover {
-        border-color: #adb5bd;
-    }
-
-    .description-tools {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.5rem 0;
-    }
-
-    /* Responsive adjustments */
-    @@media (max-width: 768px) {
         .description-textarea {
-            min-height: 300px;
-            font-size: 16px; /* Larger text on mobile for better readability */
+            min-height: 400px;
+            resize: vertical;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            padding: 1rem;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
         }
-        
+
+            .description-textarea:focus {
+                border-color: #86b7fe;
+                box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+                background-color: #f8f9fa;
+            }
+
+            .description-textarea:hover {
+                border-color: #adb5bd;
+            }
+
         .description-tools {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
         }
-    }
 
-    /* Character count color indicators */
-    #charCount.low {
-        color: #dc3545;
-        font-weight: bold;
-    }
+        .preview-image-container {
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
 
-    #charCount.medium {
-        color: #ffc107;
-        font-weight: bold;
-    }
+            .preview-image-container:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                border-color: #007bff;
+            }
 
-    #charCount.high {
-        color: #198754;
-        font-weight: bold;
-    }
+        .preview-image {
+            cursor: zoom-in;
+            transition: all 0.3s ease;
+        }
 
-    .required::after {
-        content: " *";
-        color: #dc3545;
-    }
+            .preview-image:hover {
+                opacity: 0.8;
+            }
 
-    .form-label {
-        font-weight: 600;
-        color: #2c3e50;
-        margin-bottom: 0.75rem;
-        font-size: 1.1rem;
-    }
-</style>
+        .image-badge {
+            font-size: 0.65rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .remove-preview-btn {
+            background: rgba(255, 193, 7, 0.9);
+            border: none;
+            color: #000;
+            opacity: 0.8;
+            transition: all 0.2s ease;
+        }
+
+            .remove-preview-btn:hover {
+                opacity: 1;
+                transform: scale(1.1);
+            }
+
+        .drop-zone {
+            border: 2px dashed #dee2e6;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+            .drop-zone:hover {
+                border-color: #007bff;
+                background-color: rgba(0, 123, 255, 0.05);
+            }
+
+            .drop-zone.dragover {
+                border-color: #007bff;
+                background-color: rgba(0, 123, 255, 0.1);
+                transform: scale(1.02);
+            }
+
+            .drop-zone.disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+            }
+
+                .drop-zone.disabled:hover {
+                    border-color: #dee2e6;
+                    background-color: #f8f9fa;
+                    transform: none;
+                }
+
+        /* Character count color indicators */
+        #charCount.low {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        #charCount.medium {
+            color: #ffc107;
+            font-weight: bold;
+        }
+
+        #charCount.high {
+            color: #198754;
+            font-weight: bold;
+        }
+
+        /* Image Preview Modal Styles */
+        #imagePreviewModal .modal-content {
+            border: none;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #imagePreviewModal .modal-header {
+            border-bottom: 1px solid #444;
+        }
+
+        #imagePreviewModal .modal-footer {
+            border-top: 1px solid #dee2e6;
+        }
+
+        #previewModalImage {
+            border-radius: 5px;
+            max-width: 100%;
+        }
+
+        /* Responsive adjustments */
+        @@media (max-width: 768px) {
+            .description-textarea {
+                min-height: 300px;
+                font-size: 16px;
+            }
+
+            .description-tools {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            #imagePreviewModal .modal-dialog {
+                margin: 10px;
+            }
+
+            #imagePreviewModal .modal-footer {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+                #imagePreviewModal .modal-footer .btn {
+                    flex: 1;
+                    min-width: 100px;
+                }
+        }
+
+        /* Navigation button styles */
+        #prevImage:disabled,
+        #nextImage:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .visually-hidden {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            padding: 0 !important;
+            margin: -1px !important;
+            overflow: hidden !important;
+            clip: rect(0, 0, 0, 0) !important;
+            white-space: nowrap !important;
+            border: 0 !important;
+        }
+    </style>
 }

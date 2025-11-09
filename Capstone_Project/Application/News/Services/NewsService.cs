@@ -27,7 +27,7 @@ namespace BE_Capstone_Project.Application.Newses.Services
                 Image = n.Image,
                 CreatedDate = n.CreatedDate,
                 NewsStatus = n.NewsStatus,
-                AuthorName = n.User?.Username,
+                AuthorName = (n.User != null) ? $"{n.User.FirstName} {n.User.LastName}" : null,
                 Content = n.Content
             });
         }
@@ -44,7 +44,7 @@ namespace BE_Capstone_Project.Application.Newses.Services
                 Image = n.Image,
                 CreatedDate = n.CreatedDate,
                 NewsStatus = n.NewsStatus,
-                AuthorName = n.User?.Username,
+                AuthorName = (n.User != null) ? $"{n.User.FirstName} {n.User.LastName}" : null,
                 Content = n.Content
             };
         }
@@ -93,7 +93,7 @@ namespace BE_Capstone_Project.Application.Newses.Services
                 Image = n.Image,
                 CreatedDate = n.CreatedDate,
                 NewsStatus = n.NewsStatus,
-                AuthorName = n.User?.Username,
+                AuthorName = (n.User != null) ? $"{n.User.FirstName} {n.User.LastName}" : null,
                 Content = n.Content
             });
         }

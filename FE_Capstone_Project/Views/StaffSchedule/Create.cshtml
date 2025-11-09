@@ -1,54 +1,400 @@
 ﻿@model FE_Capstone_Project.Models.CreateTourScheduleRequest
 @{
-    ViewData["Title"] = "Thêm Lịch trình Mới";
+    ViewData["Title"] = "Add New Schedule";
     Layout = "~/Views/Shared/_StaffLayout.cshtml";
 }
 
 <div class="container-fluid">
+    <!-- Alert Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0 text-dark">@ViewData["Title"]</h1>
         <a href="@Url.Action("Schedules")" class="btn btn-secondary">
-            <i class="bi bi-arrow-left me-2"></i>Quay lại
+            <i class="bi bi-arrow-left me-2"></i>Back to List
         </a>
     </div>
 
-    <div class="card">
+    <!-- Tour Selection Section -->
+    <div class="card mb-4" id="tourSelectionSection">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-map me-2"></i>Select Tour
+            </h5>
+        </div>
         <div class="card-body">
-            <form method="post">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="tourSearch" placeholder="Search tour by name...">
+                        <button class="btn btn-outline-secondary" type="button" id="searchTourBtn">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-outline-primary w-100" type="button" data-bs-toggle="modal" data-bs-target="#tourModal">
+                        <i class="bi bi-list-ul me-2"></i>View Tour List
+                    </button>
+                </div>
+            </div>
+
+            <!-- Selected Tour Info -->
+            <div id="selectedTourInfo" class="mt-3 p-3 border rounded" style="display: none;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">Selected Tour:</h6>
+                        <p class="mb-0 fw-bold text-primary" id="selectedTourName"></p>
+                        <small class="text-muted">ID: <span id="selectedTourId"></span></small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger" id="clearSelection">
+                        <i class="bi bi-x"></i> Change Selection
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule Form Section (Initially Hidden) -->
+    <div class="card" id="scheduleFormSection" style="display: none;">
+        <div class="card-header bg-success text-white">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-calendar-plus me-2"></i>Schedule Information
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="post" id="scheduleForm">
+                <input type="hidden" asp-for="TourId" id="tourIdInput" />
+
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label asp-for="TourId" class="form-label">ID Tour *</label>
-                            <input asp-for="TourId" type="number" class="form-control" />
-                            <span asp-validation-for="TourId" class="text-danger"></span>
+                            <label class="form-label">Tour *</label>
+                            <div class="form-control bg-light" id="tourDisplay" style="border: none;">
+                                <i class="bi bi-info-circle text-muted me-2"></i>
+                                <span id="tourNameDisplay">No tour selected</span>
+                            </div>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="DepartureDate" class="form-label">Ngày khởi hành *</label>
-                            <input asp-for="DepartureDate" type="date" class="form-control" />
+                            <label asp-for="DepartureDate" class="form-label">Departure Date *</label>
+                            <input asp-for="DepartureDate" type="date" class="form-control"
+                                   min="@DateTime.Now.ToString("yyyy-MM-dd")" />
                             <span asp-validation-for="DepartureDate" class="text-danger"></span>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label asp-for="ArrivalDate" class="form-label">Ngày kết thúc *</label>
-                            <input asp-for="ArrivalDate" type="date" class="form-control" />
+                            <label asp-for="ArrivalDate" class="form-label">Arrival Date *</label>
+                            <input asp-for="ArrivalDate" type="date" class="form-control"
+                                   min="@DateTime.Now.AddDays(1).ToString("yyyy-MM-dd")" />
                             <span asp-validation-for="ArrivalDate" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ScheduleStatus" class="form-label">Status *</label>
+                            <select asp-for="ScheduleStatus" class="form-select">
+                                <option value="Scheduled">Scheduled</option>
+                                <option value="Ongoing">Ongoing</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+                            <span asp-validation-for="ScheduleStatus" class="text-danger"></span>
                         </div>
                     </div>
                 </div>
 
                 <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-circle me-2"></i>Thêm Lịch trình
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle me-2"></i>Create Schedule
                     </button>
-                    <a href="@Url.Action("Schedules")" class="btn btn-secondary">Hủy</a>
+                    <a href="@Url.Action("Schedules")" class="btn btn-secondary">Cancel</a>
+                    <button type="button" class="btn btn-outline-primary" id="backToTourSelection">
+                        <i class="bi bi-arrow-left me-2"></i>Change Tour
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
+<!-- Tour Selection Modal -->
+<div class="modal fade" id="tourModal" tabindex="-1" aria-labelledby="tourModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tourModalLabel">Select Tour</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="modalTourSearch" placeholder="Search tours...">
+                    <button class="btn btn-outline-secondary" type="button" id="modalSearchBtn">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+
+                <div class="table-responsive" style="max-height: 400px;">
+                    <table class="table table-hover">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>Tour Name</th>
+                                <th>Start Location</th>
+                                <th>End Location</th>
+                                <th>Category</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tourList">
+                            <!-- Tour list will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="tourLoading" class="text-center py-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading tour list...</p>
+                </div>
+
+                <div id="noToursFound" class="text-center py-4" style="display: none;">
+                    <i class="bi bi-inbox display-4 text-muted"></i>
+                    <p class="text-muted mt-2">No tours found</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function () {
+            let allTours = [];
+            let filteredTours = [];
+
+            // Load tours when modal opens
+            $('#tourModal').on('show.bs.modal', function () {
+                loadTours();
+            });
+
+            // Load all tours
+            function loadTours(searchTerm = '') {
+                $('#tourLoading').show();
+                $('#tourList').empty();
+                $('#noToursFound').hide();
+
+                $.get('@Url.Action("GetActiveTours", "StaffSchedule")', { search: searchTerm })
+                    .done(function (data) {
+                        allTours = data;
+                        filteredTours = data;
+                        displayTours(data);
+                    })
+                    .fail(function () {
+                        $('#tourLoading').html('<div class="alert alert-danger">Error loading tour list</div>');
+                    });
+            }
+
+            // Display tours in modal
+            function displayTours(tours) {
+                $('#tourLoading').hide();
+                $('#tourList').empty();
+
+                if (tours.length === 0) {
+                    $('#noToursFound').show();
+                    return;
+                }
+
+                tours.forEach(function (tour) {
+                    const row = `
+                        <tr>
+                            <td>
+                                <strong>${tour.name}</strong>
+                                ${tour.description ? `<br><small class="text-muted">${tour.description.substring(0, 50)}...</small>` : ''}
+                                <br>
+                                <small class="text-success">${tour.price}</small> •
+                                <small class="text-info">${tour.duration}</small>
+                            </td>
+                            <td>${tour.startLocationName || 'N/A'}</td>
+                            <td>${tour.endLocationName || 'N/A'}</td>
+                            <td>${tour.categoryName || 'N/A'}</td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-primary select-tour-btn"
+                                        data-tour-id="${tour.id}"
+                                        data-tour-name="${tour.name}">
+                                    <i class="bi bi-check me-1"></i>Select
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    $('#tourList').append(row);
+                });
+
+                // Add click event for select buttons
+                $('.select-tour-btn').on('click', function () {
+                    const tourId = $(this).data('tour-id');
+                    const tourName = $(this).data('tour-name');
+                    selectTour(tourId, tourName);
+                    $('#tourModal').modal('hide');
+                });
+            }
+
+            // Select a tour
+            function selectTour(tourId, tourName) {
+                // Update hidden input
+                $('#tourIdInput').val(tourId);
+
+                // Update display
+                $('#selectedTourId').text(tourId);
+                $('#selectedTourName').text(tourName);
+                $('#tourNameDisplay').text(tourName);
+
+                // Show selected tour info
+                $('#selectedTourInfo').show();
+
+                // Show schedule form section
+                $('#scheduleFormSection').show();
+
+                // Hide tour selection section
+                $('#tourSelectionSection').hide();
+            }
+
+            // Clear selection
+            $('#clearSelection').on('click', function () {
+                resetTourSelection();
+            });
+
+            // Back to tour selection
+            $('#backToTourSelection').on('click', function () {
+                resetTourSelection();
+            });
+
+            function resetTourSelection() {
+                $('#tourIdInput').val('');
+                $('#selectedTourInfo').hide();
+                $('#scheduleFormSection').hide();
+                $('#tourSelectionSection').show();
+            }
+
+            // Search functionality
+            $('#searchTourBtn').on('click', function () {
+                const searchTerm = $('#tourSearch').val();
+                loadTours(searchTerm);
+                $('#tourModal').modal('show');
+            });
+
+            $('#modalSearchBtn').on('click', function () {
+                const searchTerm = $('#modalTourSearch').val();
+                loadTours(searchTerm);
+            });
+
+            $('#modalTourSearch').on('keyup', function (e) {
+                if (e.keyCode === 13) {
+                    const searchTerm = $(this).val();
+                    loadTours(searchTerm);
+                }
+            });
+
+            // Date validation
+            $('#DepartureDate').on('change', function () {
+                const departureDate = new Date($(this).val());
+                const minArrivalDate = new Date(departureDate);
+                minArrivalDate.setDate(minArrivalDate.getDate() + 1);
+
+                $('#ArrivalDate').attr('min', minArrivalDate.toISOString().split('T')[0]);
+
+                // If arrival date is before new min date, clear it
+                const arrivalDate = new Date($('#ArrivalDate').val());
+                if (arrivalDate <= departureDate) {
+                    $('#ArrivalDate').val('');
+                }
+            });
+
+            // Form validation
+            $('#scheduleForm').on('submit', function (e) {
+                if (!$('#tourIdInput').val()) {
+                    e.preventDefault();
+                    alert('Please select a tour before creating schedule.');
+                    return false;
+                }
+
+                const departureDate = new Date($('#DepartureDate').val());
+                const arrivalDate = new Date($('#ArrivalDate').val());
+
+                if (arrivalDate <= departureDate) {
+                    e.preventDefault();
+                    alert('Arrival date must be after departure date.');
+                    return false;
+                }
+            });
+
+            // Auto-load tours on page load if there's a search term in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const tourId = urlParams.get('tourId');
+            if (tourId) {
+                // If tourId is provided in URL, try to load that tour
+                $.get('@Url.Action("GetTourById", "StaffSchedule")', { id: tourId })
+                    .done(function (tour) {
+                        if (tour) {
+                            selectTour(tour.id, tour.name);
+                        }
+                    })
+                    .fail(function () {
+                        console.log('Could not load tour from URL parameter');
+                    });
+            }
+
+            // Auto-hide alerts after 5 seconds
+            setTimeout(function() {
+                $('.alert').alert('close');
+            }, 5000);
+        });
+    </script>
+
+    <style>
+        .sticky-top {
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 10;
+        }
+
+        #tourList tr {
+            cursor: pointer;
+        }
+
+            #tourList tr:hover {
+                background-color: rgba(0, 123, 255, 0.1);
+            }
+
+        .select-tour-btn {
+            transition: all 0.2s ease;
+        }
+
+            .select-tour-btn:hover {
+                transform: scale(1.05);
+            }
+
+        #selectedTourInfo {
+            background-color: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+    </style>
 }
