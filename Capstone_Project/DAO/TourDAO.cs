@@ -438,5 +438,34 @@ namespace BE_Capstone_Project.DAO
                 return 0;
             }
         }
+        // Thêm method này vào TourDAO
+        public async Task<List<Tour>> GetActiveTours(string search = "")
+        {
+            try
+            {
+                var query = _context.Tours
+                    .Where(t => t.TourStatus == true) // Only active tours
+                    .Include(t => t.StartLocation)
+                    .Include(t => t.EndLocation)
+                    .Include(t => t.Category)
+                    .AsQueryable();
+
+                // Apply search filter
+                if (!string.IsNullOrEmpty(search))
+                {
+                    query = query.Where(t =>
+                        t.Name.Contains(search) ||
+                        (t.Description != null && t.Description.Contains(search))
+                    );
+                }
+
+                return await query.ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in TourDAO.GetActiveTours: {ex.Message}");
+                return new List<Tour>();
+            }
+        }
     }
 }

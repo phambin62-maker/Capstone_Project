@@ -6,13 +6,14 @@ namespace BE_Capstone_Project.Application.TourManagement.DTOs
     {
         public int Id { get; set; }
         public int TourId { get; set; }
+        public string? TourName { get; set; }
         public string? StartLocation { get; set; }
         public string? EndLocation { get; set; }
         public string? CategoryName { get; set; }
         public DateOnly? DepartureDate { get; set; }
         public DateOnly? ArrivalDate { get; set; }
         public ScheduleStatus? ScheduleStatus { get; set; }
-        public string? TourName { get; set; }
+        
     }
 
     public class CreateTourScheduleRequest

@@ -173,6 +173,75 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
                 return BadRequest(new { message = "Lỗi khi lấy tên tour", error = ex.Message });
             }
         }
+        // GET: api/TourSchedule/GetFilteredTourSchedules
+        [HttpGet("GetFilteredTourSchedules")]
+        public async Task<ActionResult<ApiResponse<List<TourScheduleDTO>>>> GetFilteredTourSchedules(
+            [FromQuery] int? tourId = null,
+            [FromQuery] string? tourName = null,
+            [FromQuery] string? location = null,
+            [FromQuery] string? category = null,
+            [FromQuery] string? status = null,
+            [FromQuery] string? sort = null,
+            [FromQuery] string? search = null,
+            [FromQuery] string? fromDate = null,
+            [FromQuery] string? toDate = null,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
+        {
+            try
+            {
+                var tourSchedules = await _tourScheduleService.GetFilteredTourSchedules(
+                    tourId, tourName, location, category, status, sort, search, fromDate, toDate, page, pageSize);
+
+                return Ok(new ApiResponse<List<TourScheduleDTO>>(
+                    success: true,
+                    message: "Filtered tour schedules retrieved successfully",
+                    data: tourSchedules
+                ));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ApiResponse<List<TourScheduleDTO>>(
+                    success: false,
+                    message: $"An error occurred: {ex.Message}",
+                    data: new List<TourScheduleDTO>()
+                ));
+            }
+        }
+
+        // GET: api/TourSchedule/GetFilteredTourScheduleCount
+        [HttpGet("GetFilteredTourScheduleCount")]
+        public async Task<ActionResult<ApiResponse<int>>> GetFilteredTourScheduleCount(
+            [FromQuery] int? tourId = null,
+            [FromQuery] string? tourName = null,
+            [FromQuery] string? location = null,
+            [FromQuery] string? category = null,
+            [FromQuery] string? status = null,
+            [FromQuery] string? search = null,
+            [FromQuery] string? fromDate = null,
+            [FromQuery] string? toDate = null)
+        {
+            try
+            {
+                var count = await _tourScheduleService.GetFilteredTourScheduleCount(
+                    tourId, tourName, location, category, status, search, fromDate, toDate);
+
+                return Ok(new ApiResponse<int>(
+                    success: true,
+                    message: "Filtered tour schedule count retrieved successfully",
+                    data: count
+                ));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ApiResponse<int>(
+                    success: false,
+                    message: $"An error occurred: {ex.Message}",
+                    data: 0
+                ));
+            }
+        }
+
     }
 
     public class ApiResponse<T>

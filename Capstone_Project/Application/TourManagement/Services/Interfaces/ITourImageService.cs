@@ -10,5 +10,6 @@ namespace BE_Capstone_Project.Application.TourManagement.Services.Interfaces
         Task<bool> DeleteTourImage(int id);
         Task<bool> DeleteTourImagesByTourId(int tourId);
         Task<List<TourImage>> GetTourImagesByTourId(int tourId);
+        Task<TourImage?> GetTourImageById(int id);
     }
 }

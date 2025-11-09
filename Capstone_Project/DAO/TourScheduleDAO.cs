@@ -1,4 +1,5 @@
-﻿using BE_Capstone_Project.Domain.Models;
+﻿using BE_Capstone_Project.Domain.Enums;
+using BE_Capstone_Project.Domain.Models;
 using BE_Capstone_Project.Infrastructure;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.EntityFrameworkCore;
@@ -164,5 +165,167 @@ namespace BE_Capstone_Project.DAO
                 return new List<TourSchedule>();
             }
         }
+
+        public async Task<List<TourSchedule>> GetFilteredTourSchedules(
+            int? tourId = null,
+            string? tourName = null,
+            string? location = null,
+            string? category = null,
+            string? status = null,
+            string? sort = null,
+            string? search = null,
+            string? fromDate = null,
+            string? toDate = null,
+            int page = 1,
+            int pageSize = 10)
+        {
+            try
+            {
+                var query = _context.TourSchedules
+                    .Include(ts => ts.Tour)
+                        .ThenInclude(t => t.StartLocation)
+                    .Include(ts => ts.Tour)
+                        .ThenInclude(t => t.EndLocation)
+                    .Include(ts => ts.Tour)
+                        .ThenInclude(t => t.Category)
+                    .AsQueryable();
+
+                // Apply filters
+                query = ApplyFilters(query, tourId, tourName, location, category, status, search, fromDate, toDate);
+
+                // Apply sorting
+                query = ApplySorting(query, sort);
+
+                // Apply pagination
+                var paginatedTourSchedules = await query
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                return paginatedTourSchedules;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while retrieving filtered tour schedules: {ex.Message}");
+                return new List<TourSchedule>();
+            }
+        }
+
+        // Hàm đếm với filter
+        public async Task<int> GetFilteredTourScheduleCount(
+            int? tourId = null,
+            string? tourName = null,
+            string? location = null,
+            string? category = null,
+            string? status = null,
+            string? search = null,
+            string? fromDate = null,
+            string? toDate = null)
+        {
+            try
+            {
+                var query = _context.TourSchedules
+                    .Include(ts => ts.Tour)
+                        .ThenInclude(t => t.StartLocation)
+                    .Include(ts => ts.Tour)
+                        .ThenInclude(t => t.EndLocation)
+                    .Include(ts => ts.Tour)
+                        .ThenInclude(t => t.Category)
+                    .AsQueryable();
+
+                // Apply filters
+                query = ApplyFilters(query, tourId, tourName, location, category, status, search, fromDate, toDate);
+
+                return await query.CountAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while counting filtered tour schedules: {ex.Message}");
+                return 0;
+            }
+        }
+
+        // Helper method to apply filters
+        private IQueryable<TourSchedule> ApplyFilters(
+            IQueryable<TourSchedule> query,
+            int? tourId,
+            string? tourName,
+            string? location,
+            string? category,
+            string? status,
+            string? search,
+            string? fromDate,
+            string? toDate)
+        {
+            // Tour ID filter
+            if (tourId.HasValue)
+            {
+                query = query.Where(ts => ts.TourId == tourId.Value);
+            }
+
+            // Tour name filter
+            if (!string.IsNullOrEmpty(tourName))
+            {
+                query = query.Where(ts => ts.Tour.Name.Contains(tourName));
+            }
+
+            // Location filter (search in both start and end locations)
+            if (!string.IsNullOrEmpty(location))
+            {
+                query = query.Where(ts =>
+                    ts.Tour.StartLocation.LocationName.Contains(location) ||
+                    ts.Tour.EndLocation.LocationName.Contains(location));
+            }
+
+            // Category filter
+            if (!string.IsNullOrEmpty(category))
+            {
+                query = query.Where(ts => ts.Tour.Category.CategoryName.Contains(category));
+            }
+
+            // Status filter
+            if (!string.IsNullOrEmpty(status))
+            {
+                if (Enum.TryParse<ScheduleStatus>(status, out var statusEnum))
+                {
+                    query = query.Where(ts => ts.ScheduleStatus == statusEnum);
+                }
+            }
+
+            // Search filter (search in multiple fields)
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(ts =>
+                    ts.Tour.Name.Contains(search) ||
+                    ts.Tour.StartLocation.LocationName.Contains(search) ||
+                    ts.Tour.EndLocation.LocationName.Contains(search) ||
+                    ts.Tour.Category.CategoryName.Contains(search));
+            }
+
+            // Date range filter
+            if (!string.IsNullOrEmpty(fromDate) && DateOnly.TryParse(fromDate, out var fromDateParsed))
+            {
+                query = query.Where(ts => ts.DepartureDate >= fromDateParsed);
+            }
+
+            if (!string.IsNullOrEmpty(toDate) && DateOnly.TryParse(toDate, out var toDateParsed))
+            {
+                query = query.Where(ts => ts.ArrivalDate <= toDateParsed);
+            }
+
+            return query;
+        }
+
+        // Helper method to apply sorting
+        private IQueryable<TourSchedule> ApplySorting(IQueryable<TourSchedule> query, string? sort)
+        {
+            return sort?.ToLower() switch
+            {
+                "date_asc" => query.OrderBy(ts => ts.DepartureDate),
+                "date_desc" => query.OrderByDescending(ts => ts.DepartureDate),
+                _ => query.OrderByDescending(ts => ts.DepartureDate) // Default sort by departure date descending
+            };
+        }
+
     }
 }
