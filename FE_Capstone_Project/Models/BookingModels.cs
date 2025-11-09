@@ -1,0 +1,72 @@
+﻿using BE_Capstone_Project.Domain.Enums;
+
+namespace FE_Capstone_Project.Models
+{
+    public class TravelerDTO
+    {
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string PhoneNumber { get; set; } = string.Empty;
+        public string IdentityID { get; set; } = string.Empty;
+        public CustomerType CustomerType { get; set; }
+
+        public override string ToString()
+        {
+            return $"Traveler: {FirstName} {LastName}, Email: {Email}, Phone: {PhoneNumber}, " +
+                   $"ID: {IdentityID}, Type: {CustomerType}";
+        }
+    }
+
+    public class BookingRequest
+    {
+        public int Tour_Schedule { get; set; }
+        public int Adults { get; set; }
+        public int Children { get; set; }
+        public int Infants { get; set; }
+
+        public string First_Name { get; set; } = string.Empty;
+        public string Last_Name { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
+        public string Certificate_Id { get; set; } = string.Empty;
+
+        public List<TravelerDTO> Travelers { get; set; } = new();
+
+        public override string ToString()
+        {
+            string travelerInfo = Travelers != null && Travelers.Count > 0
+                ? string.Join("\n  ", Travelers.Select(t => t.ToString()))
+                : "No travelers";
+
+            return $"BookingRequest:\n" +
+                   $"  Tour Schedule: {Tour_Schedule}\n" +
+                   $"  Adults: {Adults}, Children: {Children}, Infants: {Infants}\n" +
+                   $"  Name: {First_Name} {Last_Name}\n" +
+                   $"  Email: {Email}, Phone: {Phone}\n" +
+                   $"  Certificate ID: {Certificate_Id}\n" +
+                   $"  Travelers:\n  {travelerInfo}";
+        }
+    }
+
+    public class BookingResponse
+    {
+        public int BookingId { get; set; }
+        public int TotalPrice { get; set; }
+        public string TourName { get; set; } = string.Empty;
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+        public bool Success { get; set; }
+
+        public override string ToString()
+        {
+            return $"Booking Success: {Success}\n" +
+                   $"Booking ID: {BookingId}\n" +
+                   $"Tour Name: {TourName}\n" +
+                   $"Customer: {FirstName} {LastName}\n" +
+                   $"Total Price: {TotalPrice:C}\n" +
+                   $"Message: {Message}";
+        }
+    }
+}

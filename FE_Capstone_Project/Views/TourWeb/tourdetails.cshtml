@@ -46,18 +46,23 @@
                                     <span class="rating"><i class="bi bi-star-fill"></i> @avgRatingText (@Model.Reviews.Count reviews)</span>
                                 </div>
                                 <p class="hero-tagline">Experience ancient wonders, pristine beaches, and vibrant cultures across three magnificent countries</p>
-                                <a asp-controller="BookingWeb" asp-action="Index" class="btn-book">Book Now</a>
+                                <a asp-controller="@(isLoggedIn ? "BookingWeb" : "AuthWeb")"
+                                   asp-action="@(isLoggedIn ? "Index" : "Login")"
+                                   asp-route-tourId="@Model.Id"
+                                   class="btn-book me-2">
+                                    @(isLoggedIn ? "Book Now" : "Login to Book")
+                                </a>
+
                                 @if (isLoggedIn)
                                 {
-                                    @if(ViewBag.IsInWishlist != null && ViewBag.IsInWishlist)
-                                    {
-                                        <a asp-controller="Profile" asp-action="RemoveFromWishlist" asp-route-tourId="@Model.Id" class="btn-book">Remove from wishlist</a>
-                                    }
-                                    else
-                                    {
-                                        <a asp-controller="Profile" asp-action="AddToWishlist" asp-route-tourId="@Model.Id" class="btn-book">Add to wishlist</a>
-                                    }
+                                    <a asp-controller="Profile"
+                                       asp-action="@(ViewBag.IsInWishlist == true ? "RemoveFromWishlist" : "AddToWishlist")"
+                                       asp-route-tourId="@Model.Id"
+                                       class="btn-book">
+                                        @(ViewBag.IsInWishlist == true ? "Remove from wishlist" : "Add to wishlist")
+                                    </a>
                                 }
+
                             </div>
                         </div>
                     </div>

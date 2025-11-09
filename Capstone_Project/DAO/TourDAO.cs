@@ -176,6 +176,23 @@ namespace BE_Capstone_Project.DAO
             }
         }
 
+        public async Task<Tour?> GetTourByScheduleIdAsync(int tourScheduleId)
+        {
+            try
+            {
+                var tourSchedule = await _context.TourSchedules
+                    .Include(ts => ts.Tour)
+                    .ThenInclude(t => t.TourImages)
+                    .FirstOrDefaultAsync(ts => ts.Id == tourScheduleId);
+                return tourSchedule?.Tour;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while retrieving the tour for schedule ID {tourScheduleId}: {ex.Message}");
+                return null;
+            }
+        }
+
         public async Task<List<Tour>> SearchToursByNameAsync(string name)
         {
             try

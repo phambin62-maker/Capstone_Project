@@ -1,6 +1,6 @@
 ﻿using BE_Capstone_Project.Domain.Enums;
 
-namespace BE_Capstone_Project.Application.Bookings.DTOs
+namespace BE_Capstone_Project.Application.BookingManagement.DTOs
 {
     public class BookingDTO
     {

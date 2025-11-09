@@ -58,6 +58,11 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
             return await _tourDAO.GetToursByPriceRangeAsync(minPrice, maxPrice);
         }
 
+        public async Task<Tour?> GetTourByScheduleId(int scheduleId)
+        {
+            return await _tourDAO.GetTourByScheduleIdAsync(scheduleId);
+        }
+
         public async Task<List<Tour>> SearchTourByName(string name)
         {
             return await _tourDAO.SearchToursByNameAsync(name);

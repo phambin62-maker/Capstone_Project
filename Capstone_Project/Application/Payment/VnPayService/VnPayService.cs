@@ -61,6 +61,7 @@ namespace BE_Capstone_Project.Application.Payment.VnPayService
                 {
                     urlCallBack = "https://localhost:7160/api/payment/payment-callback";
                 }
+                Console.WriteLine(urlCallBack);
 
                 // Đảm bảo TmnCode không có khoảng trắng
                 var tmnCode = _configuration["Vnpay:TmnCode"]?.Trim();
@@ -69,20 +70,20 @@ namespace BE_Capstone_Project.Application.Payment.VnPayService
                 var orderInfo = WebUtility.UrlEncode($"{model.Name} {model.OrderDescription} {model.Amount}");
                 var ipAddress = context?.Connection?.RemoteIpAddress?.ToString() ?? "127.0.0.1";
                 var requestData = new Dictionary<string, string>
-        {
-            {"vnp_Version", _configuration["Vnpay:Version"]},
-            {"vnp_Command", _configuration["Vnpay:Command"]},
-            {"vnp_TmnCode", tmnCode},
-            {"vnp_Amount", ((int)model.Amount * 100).ToString()},
-            {"vnp_CreateDate", timeNow.ToString("yyyyMMddHHmmss")},
-            {"vnp_CurrCode", _configuration["Vnpay:CurrCode"]},
-            {"vnp_IpAddr", ipAddress},
-            {"vnp_Locale", _configuration["Vnpay:Locale"]},
-            {"vnp_OrderInfo", orderInfo},
-            {"vnp_OrderType", model.OrderType?.Trim() ?? "other"},
-            {"vnp_ReturnUrl", urlCallBack},
-            {"vnp_TxnRef", ticketId}
-        };
+                {
+                    {"vnp_Version", _configuration["Vnpay:Version"]},
+                    {"vnp_Command", _configuration["Vnpay:Command"]},
+                    {"vnp_TmnCode", tmnCode},
+                    {"vnp_Amount", ((long)(model.Amount * 100)).ToString()},
+                    {"vnp_CreateDate", timeNow.ToString("yyyyMMddHHmmss")},
+                    {"vnp_CurrCode", _configuration["Vnpay:CurrCode"]},
+                    {"vnp_IpAddr", ipAddress},
+                    {"vnp_Locale", _configuration["Vnpay:Locale"]},
+                    {"vnp_OrderInfo", orderInfo},
+                    {"vnp_OrderType", model.OrderType?.Trim() ?? "other"},
+                    {"vnp_ReturnUrl", urlCallBack},
+                    {"vnp_TxnRef", ticketId}
+                };
 
                 foreach (var item in requestData)
                 {

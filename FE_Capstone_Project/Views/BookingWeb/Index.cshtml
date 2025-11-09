@@ -1,0 +1,377 @@
+﻿@using FE_Capstone_Project.Models
+@using System.Globalization
+
+<body class="booking-page">
+    <main class="main">
+        <!-- Travel Booking Section -->
+        <section id="travel-booking" class="travel-booking section">
+
+            <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="booking-form-container">
+                            <!-- Progress Steps -->
+                            <div class="booking-progress nav nav-tabs" data-aos="fade-up" data-aos-delay="200">
+                                <button class="step nav-link active" data-bs-toggle="tab" data-bs-target="#travel-booking-step-1" aria-current="page">
+                                    <span class="step-number">1</span>
+                                    <span class="step-title">Tour &amp; Dates</span>
+                                </button>
+                                <button class="step nav-link" data-bs-toggle="tab" data-bs-target="#travel-booking-step-2">
+                                    <span class="step-number">2</span>
+                                    <span class="step-title">Lead Traveler</span>
+                                </button>
+                                <button class="step nav-link" data-bs-toggle="tab" data-bs-target="#travel-booking-step-3">
+                                    <span class="step-number">3</span>
+                                    <span class="step-title">Travelers</span>
+                                </button>
+                            </div><!-- End Progress Steps -->
+                            <!-- Booking Form -->
+                            <form asp-action="BookTour" asp-controller="BookingWeb" method="post" class="booking-form" data-aos="fade-up" data-aos-delay="300">
+
+                                <div class="tab-content" id="bookingTabContent">
+                                    <!-- Step 1: Tour & Dates -->
+                                    <div class="form-step tab-pane fade show active" id="travel-booking-step-1" role="tabpanel">
+                                        <h4>Select Your Tour &amp; Travel Dates</h4>
+
+                                        <div class="row gy-4">
+                                            <div class="col-md-12">
+                                                <label for="tour-select">Selected Tour Package</label>
+                                                <input type="text" name="tour_package" id="tour-select" class="form-control" value="@ViewBag.Tour.Name" readonly="">
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label for="tour-schedule">Tour schedule</label>
+                                                <select name="tour_schedule" id="tour-schedule" class="form-select" required="">
+                                                    <option value="-1">Select a tour schedule</option>
+                                                    @foreach (TourScheduleDTO schedule in ViewBag.TourSchedules)
+                                                    {
+                                                        <option value="@schedule.Id">
+                                                            @schedule.DepartureDate.Value.ToString("MMMM dd", CultureInfo.InvariantCulture) -
+                                                            @schedule.ArrivalDate.Value.ToString("MMMM dd", CultureInfo.InvariantCulture)
+                                                        </option>
+                                                    }
+                                                </select>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label for="departure-location">Departure Location</label>
+                                                <input type="text" name="departure_location" id="departure-location" class="form-control" value="@ViewBag.Tour.StartLocation.LocationName" readonly="">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label for="adults">Adults</label>
+                                                <input type="number" name="adults" id="adults" class="form-control" required="" min="0">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label for="children">Children (2-12)</label>
+                                                <input type="number" name="children" id="children" class="form-control" required="" min="0">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label for="infants">Infants (0-2)</label>
+                                                <input type="number" name="infants" id="infants" class="form-control" required="" min="0">
+                                            </div>
+                                        </div>
+                                    </div><!-- End Step 1 -->
+                                    <!-- Step 2: Traveler Information -->
+                                    <div class="form-step tab-pane fade" id="travel-booking-step-2" role="tabpanel">
+                                        <h4>Traveler Information</h4>
+
+                                        <div class="traveler-info">
+                                            <h5>Lead Traveler</h5>
+                                            <div class="row gy-3">
+                                                <div class="col-md-6">
+                                                    <label for="first-name">First Name</label>
+                                                    <input type="text" name="first_name" id="first-name" class="form-control" required="" value="@ViewBag.User.FirstName">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="last-name">Last Name</label>
+                                                    <input type="text" name="last_name" id="last-name" class="form-control" required="" value="@ViewBag.User.LastName">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="email">Email Address</label>
+                                                    <input type="email" name="email" id="email" class="form-control" required="" value="@ViewBag.User.Email">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="phone">Phone Number</label>
+                                                    <input type="tel" name="phone" id="phone" class="form-control" required="" value="@ViewBag.User.PhoneNumber">
+                                                </div>
+                                                <div class="col-md-12">
+                                                    <label for="certificate-id">Certificate Identification</label>
+                                                    <input type="text" name="certificate_id" id="certificate-id" class="form-control" required="">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div><!-- End Step 2 -->
+                                    <!-- Step 3: Travelers -->
+                                    <div class="form-step tab-pane fade" id="travel-booking-step-3" role="tabpanel">
+                                        <div id="travelers-list" class="row gy-3"></div>
+
+                                        <div class="form-navigation">
+                                            <button type="submit" class="btn btn-book">Complete Booking</button>
+                                        </div>
+                                    </div><!-- End Step 3 -->
+
+                                </div><!-- End Tab Content -->
+
+                            </form><!-- End Booking Form -->
+                        </div>
+                    </div>
+
+                    <!-- Booking Summary Sidebar -->
+                    <div class="col-lg-4">
+                        <div class="booking-summary" data-aos="fade-up" data-aos-delay="400">
+                            <div class="summary-header">
+                                <h4>Booking Summary</h4>
+                            </div>
+
+                            <div class="selected-tour">
+                                <img src="@(ViewBag.FirstImage ?? "/images/default-tour.jpg")" alt="Selected Tour" class="img-fluid">
+                                <div class="tour-info">
+                                    <h5>@ViewBag.Tour.Name</h5>
+                                    <p><i class="bi bi-calendar"></i> @ViewBag.Tour.Duration Day@(ViewBag.Tour.Duration == 1 ? "" : "s")</p>
+                                    <p><i class="bi bi-geo-alt"></i> @ViewBag.Tour.EndLocation.LocationName</p>
+                                </div>
+                            </div>
+                            <div class="booking-details">
+                                <div class="detail-item">
+                                    <span class="label">Tour Schedule:</span>
+                                    <span class="value" id="tSchedule">Tour schedule</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="label">Departure Location:</span>
+                                    <span class="value" id="depLocation">location</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="label">Adults:</span>
+                                    <span class="value" id="numAdults">2</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="label">Children and Infants:</span>
+                                    <span class="value" id="numChildren">0</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="label">Total Travelers:</span>
+                                    <span class="value" id="totalTravelers">2</span>
+                                </div>
+                            </div>
+
+                            <div class="price-breakdown mt-3">
+                                <div class="price-item">
+                                    <span class="description">General Price (Adult)</span>
+                                    <span class="amount" id="pricePerAdult">0 VND</span>
+                                </div>
+                                <div class="price-item">
+                                    <span class="description">Child Price (after discount)</span>
+                                    <span class="amount" id="pricePerChild">0 VND</span>
+                                </div>
+                                <div class="price-item">
+                                    <span class="description">Group Discount (6+)</span>
+                                    <span class="amount" id="groupDiscount">0 VND</span>
+                                </div>
+                                <div class="price-total">
+                                    <span class="description">Total Amount</span>
+                                    <span class="amount" id="totalPrice">0 VND</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section><!-- /Travel Booking Section -->
+    </main>
+    <!-- Scroll Top -->
+    <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+    <!-- Preloader -->
+    <div id="preloader"></div>
+    <!-- Vendor JS Files -->
+    <script src="~/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/assets/vendor/php-email-form/validate.js"></script>
+    <script src="~/assets/vendor/aos/aos.js"></script>
+    <script src="~/assets/vendor/purecounter/purecounter_vanilla.js"></script>
+    <script src="~/assets/vendor/swiper/swiper-bundle.min.js"></script>
+    <script src="~/assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
+    <script src="~/assets/vendor/imagesloaded/imagesloaded.pkgd.min.js"></script>
+    <script src="~/assets/vendor/glightbox/js/glightbox.min.js"></script>
+    <!-- Main JS File -->
+    <script src="~/assets/js/main.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const tour = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Tour));
+            const tourSchedules = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.TourSchedules));
+            const departureLocations = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.DepartureLocations));
+
+            const step3Button = document.querySelector('[data-bs-target="#travel-booking-step-3"]');
+            const travelersList = document.getElementById("travelers-list");
+
+            step3Button.addEventListener("click", function () {
+                // Get counts from Step 1
+                const adults = parseInt(document.getElementById("adults").value) || 0;
+                const children = parseInt(document.getElementById("children").value) || 0;
+                const infants = parseInt(document.getElementById("infants").value) || 0;
+
+                // Clear previous list
+                travelersList.innerHTML = "";
+
+                // Function to create traveler input form
+                function createTravelerForm(index, type) {
+                    return `
+                            <div class="col-md-12">
+                                <div class="card p-4 shadow-sm border-0 rounded-3 mb-4">
+                                    <h4>${type} ${index}</h4>
+
+                                    <div class="row g-4">
+                                        <div class="col-md-6">
+                                            <label class="form-label">First Name</label>
+                                            <input type="text" name="Travelers[${index}].FirstName" class="form-control" required>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label class="form-label">Last Name</label>
+                                            <input type="text" name="Travelers[${index}].LastName" class="form-control" required>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label class="form-label">Email</label>
+                                            <input type="email" name="Travelers[${index}].Email" class="form-control" required>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label class="form-label">Phone Number</label>
+                                            <input type="text" name="Travelers[${index}].PhoneNumber" class="form-control" required>
+                                        </div>
+
+                                        <div class="col-md-12">
+                                            <label class="form-label">Identity ID</label>
+                                            <input type="text" name="Travelers[${index}].IdentityID" class="form-control" required>
+                                        </div>
+                                    </div>
+
+                                    <input type="hidden" name="Travelers[${index}].CustomerType" value="${type}">
+                                </div>
+                            </div>
+                            `;
+                }
+
+                // Generate adult forms
+                for (let i = 0; i < adults; i++) {
+                    travelersList.innerHTML += createTravelerForm(i, "Adult");
+                }
+
+                // Generate child forms
+                for (let i = 0; i < children; i++) {
+                    travelersList.innerHTML += createTravelerForm(adults + i, "Child");
+                }
+
+                // Generate infant forms
+                for (let i = 0; i < infants; i++) {
+                    travelersList.innerHTML += createTravelerForm(adults + children + i, "Infant");
+                }
+
+                if (adults + children + infants === 0) {
+                    travelersList.innerHTML = `<p class="text-muted">Please enter the number of travelers in Step 1.</p>`;
+                }
+
+                document.getElementsByClassName("btn-book")[0].disabled = (adults + children + infants === 0);
+
+            });
+
+            function updateSummary() {
+                const numAdultsEl = document.getElementById("adults");
+                const numChildrenEl = document.getElementById("children");
+                const numInfantsEl = document.getElementById("infants");
+                const pricePerAdultEl = document.getElementById("pricePerAdult");
+                const pricePerChildEl = document.getElementById("pricePerChild");
+                const groupDiscountEl = document.getElementById("groupDiscount");
+                const totalPriceEl = document.getElementById("totalPrice");
+                const totalTravelersEl = document.getElementById("totalTravelers");
+
+                // Parse numbers safely
+                const adults = parseInt(numAdultsEl.value) || 0;
+                const children = parseInt(numChildrenEl.value) || 0;
+                const infants = parseInt(numInfantsEl.value) || 0;
+                const totalTravelers = adults + children + infants;
+
+                // Pricing calculations
+                const childPrice = tour.price * (1 - tour.childDiscount / 100);
+                let totalPrice = (adults * tour.price) + ((children + infants) * childPrice);
+                let groupDiscountAmount = 0;
+                const groupThreshold = adults + children + infants >= 6 ? 6 : Infinity; // Example threshold
+
+                if (totalTravelers >= groupThreshold && tour.groupDiscount > 0) {
+                    groupDiscountAmount = totalPrice * (tour.groupDiscount / 100);
+                    totalPrice -= groupDiscountAmount;
+                }
+
+                const totalAdultPrice = adults * tour.price;
+                const totalChildPrice = (children + infants) * childPrice;
+
+                // Update display
+                pricePerAdultEl.textContent = totalAdultPrice.toLocaleString('en-US') + " VND";
+                pricePerChildEl.textContent = totalChildPrice.toLocaleString('en-US') + " VND";
+                groupDiscountEl.textContent = "-" + groupDiscountAmount.toLocaleString('en-US') + " VND";
+                totalPriceEl.textContent = totalPrice.toLocaleString('en-US') + " VND";
+                totalTravelersEl.textContent = totalTravelers;
+
+            }
+
+             //set tour schedule text
+            document.getElementById("tour-schedule").addEventListener("change", function() {
+                const selectedScheduleId = this.value;
+                const selectedText = this.options[this.selectedIndex].text.trim();
+
+                const spanToChange = document.getElementById("tSchedule");
+
+                if (selectedScheduleId && selectedScheduleId !== "-1") {
+                    spanToChange.textContent = selectedText;
+                } else {
+                    spanToChange.textContent = "N/A";
+                }
+            });
+
+            document.getElementById("departure-location").addEventListener("change", function() {
+                const selectedLocationId = this.value;
+                const selectedText = this.options[this.selectedIndex].text.trim();
+
+                const spanToChange = document.getElementById("depLocation");
+                if (selectedLocationId && selectedLocationId !== "-1") {
+                    spanToChange.textContent = selectedText;
+                } else {
+                    spanToChange.textContent = "N/A";
+                }
+            });
+
+            document.getElementById("adults").addEventListener("input", function() {
+                const numAdultsEl = document.getElementById("numAdults");
+                numAdultsEl.textContent = this.value || "0";
+                updateSummary();
+            });
+
+            document.getElementById("children").addEventListener("input", function() {
+                const numChildrenEl = document.getElementById("numChildren");
+                const numInfantsEl = document.getElementById("infants");
+
+                const children = parseInt(this.value) || 0;
+                const infants = parseInt(numInfantsEl.value) || 0;
+
+                numChildrenEl.textContent = children + infants;
+
+                updateSummary();
+            });
+
+            document.getElementById("infants").addEventListener("input", function() {
+                const numChildrenEl = document.getElementById("numChildren");
+                const numChildrenInputEl = document.getElementById("children");
+
+                const children = parseInt(numChildrenInputEl.value) || 0;
+                const infants = parseInt(this.value) || 0;
+
+                numChildrenEl.textContent = children + infants;
+
+                updateSummary();
+            });
+        });
+    </script>
+</body>
