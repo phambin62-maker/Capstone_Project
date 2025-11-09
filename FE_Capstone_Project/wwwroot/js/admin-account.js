@@ -184,7 +184,7 @@
     };
 
     // Toggle Account Status
-    window.toggleAccountStatus = async function (checkbox, accountId) {
+    window.toggleAccountStatus = async function (checkbox, userId) {
         const isActive = checkbox.checked;
         const label = checkbox.nextElementSibling;
 
@@ -194,8 +194,8 @@
         }
 
         try {
-            const response = await fetch(`https://localhost:7160/api/admin/account/${accountId}/toggle-status`, {
-                method: "PATCH",
+            const response = await fetch(`https://localhost:7160/api/admin/staff/${userId}/status`, {
+                method: "PUT",
                 headers: {
                     "Content-Type": "application/json"
                 },
