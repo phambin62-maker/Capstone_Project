@@ -18,28 +18,184 @@
         </a>
     </div>
 
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-primary">
+                            <i class="bi bi-calendar-check"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h4 class="mb-0">@ViewBag.TotalCount</h4>
+                            <small class="text-muted">Total Schedules</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-success">
+                            <i class="bi bi-play-circle"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h4 class="mb-0">@(Model?.Count(s => s.ScheduleStatus == ScheduleStatus.Scheduled) ?? 0)</h4>
+                            <small class="text-muted">Scheduled</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-warning">
+                            <i class="bi bi-clock-history"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h4 class="mb-0">@(Model?.Count(s => s.ScheduleStatus == ScheduleStatus.Ongoing) ?? 0)</h4>
+                            <small class="text-muted">Ongoing</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-info">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h4 class="mb-0">@(Model?.Count(s => s.ScheduleStatus == ScheduleStatus.Completed) ?? 0)</h4>
+                            <small class="text-muted">Completed</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Filter section -->
     <div class="card mb-4">
-        <div class="card-body">
-            <form method="get" asp-action="Schedules" class="row g-2 mb-3">
-                <div class="col-md-3">
-                    <input type="text" name="tourName" value="@ViewBag.TourName"
-                           class="form-control" placeholder="Tìm theo tên Tour..." />
+        <div class="card-header bg-transparent">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h5 class="card-title mb-0 text-dark">
+                        <i class="bi bi-funnel me-2"></i>Filters & Search
+                    </h5>
                 </div>
-                <div class="col-md-3">
-                    <input type="text" name="location" value="@ViewBag.Location"
-                           class="form-control" placeholder="Tìm theo địa điểm..." />
+                <div class="col-md-6 text-end">
+                    <div class="d-flex justify-content-end gap-2">
+                        <div class="input-group input-group-sm" style="width: 250px;">
+                            <input type="text" class="form-control" placeholder="Search tour..." id="searchInput" value="@ViewBag.CurrentSearch">
+                            <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                        <!-- Sort by Date -->
+                        <select class="form-select form-select-sm" style="width: 180px;" id="sortByDate">
+                            <option value="">Sort by Date</option>
+                            @if (ViewBag.CurrentSort == "date_asc")
+                            {
+                                <option value="date_asc" selected>Date: Oldest First</option>
+                                <option value="date_desc">Date: Newest First</option>
+                            }
+                            else if (ViewBag.CurrentSort == "date_desc")
+                            {
+                                <option value="date_asc">Date: Oldest First</option>
+                                <option value="date_desc" selected>Date: Newest First</option>
+                            }
+                            else
+                            {
+                                <option value="date_asc">Date: Oldest First</option>
+                                <option value="date_desc">Date: Newest First</option>
+                            }
+                        </select>
+                    </div>
                 </div>
-                <div class="col-md-3">
-                    <input type="text" name="category" value="@ViewBag.Category"
-                           class="form-control" placeholder="Tìm theo danh mục..." />
-                </div>
-                <div class="col-md-3 d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">Tìm kiếm</button>
-                    <a href="@Url.Action("Schedules")" class="btn btn-secondary">Làm mới</a>
-                </div>
-            </form>
+            </div>
+            
+            <!-- Advanced filters -->
+            <div class="row mt-3">
+                <div class="col-md-12">
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <small class="text-muted me-2"><strong>Filters:</strong></small>
+                        
+                        <!-- Status filter -->
+                        <select class="form-select form-select-sm" style="width: 180px;" id="statusFilter">
+                            <option value="">All Status</option>
+                            @if (ViewBag.CurrentStatus == "Scheduled")
+                            {
+                                <option value="Scheduled" selected>Scheduled</option>
+                                <option value="Ongoing">Ongoing</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Cancelled">Cancelled</option>
+                            }
+                            else if (ViewBag.CurrentStatus == "Ongoing")
+                            {
+                                <option value="Scheduled">Scheduled</option>
+                                <option value="Ongoing" selected>Ongoing</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Cancelled">Cancelled</option>
+                            }
+                            else if (ViewBag.CurrentStatus == "Completed")
+                            {
+                                <option value="Scheduled">Scheduled</option>
+                                <option value="Ongoing">Ongoing</option>
+                                <option value="Completed" selected>Completed</option>
+                                <option value="Cancelled">Cancelled</option>
+                            }
+                            else if (ViewBag.CurrentStatus == "Cancelled")
+                            {
+                                <option value="Scheduled">Scheduled</option>
+                                <option value="Ongoing">Ongoing</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Cancelled" selected>Cancelled</option>
+                            }
+                            else
+                            {
+                                <option value="Scheduled">Scheduled</option>
+                                <option value="Ongoing">Ongoing</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Cancelled">Cancelled</option>
+                            }
+                        </select>
 
+                        <!-- Tour name filter -->
+                        <input type="text" class="form-control form-control-sm" style="width: 180px;" 
+                               placeholder="Tour name..." id="tourNameFilter" value="@ViewBag.CurrentTourName">
+
+                        <!-- Location filter -->
+                        <input type="text" class="form-control form-control-sm" style="width: 180px;" 
+                               placeholder="Location..." id="locationFilter" value="@ViewBag.CurrentLocation">
+
+                        <!-- Category filter -->
+                        <input type="text" class="form-control form-control-sm" style="width: 180px;" 
+                               placeholder="Category..." id="categoryFilter" value="@ViewBag.CurrentCategory">
+
+                        <!-- Date range -->
+                        <div class="input-group input-group-sm" style="width: 300px;">
+                            <input type="date" class="form-control" placeholder="From Date" id="fromDate" value="@ViewBag.CurrentFromDate">
+                            <input type="date" class="form-control" placeholder="To Date" id="toDate" value="@ViewBag.CurrentToDate">
+                        </div>
+
+                        <button class="btn btn-sm btn-outline-primary" id="applyFilters">
+                            <i class="bi bi-funnel me-1"></i>Apply
+                        </button>
+            
+                        <button class="btn btn-sm btn-outline-secondary" id="resetFilters">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -50,6 +206,7 @@
                 <div class="text-center py-5">
                     <i class="bi bi-calendar-x display-1 text-muted mb-3"></i>
                     <h5 class="text-muted">Không có lịch trình nào</h5>
+                    <p class="text-muted mb-4">No schedules found matching your criteria.</p>
                     <a href="@Url.Action("Create", "StaffSchedule")" class="btn btn-primary mt-3">
                         <i class="bi bi-plus-circle me-2"></i>Thêm lịch trình đầu tiên
                     </a>
@@ -58,36 +215,50 @@
             else
             {
                 <div class="table-responsive">
-                    <table class="table table-hover table-striped">
+                    <table class="table table-hover table-striped" id="schedulesTable">
                         <thead class="table-light">
                             <tr>
-                                <th>ID</th>
                                 <th>Tour</th>
-                                <th>Địa điểm khởi hành</th>
-                                <th>Địa điểm kết thúc</th>
-                                <th>Danh mục</th>
-                                <th>Ngày khởi hành</th>
-                                <th>Ngày kết thúc</th>
-                                <th>Trạng thái</th>
-                                <th>Thao tác</th>
+                                <th width="150">Địa điểm khởi hành</th>
+                                <th width="150">Địa điểm kết thúc</th>
+                                <th width="120">Danh mục</th>
+                                <th width="120">Ngày khởi hành</th>
+                                <th width="120">Ngày kết thúc</th>
+                                <th width="120">Trạng thái</th>
+                                <th width="150">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var schedule in Model)
                             {
                                 <tr>
-                                    <td>@schedule.Id</td>
                                     <td>
                                         <a href="@Url.Action("Schedules", new { tourId = schedule.TourId })" 
-                                           class="text-decoration-none">
+                                           class="text-decoration-none fw-bold text-dark">
                                             @(schedule.TourName ?? $"Tour #{schedule.TourId}")
                                         </a>
                                     </td>
-                                    <td>@schedule.StartLocation</td>
-                                    <td>@schedule.EndLocation</td>
-                                    <td>@schedule.CategoryName</td>
-                                    <td>@schedule.DepartureDate?.ToString("dd/MM/yyyy")</td>
-                                    <td>@schedule.ArrivalDate?.ToString("dd/MM/yyyy")</td>
+                                    <td>
+                                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary">
+                                            @schedule.StartLocation
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success">
+                                            @schedule.EndLocation
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info bg-opacity-10 text-info border border-info">
+                                            @schedule.CategoryName
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold text-dark">@schedule.DepartureDate?.ToString("dd/MM/yyyy")</span>
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold text-dark">@schedule.ArrivalDate?.ToString("dd/MM/yyyy")</span>
+                                    </td>
                                     <td>
                                         <span class="badge @GetStatusBadgeClass(schedule.ScheduleStatus)">
                                             @GetStatusText(schedule.ScheduleStatus)
@@ -96,16 +267,23 @@
                                     <td>
                                         <div class="d-flex gap-1">
                                             <a href="@Url.Action("Details", "StaffSchedule", new { id = schedule.Id })"
-                                               class="btn btn-sm btn-outline-primary">
+                                               class="btn btn-sm btn-outline-primary"
+                                               title="View details"
+                                               data-bs-toggle="tooltip">
                                                 <i class="bi bi-eye"></i>
                                             </a>
                                             <a href="@Url.Action("Edit", "StaffSchedule", new { id = schedule.Id })"
-                                               class="btn btn-sm btn-outline-warning">
+                                               class="btn btn-sm btn-outline-warning"
+                                               title="Edit schedule"
+                                               data-bs-toggle="tooltip">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
-                                            <form method="post" action="@Url.Action("Delete", "StaffSchedule")">
+                                            <form method="post" action="@Url.Action("Delete", "StaffSchedule")" class="d-inline">
                                                 <input type="hidden" name="id" value="@schedule.Id" />
-                                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                <button type="submit" 
+                                                        class="btn btn-sm btn-outline-danger"
+                                                        title="Delete schedule"
+                                                        data-bs-toggle="tooltip"
                                                         onclick="return confirm('Bạn có chắc chắn muốn xóa lịch trình này?')">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
@@ -115,26 +293,51 @@
                                 </tr>
                             }
                         </tbody>
-
                     </table>
                 </div>
 
                 <!-- Phân trang -->
                 @if (ViewBag.TotalPages > 1)
                 {
-                    <nav aria-label="Page navigation">
-                        <ul class="pagination justify-content-center mt-4">
-                            @for (int i = 1; i <= ViewBag.TotalPages; i++)
-                            {
-                                <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
-                                    <a class="page-link" 
-                                       href="@Url.Action("Schedules", new { tourId = ViewBag.TourId, page = i, pageSize = ViewBag.PageSize })">
-                                        @i
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <div class="text-muted">
+                            Showing <strong>@Model.Count</strong> schedules of <strong>@ViewBag.TotalCount</strong> total
+                        </div>
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination pagination-sm mb-0">
+                                <!-- Previous button -->
+                                <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                                    <a class="page-link" href="@BuildPaginationUrl(ViewBag.CurrentPage - 1)">
+                                        <i class="bi bi-chevron-left"></i>
                                     </a>
                                 </li>
-                            }
-                        </ul>
-                    </nav>
+
+                                <!-- Pages -->
+                                @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                                {
+                                    if (i == 1 || i == ViewBag.TotalPages || (i >= ViewBag.CurrentPage - 1 && i <= ViewBag.CurrentPage + 1))
+                                    {
+                                        <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                                            <a class="page-link" href="@BuildPaginationUrl(i)">@i</a>
+                                        </li>
+                                    }
+                                    else if (i == ViewBag.CurrentPage - 2 || i == ViewBag.CurrentPage + 2)
+                                    {
+                                        <li class="page-item disabled">
+                                            <span class="page-link">...</span>
+                                        </li>
+                                    }
+                                }
+
+                                <!-- Next button -->
+                                <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                                    <a class="page-link" href="@BuildPaginationUrl(ViewBag.CurrentPage + 1)">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
                 }
             }
         </div>
@@ -165,4 +368,180 @@
             _ => "Không xác định"
         };
     }
+
+    public string BuildPaginationUrl(int page)
+    {
+        var queryParams = new List<string>
+        {
+            $"page={page}",
+            $"pageSize={ViewBag.PageSize}"
+        };
+
+        // Sử dụng ViewBag thay vì các biến không tồn tại
+        if (!string.IsNullOrEmpty(ViewBag.CurrentTourName?.ToString()))
+            queryParams.Add($"tourName={Uri.EscapeDataString(ViewBag.CurrentTourName.ToString())}");
+        if (!string.IsNullOrEmpty(ViewBag.CurrentLocation?.ToString()))
+            queryParams.Add($"location={Uri.EscapeDataString(ViewBag.CurrentLocation.ToString())}");
+        if (!string.IsNullOrEmpty(ViewBag.CurrentCategory?.ToString()))
+            queryParams.Add($"category={Uri.EscapeDataString(ViewBag.CurrentCategory.ToString())}");
+        if (!string.IsNullOrEmpty(ViewBag.CurrentStatus?.ToString()))
+            queryParams.Add($"status={Uri.EscapeDataString(ViewBag.CurrentStatus.ToString())}");
+        if (!string.IsNullOrEmpty(ViewBag.CurrentSort?.ToString()))
+            queryParams.Add($"sort={Uri.EscapeDataString(ViewBag.CurrentSort.ToString())}");
+        if (!string.IsNullOrEmpty(ViewBag.CurrentSearch?.ToString()))
+            queryParams.Add($"search={Uri.EscapeDataString(ViewBag.CurrentSearch.ToString())}");
+        if (!string.IsNullOrEmpty(ViewBag.CurrentFromDate?.ToString()))
+            queryParams.Add($"fromDate={Uri.EscapeDataString(ViewBag.CurrentFromDate.ToString())}");
+        if (!string.IsNullOrEmpty(ViewBag.CurrentToDate?.ToString()))
+            queryParams.Add($"toDate={Uri.EscapeDataString(ViewBag.CurrentToDate.ToString())}");
+        if (ViewBag.TourId != null)
+            queryParams.Add($"tourId={ViewBag.TourId}");
+
+        return Url.Action("Schedules") + "?" + string.Join("&", queryParams);
+    }
+}
+
+@section Styles {
+    <style>
+        .stat-card {
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .table th {
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        #schedulesTable tbody tr:hover {
+            background-color: rgba(0, 123, 255, 0.05);
+            transform: translateY(-1px);
+            transition: all 0.2s ease;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('[data-bs-toggle="tooltip"]').tooltip();
+
+            // Apply all filters
+            $('#applyFilters').on('click', function () {
+                applyFiltersAndRedirect();
+            });
+
+            // Search on Enter key
+            $('#searchInput').on('keyup', function (e) {
+                if (e.keyCode === 13) { 
+                    applyFiltersAndRedirect();
+                }
+            });
+
+            $('#searchButton').on('click', function () {
+                applyFiltersAndRedirect();
+            });
+
+            // Sort by Date
+            $('#sortByDate').on('change', function () {
+                applyFiltersAndRedirect();
+            });
+
+            // Reset filters
+            $('#resetFilters').on('click', function () {
+                window.location.href = '@Url.Action("Schedules")';
+            });
+
+            function applyFiltersAndRedirect() {
+                var tourNameFilter = $('#tourNameFilter').val();
+                var locationFilter = $('#locationFilter').val();
+                var categoryFilter = $('#categoryFilter').val();
+                var statusFilter = $('#statusFilter').val();
+                var sortByDate = $('#sortByDate').val();
+                var searchValue = $('#searchInput').val();
+                var fromDate = $('#fromDate').val();
+                var toDate = $('#toDate').val();
+
+                // Xây dựng URL với các tham số filter
+                var url = '@Url.Action("Schedules", new { page = 1 })';
+                
+                // Thêm các tham số filter nếu có
+                if (tourNameFilter) {
+                    url += '&tourName=' + encodeURIComponent(tourNameFilter);
+                }
+                if (locationFilter) {
+                    url += '&location=' + encodeURIComponent(locationFilter);
+                }
+                if (categoryFilter) {
+                    url += '&category=' + encodeURIComponent(categoryFilter);
+                }
+                if (statusFilter) {
+                    url += '&status=' + encodeURIComponent(statusFilter);
+                }
+                if (sortByDate) {
+                    url += '&sort=' + encodeURIComponent(sortByDate);
+                }
+                if (searchValue) {
+                    url += '&search=' + encodeURIComponent(searchValue);
+                }
+                if (fromDate) {
+                    url += '&fromDate=' + encodeURIComponent(fromDate);
+                }
+                if (toDate) {
+                    url += '&toDate=' + encodeURIComponent(toDate);
+                }
+                @if (ViewBag.TourId != null)
+                {
+                    <text>url += '&tourId=@ViewBag.TourId';</text>
+                }
+
+                // Chuyển hướng đến URL mới
+                window.location.href = url;
+            }
+
+            // Auto hide alerts after 5 seconds
+            setTimeout(function() {
+                $('.alert').alert('close');
+            }, 5000);
+
+            // Hover effect for table rows
+            $('#schedulesTable tbody tr').hover(
+                function() { $(this).addClass('table-active'); },
+                function() { $(this).removeClass('table-active'); }
+            );
+
+            // Set max date for "toDate" to be at least "fromDate"
+            $('#fromDate').on('change', function() {
+                $('#toDate').attr('min', $(this).val());
+            });
+
+            $('#toDate').on('change', function() {
+                var fromDate = $('#fromDate').val();
+                var toDate = $(this).val();
+                
+                if (fromDate && toDate && fromDate > toDate) {
+                    alert('To date must be after from date');
+                    $(this).val('');
+                }
+            });
+        });
+    </script>
 }

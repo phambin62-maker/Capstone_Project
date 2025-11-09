@@ -1,9 +1,9 @@
-﻿using FE_Capstone_Project.Models;
+﻿using BE_Capstone_Project.Domain.Models;
+using FE_Capstone_Project.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using System.Text.Json;
-
 
 namespace FE_Capstone_Project.Controllers
 {
@@ -26,17 +26,34 @@ namespace FE_Capstone_Project.Controllers
             return View();
         }
 
-        public async Task<IActionResult> Schedules(int? tourId = null, int page = 1, int pageSize = 10)
+        public async Task<IActionResult> Schedules(
+            int? tourId = null,
+            int page = 1,
+            int pageSize = 3,
+            string tourName = null,
+            string location = null,
+            string category = null,
+            string status = null,
+            string sort = null,
+            string search = null,
+            string fromDate = null,
+            string toDate = null)
         {
             try
             {
                 List<TourScheduleDTO> schedules;
                 int totalCount;
-                string apiUrl;
+
+                // Build API URL với các tham số filter
+                var queryParams = new List<string>
+                {
+                    $"page={page}",
+                    $"pageSize={pageSize}"
+                };
 
                 if (tourId.HasValue)
                 {
-                    apiUrl = $"TourSchedule/GetPaginatedTourSchedules/{tourId}?page={page}&pageSize={pageSize}";
+                    queryParams.Add($"tourId={tourId.Value}");
                     ViewData["Title"] = $"Lịch trình Tour #{tourId}";
 
                     var tourResponse = await _httpClient.GetAsync($"TourSchedule/GetTourNameById?id={tourId}");
@@ -53,11 +70,31 @@ namespace FE_Capstone_Project.Controllers
                 }
                 else
                 {
-                    apiUrl = $"TourSchedule/GetPaginatedTourSchedules?page={page}&pageSize={pageSize}";
                     ViewData["Title"] = "Danh sách Lịch trình Tour";
                 }
 
+                // Thêm các tham số filter
+                if (!string.IsNullOrEmpty(tourName))
+                    queryParams.Add($"tourName={Uri.EscapeDataString(tourName)}");
+                if (!string.IsNullOrEmpty(location))
+                    queryParams.Add($"location={Uri.EscapeDataString(location)}");
+                if (!string.IsNullOrEmpty(category))
+                    queryParams.Add($"category={Uri.EscapeDataString(category)}");
+                if (!string.IsNullOrEmpty(status))
+                    queryParams.Add($"status={Uri.EscapeDataString(status)}");
+                if (!string.IsNullOrEmpty(sort))
+                    queryParams.Add($"sort={Uri.EscapeDataString(sort)}");
+                if (!string.IsNullOrEmpty(search))
+                    queryParams.Add($"search={Uri.EscapeDataString(search)}");
+                if (!string.IsNullOrEmpty(fromDate))
+                    queryParams.Add($"fromDate={Uri.EscapeDataString(fromDate)}");
+                if (!string.IsNullOrEmpty(toDate))
+                    queryParams.Add($"toDate={Uri.EscapeDataString(toDate)}");
+
+                // Gọi API filter
+                var apiUrl = $"TourSchedule/GetFilteredTourSchedules?{string.Join("&", queryParams)}";
                 var response = await _httpClient.GetAsync(apiUrl);
+
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
@@ -68,27 +105,60 @@ namespace FE_Capstone_Project.Controllers
 
                     schedules = result?.Data ?? new List<TourScheduleDTO>();
 
-                    var countApiUrl = tourId.HasValue ? $"TourSchedule/tour/{tourId}" : "TourSchedule";
+                    // Lấy tổng số count với filter
+                    var countQueryParams = new List<string>();
+                    if (tourId.HasValue)
+                        countQueryParams.Add($"tourId={tourId.Value}");
+                    if (!string.IsNullOrEmpty(tourName))
+                        countQueryParams.Add($"tourName={Uri.EscapeDataString(tourName)}");
+                    if (!string.IsNullOrEmpty(location))
+                        countQueryParams.Add($"location={Uri.EscapeDataString(location)}");
+                    if (!string.IsNullOrEmpty(category))
+                        countQueryParams.Add($"category={Uri.EscapeDataString(category)}");
+                    if (!string.IsNullOrEmpty(status))
+                        countQueryParams.Add($"status={Uri.EscapeDataString(status)}");
+                    if (!string.IsNullOrEmpty(search))
+                        countQueryParams.Add($"search={Uri.EscapeDataString(search)}");
+                    if (!string.IsNullOrEmpty(fromDate))
+                        countQueryParams.Add($"fromDate={Uri.EscapeDataString(fromDate)}");
+                    if (!string.IsNullOrEmpty(toDate))
+                        countQueryParams.Add($"toDate={Uri.EscapeDataString(toDate)}");
+
+                    var countApiUrl = "TourSchedule/GetFilteredTourScheduleCount";
+                    if (countQueryParams.Any())
+                        countApiUrl += "?" + string.Join("&", countQueryParams);
+
                     var countResponse = await _httpClient.GetAsync(countApiUrl);
                     if (countResponse.IsSuccessStatusCode)
                     {
                         var countContent = await countResponse.Content.ReadAsStringAsync();
-                        var countResult = JsonSerializer.Deserialize<ApiResponse<List<TourScheduleDTO>>>(countContent, new JsonSerializerOptions
+                        var countResult = JsonSerializer.Deserialize<ApiResponse<int>>(countContent, new JsonSerializerOptions
                         {
                             PropertyNameCaseInsensitive = true
                         });
-                        totalCount = countResult?.Data?.Count ?? schedules.Count;
+                        totalCount = countResult?.Data ?? schedules.Count;
                     }
                     else
                     {
                         totalCount = schedules.Count;
                     }
 
+                    // Set ViewBag values
                     ViewBag.TourId = tourId;
                     ViewBag.CurrentPage = page;
                     ViewBag.PageSize = pageSize;
                     ViewBag.TotalCount = totalCount;
                     ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+                    // Store current filter values for view
+                    ViewBag.CurrentTourName = tourName;
+                    ViewBag.CurrentLocation = location;
+                    ViewBag.CurrentCategory = category;
+                    ViewBag.CurrentStatus = status;
+                    ViewBag.CurrentSort = sort;
+                    ViewBag.CurrentSearch = search;
+                    ViewBag.CurrentFromDate = fromDate;
+                    ViewBag.CurrentToDate = toDate;
 
                     return View(schedules);
                 }
@@ -105,8 +175,7 @@ namespace FE_Capstone_Project.Controllers
             }
         }
 
-        
-
+        // Các method khác giữ nguyên...
         public IActionResult Create(int? tourId = null)
         {
             ViewData["Title"] = "Thêm Lịch trình Mới";
@@ -283,7 +352,6 @@ namespace FE_Capstone_Project.Controllers
             return RedirectToAction("Schedules");
         }
 
-        // GET: Chi tiết lịch trình
         public async Task<IActionResult> Details(int id)
         {
             try
@@ -312,6 +380,81 @@ namespace FE_Capstone_Project.Controllers
             {
                 TempData["ErrorMessage"] = $"Lỗi kết nối đến server: {ex.Message}";
                 return RedirectToAction("Schedules");
+            }
+        }
+        
+        [HttpGet]
+        public async Task<IActionResult> GetActiveTours(string search = "")
+        {
+            try
+            {
+                var apiUrl = $"Tour/GetActiveTours?search={Uri.EscapeDataString(search)}";
+                var response = await _httpClient.GetAsync(apiUrl);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<ApiResponse<List<Tour>>>(content, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+                    var tours = result?.Data ?? new List<Tour>();
+
+                    // Transform to simple DTO for selection
+                    var tourList = tours.Select(t => new
+                    {
+                        id = t.Id,
+                        name = t.Name,
+                        description = t.Description,
+                        startLocationName = t.StartLocation?.LocationName,
+                        endLocationName = t.EndLocation?.LocationName,
+                        categoryName = t.Category?.CategoryName,
+                        price = t.Price?.ToString("N0") + " VND",
+                        duration = t.Duration + " ngày"
+                    }).ToList();
+
+                    return Json(tourList);
+                }
+
+                return Json(new List<object>());
+            }
+            catch (Exception ex)
+            {
+                return Json(new List<object>());
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetTourById(int id)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"Tour/GetTourById/{id}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<ApiResponse<Tour>>(content, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+                    if (result?.Data != null)
+                    {
+                        return Json(new
+                        {
+                            id = result.Data.Id,
+                            name = result.Data.Name
+                        });
+                    }
+                }
+
+                return Json(null);
+            }
+            catch (Exception ex)
+            {
+                return Json(null);
             }
         }
     }

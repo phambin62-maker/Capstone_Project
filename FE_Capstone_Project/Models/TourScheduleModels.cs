@@ -46,6 +46,9 @@ namespace FE_Capstone_Project.Models
         [JsonPropertyName("arrivalDate")]
         [JsonConverter(typeof(DateOnlyJsonConverter))]
         public DateOnly ArrivalDate { get; set; } = DateOnly.FromDateTime(DateTime.Now.AddDays(1));
+
+        [JsonPropertyName("scheduleStatus")]
+        public ScheduleStatus ScheduleStatus { get; set; } = ScheduleStatus.Scheduled;
     }
 
     public class UpdateTourScheduleRequest

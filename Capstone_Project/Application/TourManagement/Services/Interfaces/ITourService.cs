@@ -37,5 +37,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Services.Interfaces
             decimal? minPrice = null,
             decimal? maxPrice = null,
             string search = null);
+        Task<List<Tour>> GetActiveTours(string search = "");
     }
+
 }

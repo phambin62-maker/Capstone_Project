@@ -15,6 +15,36 @@
     <div class="card">
         <div class="card-body">
             <form method="post">
+                <!-- Thêm phần hiển thị Tour name -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card bg-light">
+                            <div class="card-body py-3">
+                                <div class="row align-items-center">
+                                    <div class="col-md-8">
+                                        <h6 class="card-title mb-1 text-primary">
+                                            <i class="bi bi-map me-2"></i>Thông tin Tour
+                                        </h6>
+                                        <p class="mb-0 fw-bold">
+                                            @if (ViewData["TourName"] != null)
+                                            {
+                                                @ViewData["TourName"]
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">Không có thông tin tour</span>
+                                            }
+                                        </p>
+                                    </div>
+                                    <div class="col-md-4 text-end">
+                                        <small class="text-muted">Mã lịch trình: @ViewContext.RouteData.Values["id"]</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
@@ -56,4 +86,20 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function () {
+            $('#DepartureDate').on('change', function () {
+                const departureDate = new Date($(this).val());
+                const minArrivalDate = new Date(departureDate);
+                minArrivalDate.setDate(minArrivalDate.getDate() + 1);
+
+                $('#ArrivalDate').attr('min', minArrivalDate.toISOString().split('T')[0]);
+
+                const arrivalDate = new Date($('#ArrivalDate').val());
+                if (arrivalDate <= departureDate) {
+                    $('#ArrivalDate').val('');
+                }
+            });
+        });
+    </script>
 }

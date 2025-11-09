@@ -541,5 +541,18 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
                 });
             }
         }
+        [HttpGet("GetActiveTours")]
+        public async Task<ActionResult<ApiResponse<List<Tour>>>> GetActiveTours([FromQuery] string search = "")
+        {
+            try
+            {
+                var tours = await _tourService.GetActiveTours(search);
+                return Ok(new ApiResponse<List<Tour>>(true, "Active tours retrieved successfully", tours));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ApiResponse<List<Tour>>(false, $"An error occurred: {ex.Message}", new List<Tour>()));
+            }
+        }
     }
 }
