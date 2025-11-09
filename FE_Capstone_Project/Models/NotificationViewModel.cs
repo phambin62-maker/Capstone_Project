@@ -1,16 +1,15 @@
 ﻿using BE_Capstone_Project.Domain.Enums;
 
-namespace BE_Capstone_Project.Application.Notifications.DTOs
+namespace FE_Capstone_Project.Models
 {
-    public class NotificationDTO
+    public class NotificationViewModel
     {
         public int Id { get; set; }
         public int UserId { get; set; }
         public string? Title { get; set; }
         public string? Message { get; set; }
-        public DateTime? CreatedDate { get; set; }
-        public NotificationType? NotificationType { get; set; }
-        public string? Username { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public NotificationType NotificationType { get; set; }
         public bool IsRead { get; set; }
     }
 }

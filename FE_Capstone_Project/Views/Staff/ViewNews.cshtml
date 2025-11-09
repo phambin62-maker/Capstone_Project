@@ -35,16 +35,35 @@
                             <input asp-for="Title" class="form-control" disabled />
                         </div>
 
-                        <div class="mb-3">
+                        @* <div class="mb-3">
                             <label asp-for="UserId" class="form-label fw-bold">User ID</label>
                             <input asp-for="UserId" type="number" class="form-control" disabled />
-                        </div>
+                        </div> *@
 
                         <div class="mb-3">
                             <label asp-for="NewsStatus" class="form-label fw-bold">Status</label>
-                            <p class="form-control-plaintext fw-bold">
-                                @(Model.NewsStatus == "Published" ? "" : (Model.NewsStatus == "Draft" ? "" : "Hidden"))
-                            </p>
+
+                            <div>
+                                @{
+                                    var status = Model.NewsStatus?.ToLowerInvariant();
+                                    string badgeClass = status switch
+                                    {
+                                        "published" => "badge bg-success",
+                                        "draft" => "badge bg-warning text-dark",
+                                        "hidden" => "badge bg-secondary",
+                                        _ => "badge bg-light text-dark"
+                                    };
+
+                                    string badgeText = status switch
+                                    {
+                                        "published" => "Published",
+                                        "draft" => "Draft",
+                                        "hidden" => "Hidden",
+                                        _ => "Unknown"
+                                    };
+                                }
+                                <span class="@badgeClass fs-5">@badgeText</span>
+                            </div>
                         </div>
                     </div>
 

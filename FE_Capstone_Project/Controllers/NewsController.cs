@@ -6,18 +6,18 @@ using System;
 using System.Net.Http;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Text; 
-using System.Globalization; 
+using System.Text;
+using System.Globalization;
 
 namespace FE_Capstone_Project.Controllers
 {
-    [Route("Bolg")]
-    public class BlogController : Controller
+    [Route("News")]
+    public class NewsController : Controller
     {
         private readonly HttpClient _httpClient;
         private readonly string _apiBaseUrl = "https://localhost:7160/api/News";
 
-        public BlogController()
+        public NewsController()
         {
             _httpClient = new HttpClient();
         }
@@ -44,7 +44,7 @@ namespace FE_Capstone_Project.Controllers
                 if (!response.IsSuccessStatusCode)
                 {
                     ViewBag.ErrorMessage = "Không thể tải danh sách bài viết.";
-                    return View("Blog", new NewsListViewModel { NewsList = new List<NewsViewModel>() });
+                    return View(new NewsListViewModel { NewsList = new List<NewsViewModel>() });
                 }
 
                 var json = await response.Content.ReadAsStringAsync();
@@ -56,7 +56,7 @@ namespace FE_Capstone_Project.Controllers
                 var publishedNews = newsList
                     .Where(n => n.NewsStatus == "1" || n.NewsStatus?.ToLower() == "published")
                     .OrderByDescending(n => n.CreatedDate)
-                    .ToList();
+                    .AsQueryable();
 
                 string normalizedSearch = NormalizeString(search);
 
@@ -64,27 +64,23 @@ namespace FE_Capstone_Project.Controllers
                 {
                     publishedNews = publishedNews
                         .Where(n =>
-                        {
-                            string normalizedTitle = NormalizeString(n.Title);
-                            string normalizedAuthor = NormalizeString(n.AuthorName);
-                            string normalizedContent = NormalizeString(n.Content);
-
-                            return normalizedTitle.Contains(normalizedSearch) ||
-                                   normalizedAuthor.Contains(normalizedSearch) ||
-                                   normalizedContent.Contains(normalizedSearch);
-                        })
-                        .ToList();
+                            NormalizeString(n.Title).Contains(normalizedSearch) ||
+                            NormalizeString(n.AuthorName).Contains(normalizedSearch) ||
+                            NormalizeString(n.Content).Contains(normalizedSearch)
+                        );
                 }
 
                 if (fromDate.HasValue)
-                    publishedNews = publishedNews.Where(n => n.CreatedDate >= fromDate.Value).ToList();
+                    publishedNews = publishedNews.Where(n => n.CreatedDate >= fromDate.Value);
 
                 if (toDate.HasValue)
-                    publishedNews = publishedNews.Where(n => n.CreatedDate <= toDate.Value).ToList();
+                    publishedNews = publishedNews.Where(n => n.CreatedDate <= toDate.Value);
 
-                int totalItems = publishedNews.Count;
+                var finalPublishedNews = publishedNews.ToList();
+
+                int totalItems = finalPublishedNews.Count;
                 int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
-                var pagedNews = publishedNews.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+                var pagedNews = finalPublishedNews.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
                 var model = new NewsListViewModel
                 {
@@ -96,12 +92,12 @@ namespace FE_Capstone_Project.Controllers
                     TotalPages = totalPages
                 };
 
-                return View("Blog", model);
+                return View(model);
             }
             catch (Exception ex)
             {
                 ViewBag.ErrorMessage = "Đã xảy ra lỗi khi tải dữ liệu: " + ex.Message;
-                return View("Blog", new NewsListViewModel { NewsList = new List<NewsViewModel>() });
+                return View(new NewsListViewModel { NewsList = new List<NewsViewModel>() });
             }
         }
 
@@ -130,7 +126,7 @@ namespace FE_Capstone_Project.Controllers
                     return RedirectToAction("Index");
                 }
 
-                return View("BlogDetail", model);
+                return View(model);
             }
             catch (Exception ex)
             {
@@ -139,8 +135,8 @@ namespace FE_Capstone_Project.Controllers
             }
         }
 
-        [HttpGet("Blog")]
-        public Task<IActionResult> Blog(string? search, DateTime? fromDate, DateTime? toDate, int page = 1, int pageSize = 6)
+        [HttpGet("News")]
+        public Task<IActionResult> News(string? search, DateTime? fromDate, DateTime? toDate, int page = 1, int pageSize = 6)
         {
             return Index(search, fromDate, toDate, page, pageSize);
         }

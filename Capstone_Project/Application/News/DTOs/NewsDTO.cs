@@ -10,7 +10,7 @@ namespace BE_Capstone_Project.Application.Newses.DTOs
         public string? Image { get; set; }           
         public DateTime? CreatedDate { get; set; }   
         public NewsStatus? NewsStatus { get; set; }  
-        public string? AuthorName { get; set; }      
+        public string? AuthorName { get; set; }
         public string Content { get; set; }
     }
 }

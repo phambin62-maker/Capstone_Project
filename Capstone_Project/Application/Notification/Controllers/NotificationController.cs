@@ -31,10 +31,25 @@ namespace BE_Capstone_Project.Application.Notifications.Controllers
         }
 
         [HttpGet("user/{userId}")]
-        public async Task<IActionResult> GetByUserId(int userId)
+        public async Task<IActionResult> GetByUserId(int userId, [FromQuery] bool? isRead)
         {
-            var list = await _service.GetByUserIdAsync(userId);
+            var list = await _service.GetByUserIdAsync(userId, isRead);
             return Ok(list);
+        }
+
+        [HttpGet("unread/{userId}")]
+        public async Task<IActionResult> GetUnreadCount(int userId)
+        {
+            var count = await _service.GetUnreadCountAsync(userId);
+            return Ok(new { count = count });
+        }
+
+        [HttpPut("mark-read/{userId}")]
+        public async Task<IActionResult> MarkAllAsRead(int userId)
+        {
+            var success = await _service.MarkAllAsReadAsync(userId);
+            if (!success) return BadRequest("Could not mark all notifications as read.");
+            return NoContent();
         }
 
         [HttpPost]

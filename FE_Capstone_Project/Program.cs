@@ -15,6 +15,7 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 builder.Services.AddHttpClient();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient<ApiHelper>(client =>
 {
     client.BaseAddress = new Uri("https://localhost:7160/api/");

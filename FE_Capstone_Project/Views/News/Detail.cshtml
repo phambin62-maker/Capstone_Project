@@ -1,6 +1,6 @@
 ﻿@model FE_Capstone_Project.Models.NewsViewModel
 @{
-    ViewData["Title"] = Model?.Title ?? "Article details";
+    ViewData["Title"] = Model?.Title ?? "News details";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
@@ -35,7 +35,7 @@
     </div>
 
     <div class="text-center mt-5">
-        <a href="@Url.Action("Index", "Blog")" class="btn btn-outline-secondary">
+        <a href="@Url.Action("Index", "News")" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left"></i> Back to list
         </a>
     </div>
