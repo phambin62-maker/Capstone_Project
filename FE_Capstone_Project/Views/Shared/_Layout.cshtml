@@ -58,7 +58,7 @@
                         @* <li><a href="about.html">About</a></li>
                         <li><a href="destinations.html">Destinations</a></li> *@
                         <li><a asp-controller="TourWeb" asp-action="Tours">Tours</a></li>
-                        <li><a asp-controller="Blog" asp-action="Blog">Blog</a></li>
+                        <li><a asp-controller="News" asp-action="Index">News</a></li>
                         @* <li><a href="blog.html">Blog</a></li> *@
                         @* <li class="dropdown">
                             <a href="#"><span>More Pages</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
@@ -96,24 +96,42 @@
                     </ul>
                     <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
                 </nav>
-                <nav id="navmenu" class="navmenu">
+                <nav id="user-nav" class="navmenu">
                     <ul>
-                @if (!string.IsNullOrEmpty(firstname))
-                {
-                        <li class="dropdown">
-                            <a href="#"><span>Welcome, @firstname</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-                            <ul>
-                                <li><a asp-action="Profile" asp-controller="AuthWeb">Profile</a></li>
-                                <li><a asp-action="Wishlist" asp-controller="Profile">Wishlist</a></li>
-                                <li><a asp-action="Logout" asp-controller="AuthWeb">Logout</a></li>
-                            </ul>
-                        </li>
-                }else
-                {
-                        <li><a asp-action="Login" asp-controller="AuthWeb">Login</a></li>
-                }
+                        @if (!string.IsNullOrEmpty(firstname))
+                        {
+                            <li class="notification-item">
+                                <a asp-controller="NotificationWeb" asp-action="Index"
+                                   class="notification-trigger" title="Notifications"
+                                   id="notification-bell-trigger">
+
+                                    <span class="notification-icon-container fs-5">
+                                        <i class="bi bi-bell"></i>
+                                        <span class="badge rounded-pill bg-danger notification-count d-none" id="notification-count-badge">0</span>
+                                    </span>
+                                </a>
+                            </li>
+
+                            <li class="dropdown">
+                                <a href="#">
+                                    <span>Welcome, @firstname</span>
+                                    <i class="bi bi-chevron-down toggle-dropdown"></i>
+                                </a>
+                                <ul>
+                                    <li><a asp-action="Profile" asp-controller="AuthWeb">Profile</a></li>
+                                    <li><a asp-action="Wishlist" asp-controller="Profile">Wishlist</a></li>
+                                    <li><a asp-action="Logout" asp-controller="AuthWeb">Logout</a></li>
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <li><a asp-action="Login" asp-controller="AuthWeb">Login</a></li>
+                        }
                     </ul>
                 </nav>
+
+                <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
             </div>
         </header>
         <main role="main" class="container">
@@ -209,6 +227,7 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/notification.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

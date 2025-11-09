@@ -12,6 +12,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Globalization;
 using System.Text.Json.Serialization;
+using System.Security.Claims;
 
 namespace FE_Capstone_Project.Controllers
 {
@@ -724,12 +725,41 @@ namespace FE_Capstone_Project.Controllers
         public IActionResult CreateNews()
         {
             ViewData["Title"] = "Tạo Tin tức Mới";
-            return View();
+
+            // 2. LẤY USER ID TỪ CLAIMS (HOẶC SESSION)
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // Nếu dùng Session:
+            // var userIdString = HttpContext.Session.GetString("UserId");
+
+            if (!int.TryParse(userIdString, out int userId))
+            {
+                // Nếu không tìm thấy ID (chưa đăng nhập hoặc cookie lỗi)
+                TempData["ErrorMessage"] = "Không thể xác định người dùng. Vui lòng đăng nhập lại.";
+                return RedirectToAction("News");
+            }
+
+            // 3. TRUYỀN ID VÀO MODEL
+            var model = new NewsCreateModel
+            {
+                UserId = userId // Tự động gán UserId vào Model
+            };
+
+            return View(model); // Trả về View với Model đã có UserId
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateNews(NewsCreateModel model, IFormFile? imageFile)
         {
+            // Lấy UserId an toàn từ Claims/Session (ĐOẠN NÀY BẠN ĐÃ LÀM ĐÚNG)
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!int.TryParse(userIdString, out int staffUserId))
+            {
+                TempData["ErrorMessage"] = "Không thể xác định người dùng. Vui lòng đăng nhập lại.";
+                return View(model);
+            }
+
             try
             {
                 if (!ModelState.IsValid)
@@ -747,10 +777,9 @@ namespace FE_Capstone_Project.Controllers
                     imageBase64 = $"data:{imageFile.ContentType};base64,{Convert.ToBase64String(imageBytes)}";
                 }
 
-
                 var dto = new
                 {
-                    UserId = model.UserId,
+                    UserId = staffUserId, // (Đúng: Sử dụng staffUserId đã xác thực)
                     Title = model.Title,
                     Content = model.Content,
                     Image = imageBase64,
@@ -777,6 +806,7 @@ namespace FE_Capstone_Project.Controllers
                 return View(model);
             }
         }
+
 
         [HttpGet]
         public async Task<IActionResult> ViewNews(int id)
@@ -835,7 +865,6 @@ namespace FE_Capstone_Project.Controllers
                 return RedirectToAction("News");
             }
         }
-
 
         [HttpPost]
         public async Task<IActionResult> EditNews(int id, NewsCreateModel model, IFormFile? imageFile)
