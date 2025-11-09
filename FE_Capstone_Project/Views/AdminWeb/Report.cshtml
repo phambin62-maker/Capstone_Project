@@ -1,0 +1,482 @@
+﻿@{
+    ViewData["Title"] = "Báo cáo & Thống kê";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">Báo cáo & Thống kê</h2>
+            <div>
+                <button class="btn btn-outline-secondary me-2">
+                    <i class="bi bi-printer me-2"></i>In báo cáo
+                </button>
+                <button class="btn btn-success">
+                    <i class="bi bi-file-earmark-excel me-2"></i>Xuất Excel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Date Filter -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="admin-card">
+            <div class="card-body">
+                <div class="row align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">Từ ngày</label>
+                        <input type="date" class="form-control" value="2025-11-01">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Đến ngày</label>
+                        <input type="date" class="form-control" value="2025-11-08">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Loại báo cáo</label>
+                        <select class="form-select">
+                            <option value="all">Tất cả</option>
+                            <option value="booking">Đặt tour</option>
+                            <option value="revenue">Doanh thu</option>
+                            <option value="customer">Khách hàng</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-primary w-100">
+                            <i class="bi bi-search me-2"></i>Tìm kiếm
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Overview Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="admin-card stat-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="text-muted mb-0">Tổng doanh thu</h6>
+                    <div class="stat-icon bg-success">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                </div>
+                <h3 class="mb-1">2.456.000.000 VNĐ</h3>
+                <small class="text-success">
+                    <i class="bi bi-arrow-up"></i> +12.5% so với tháng trước
+                </small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="admin-card stat-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="text-muted mb-0">Tổng đặt tour</h6>
+                    <div class="stat-icon bg-primary">
+                        <i class="bi bi-ticket-perforated"></i>
+                    </div>
+                </div>
+                <h3 class="mb-1">1,842</h3>
+                <small class="text-success">
+                    <i class="bi bi-arrow-up"></i> +8.2% so với tháng trước
+                </small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="admin-card stat-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="text-muted mb-0">Khách hàng mới</h6>
+                    <div class="stat-icon bg-info">
+                        <i class="bi bi-person-plus"></i>
+                    </div>
+                </div>
+                <h3 class="mb-1">486</h3>
+                <small class="text-success">
+                    <i class="bi bi-arrow-up"></i> +15.3% so với tháng trước
+                </small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="admin-card stat-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="text-muted mb-0">Đánh giá TB</h6>
+                    <div class="stat-icon bg-warning">
+                        <i class="bi bi-star-fill"></i>
+                    </div>
+                </div>
+                <h3 class="mb-1">4.7/5.0</h3>
+                <small class="text-success">
+                    <i class="bi bi-arrow-up"></i> +0.2 so với tháng trước
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Revenue Chart -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-graph-up me-2"></i>Biểu đồ doanh thu
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-pie-chart me-2"></i>Tour phổ biến
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="tourChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Booking Statistics -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-calendar-check me-2"></i>Thống kê đặt tour theo tháng
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Tháng</th>
+                                <th class="text-center">Số booking</th>
+                                <th class="text-end">Doanh thu</th>
+                                <th class="text-center">Tăng trưởng</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Tháng 11/2025</td>
+                                <td class="text-center">234</td>
+                                <td class="text-end">456.000.000 VNĐ</td>
+                                <td class="text-center">
+                                    <span class="badge bg-success">+12%</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Tháng 10/2025</td>
+                                <td class="text-center">289</td>
+                                <td class="text-end">567.000.000 VNĐ</td>
+                                <td class="text-center">
+                                    <span class="badge bg-success">+8%</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Tháng 9/2025</td>
+                                <td class="text-center">312</td>
+                                <td class="text-end">623.000.000 VNĐ</td>
+                                <td class="text-center">
+                                    <span class="badge bg-success">+15%</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Tháng 8/2025</td>
+                                <td class="text-center">198</td>
+                                <td class="text-end">389.000.000 VNĐ</td>
+                                <td class="text-center">
+                                    <span class="badge bg-danger">-5%</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Tháng 7/2025</td>
+                                <td class="text-center">276</td>
+                                <td class="text-end">521.000.000 VNĐ</td>
+                                <td class="text-center">
+                                    <span class="badge bg-success">+10%</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-trophy me-2"></i>Top 5 Tour bán chạy
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Tên Tour</th>
+                                <th class="text-center">Số booking</th>
+                                <th class="text-end">Doanh thu</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="bi bi-trophy-fill"></i> 1
+                                    </span>
+                                </td>
+                                <td>Ha Long Bay Cruise</td>
+                                <td class="text-center">342</td>
+                                <td class="text-end">856.000.000 VNĐ</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="badge bg-secondary">
+                                        <i class="bi bi-trophy-fill"></i> 2
+                                    </span>
+                                </td>
+                                <td>Sapa Mountain Trek</td>
+                                <td class="text-center">289</td>
+                                <td class="text-end">520.000.000 VNĐ</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="badge bg-danger">
+                                        <i class="bi bi-trophy-fill"></i> 3
+                                    </span>
+                                </td>
+                                <td>Phu Quoc Island</td>
+                                <td class="text-center">256</td>
+                                <td class="text-end">486.000.000 VNĐ</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-info">4</span></td>
+                                <td>Hanoi City Tour</td>
+                                <td class="text-center">234</td>
+                                <td class="text-end">234.000.000 VNĐ</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-info">5</span></td>
+                                <td>Mekong Delta</td>
+                                <td class="text-center">198</td>
+                                <td class="text-end">297.000.000 VNĐ</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Customer Analysis -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-people me-2"></i>Phân tích khách hàng
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center border-end">
+                        <h4 class="text-primary">2,847</h4>
+                        <p class="text-muted mb-0">Tổng khách hàng</p>
+                    </div>
+                    <div class="col-md-3 text-center border-end">
+                        <h4 class="text-success">1,245</h4>
+                        <p class="text-muted mb-0">Khách hàng thân thiết</p>
+                    </div>
+                    <div class="col-md-3 text-center border-end">
+                        <h4 class="text-info">486</h4>
+                        <p class="text-muted mb-0">Khách mới tháng này</p>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <h4 class="text-warning">73%</h4>
+                        <p class="text-muted mb-0">Tỷ lệ quay lại</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Staff Performance -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-bar-chart me-2"></i>Hiệu suất nhân viên
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Nhân viên</th>
+                                <th class="text-center">Số booking xử lý</th>
+                                <th class="text-end">Doanh thu</th>
+                                <th class="text-center">Đánh giá TB</th>
+                                <th class="text-center">Hiệu suất</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://ui-avatars.com/api/?name=Nguyen+Van+A&background=0D8ABC&color=fff"
+                                             class="rounded-circle me-2" width="32" alt="Avatar">
+                                        <strong>Nguyễn Văn A</strong>
+                                    </div>
+                                </td>
+                                <td class="text-center">342</td>
+                                <td class="text-end">856.000.000 VNĐ</td>
+                                <td class="text-center">
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="bi bi-star-fill"></i> 4.8
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-success" style="width: 95%">95%</div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://ui-avatars.com/api/?name=Tran+Thi+B&background=28A745&color=fff"
+                                             class="rounded-circle me-2" width="32" alt="Avatar">
+                                        <strong>Trần Thị B</strong>
+                                    </div>
+                                </td>
+                                <td class="text-center">298</td>
+                                <td class="text-end">745.000.000 VNĐ</td>
+                                <td class="text-center">
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="bi bi-star-fill"></i> 4.7
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-success" style="width: 92%">92%</div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://ui-avatars.com/api/?name=Le+Van+C&background=6C757D&color=fff"
+                                             class="rounded-circle me-2" width="32" alt="Avatar">
+                                        <strong>Lê Văn C</strong>
+                                    </div>
+                                </td>
+                                <td class="text-center">267</td>
+                                <td class="text-end">668.000.000 VNĐ</td>
+                                <td class="text-center">
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="bi bi-star-fill"></i> 4.6
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-info" style="width: 88%">88%</div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Revenue Chart
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        const revenueChart = new Chart(revenueCtx, {
+            type: 'line',
+            data: {
+                labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'],
+                datasets: [{
+                    label: 'Doanh thu (triệu VNĐ)',
+                    data: [420, 380, 450, 520, 480, 510, 521, 389, 623, 567, 456, 0],
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value + 'M';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Tour Chart
+        const tourCtx = document.getElementById('tourChart').getContext('2d');
+        const tourChart = new Chart(tourCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Ha Long Bay', 'Sapa Trek', 'Phu Quoc', 'Hanoi Tour', 'Mekong'],
+                datasets: [{
+                    data: [342, 289, 256, 234, 198],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.8)',
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(255, 206, 86, 0.8)',
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(153, 102, 255, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    </script>
+}

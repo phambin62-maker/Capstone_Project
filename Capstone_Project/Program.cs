@@ -1,6 +1,9 @@
 ﻿using BE_Capstone_Project.Application.Auth.Services;
 using BE_Capstone_Project.Application.BookingManagement.Services;
 using BE_Capstone_Project.Application.BookingManagement.Services.Interfaces;
+﻿using BE_Capstone_Project.Application.Admin.Service;
+using BE_Capstone_Project.Application.Admin.Service.Interfaces;
+using BE_Capstone_Project.Application.Auth.Services;
 using BE_Capstone_Project.Application.CancelConditions.Services;
 using BE_Capstone_Project.Application.CancelConditions.Services.Interfaces;
 using BE_Capstone_Project.Application.Categories.Services;
@@ -49,7 +52,7 @@ builder.Services.AddScoped<ILocationService, LocationService>();
 builder.Services.AddScoped<ITourCategoryService, TourCategoryService>();
 builder.Services.AddScoped<ICancelConditionService, CancelConditionService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
-
+builder.Services.AddScoped<IAdminService, AdminService>();
 //DAO
 builder.Services.AddScoped<BookingCustomerDAO>();
 builder.Services.AddScoped<BookingDAO>();
