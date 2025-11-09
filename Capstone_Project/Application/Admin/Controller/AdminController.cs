@@ -1,8 +1,7 @@
 ﻿using BE_Capstone_Project.Application.Admin.DTOs;
 using BE_Capstone_Project.Application.Admin.Service;
 using BE_Capstone_Project.Application.Admin.Service.Interfaces;
-using BE_Capstone_Project.Application.Bookings.Services;
-using Microsoft.AspNetCore.Authorization;
+using BE_Capstone_Project.Application.BookingManagement.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BE_Capstone_Project.Application.Admin.Controller

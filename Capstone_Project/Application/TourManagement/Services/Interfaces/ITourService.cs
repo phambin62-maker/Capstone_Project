@@ -13,6 +13,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Services.Interfaces
         Task<List<Tour>> GetToursByStartLocationId(int startLocationId);
         Task<List<Tour>> GetToursByEndLocationId(int endLocationId);
         Task<List<Tour>> GetToursByPriceRange(decimal minPrice, decimal maxPrice);
+        Task<Tour?> GetTourByScheduleId(int scheduleId);
         Task<List<Tour>> SearchTourByName(string name);
         Task<int> GetTotalTourCount();
         Task<List<Tour>> GetPaginatedTours(int page = 1, int pageSize = 10);
@@ -37,5 +38,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Services.Interfaces
             decimal? minPrice = null,
             decimal? maxPrice = null,
             string search = null);
+        Task<List<Tour>> GetActiveTours(string search = "");
     }
+
 }

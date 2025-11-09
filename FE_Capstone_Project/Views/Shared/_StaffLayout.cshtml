@@ -29,7 +29,7 @@
     {
         <header id="header" class="header d-flex align-items-center fixed-top">
             <div class="header-container container-fluid container-xl d-flex align-items-center justify-content-between">
-                <a href="/" class="logo d-flex align-items-center me-auto me-xl-0">
+                <a asp-action="Index" asp-controller="Staff" class="logo d-flex align-items-center me-auto me-xl-0">
                     <h1 class="sitename">Staff Panel</h1>
                 </a>
 
@@ -85,13 +85,6 @@
                             <i class="bi bi-speedometer2 me-2"></i>Bảng điều khiển
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Bookings" ? "active" : "")"
-                           href="/Staff/Bookings">
-                            <i class="bi bi-ticket-perforated me-2"></i>Đặt tour
-                            <span class="badge bg-primary ms-2">@ViewBag.BookingCount</span>
-                        </a>
-                    </li>
                     
                     <li class="nav-item">
                         <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Tours" ? "active" : "")"
@@ -103,13 +96,6 @@
                         <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "StaffSchedule" ? "active" : "")"
                            href="/StaffSchedule/Schedules">
                             <i class="bi bi-calendar-event me-2"></i>Lịch trình Tour
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Tasks" ? "active" : "")"
-                           href="/Staff/Tasks">
-                            <i class="bi bi-list-check me-2"></i>Công việc của tôi
-                            <span class="badge bg-warning ms-2">@ViewBag.TaskCount</span>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -138,7 +124,7 @@
                     </ol>
                 </nav>
 
-                
+                <partial name="_AlertMessages" />
 
                 @RenderBody()
             </div>

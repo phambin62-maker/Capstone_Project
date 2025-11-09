@@ -1,4 +1,4 @@
-﻿using BE_Capstone_Project.Application.Bookings.Services;
+﻿using BE_Capstone_Project.Application.BookingManagement.Services.Interfaces;
 using BE_Capstone_Project.Application.ReviewManagement.DTOs;
 using BE_Capstone_Project.Application.ReviewManagement.Services.Interfaces;
 using BE_Capstone_Project.Application.Services;
@@ -15,9 +15,9 @@ namespace BE_Capstone_Project.Application.ReviewManagement.Controllers
     {
         private readonly IReviewService _reviewService;
         private readonly IUserService _userService;
-        private readonly BookingService _bookingService;
+        private readonly IBookingService _bookingService;
         private readonly ILogger<ReviewController> _logger;
-        public ReviewController(IReviewService reviewService, IUserService userService, BookingService bookingService, ILogger<ReviewController> logger) 
+        public ReviewController(IReviewService reviewService, IUserService userService, IBookingService bookingService, ILogger<ReviewController> logger) 
         {
             _reviewService = reviewService;
             _userService = userService;

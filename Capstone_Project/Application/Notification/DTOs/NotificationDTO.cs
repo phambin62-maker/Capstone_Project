@@ -10,6 +10,7 @@ namespace BE_Capstone_Project.Application.Notifications.DTOs
         public string? Message { get; set; }
         public DateTime? CreatedDate { get; set; }
         public NotificationType? NotificationType { get; set; }
-        public string? Username { get; set; } 
+        public string? Username { get; set; }
+        public bool IsRead { get; set; }
     }
 }

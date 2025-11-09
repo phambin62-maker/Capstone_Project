@@ -18,6 +18,7 @@ namespace BE_Capstone_Project.DAO
             {
                 await _context.Notifications.AddAsync(notification);
                 await _context.SaveChangesAsync();
+                // SỬA LỖI: Khớp với Model C# (chữ 'i' thường)
                 return notification.Id;
             }
             catch (Exception ex)
@@ -37,6 +38,7 @@ namespace BE_Capstone_Project.DAO
             }
             catch (Exception ex)
             {
+                // SỬA LỖI: Khớp với Model C# (chữ 'i' thường)
                 Console.WriteLine($"An error occurred while updating the notification with ID {notification.Id}: {ex.Message}");
                 return false;
             }
@@ -66,7 +68,7 @@ namespace BE_Capstone_Project.DAO
         {
             try
             {
-                return await _context.Notifications.ToListAsync();
+                return await _context.Notifications.Include(n => n.User).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -79,7 +81,8 @@ namespace BE_Capstone_Project.DAO
         {
             try
             {
-                return await _context.Notifications.FindAsync(notificationId);
+                // SỬA LỖI: Khớp với Model C# (chữ 'i' thường)
+                return await _context.Notifications.Include(n => n.User).FirstOrDefaultAsync(n => n.Id == notificationId);
             }
             catch (Exception ex)
             {
@@ -88,18 +91,70 @@ namespace BE_Capstone_Project.DAO
             }
         }
 
-        public async Task<List<Notification>> GetNotificationsByUserIdAsync(int userId)
+        public async Task<List<Notification>> GetNotificationsByUserIdAsync(int userId, bool? isRead = null)
         {
             try
             {
-                return await _context.Notifications
+                var query = _context.Notifications
+                    .Include(n => n.User)
+                    // SỬA LỖI: Khớp với Model C# (chữ 'd' thường)
                     .Where(n => n.UserId == userId)
-                    .ToListAsync();
+                    .AsQueryable();
+
+                if (isRead.HasValue)
+                {
+                    query = query.Where(n => n.IsRead == isRead.Value);
+                }
+
+                return await query.OrderByDescending(n => n.CreatedDate).ToListAsync();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"An error occurred while retrieving notifications for user ID {userId}: {ex.Message}");
                 return new List<Notification>();
+            }
+        }
+
+        public async Task<int> GetUnreadCountAsync(int userId)
+        {
+            try
+            {
+                return await _context.Notifications
+                    // SỬA LỖI: Khớp với Model C# (chữ 'd' thường)
+                    .Where(n => n.UserId == userId && n.IsRead == false)
+                    .CountAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while counting unread notifications for user ID {userId}: {ex.Message}");
+                return 0;
+            }
+        }
+
+        public async Task<bool> MarkAllAsReadAsync(int userId)
+        {
+            try
+            {
+                var unreadNotifications = await _context.Notifications
+                    // SỬA LỖI: Khớp với Model C# (chữ 'd' thường)
+                    .Where(n => n.UserId == userId && n.IsRead == false)
+                    .ToListAsync();
+
+                if (!unreadNotifications.Any())
+                {
+                    return true;
+                }
+
+                unreadNotifications.ForEach(n => n.IsRead = true);
+
+                await _context.SaveChangesAsync();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while marking all notifications as read for user ID {userId}: {ex.Message}");
+                return false;
             }
         }
     }
