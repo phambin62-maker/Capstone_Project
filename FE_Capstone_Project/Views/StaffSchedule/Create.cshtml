@@ -1,14 +1,30 @@
 ﻿@model FE_Capstone_Project.Models.CreateTourScheduleRequest
 @{
-    ViewData["Title"] = "Thêm Lịch trình Mới";
+    ViewData["Title"] = "Add New Schedule";
     Layout = "~/Views/Shared/_StaffLayout.cshtml";
 }
 
 <div class="container-fluid">
+    <!-- Alert Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0 text-dark">@ViewData["Title"]</h1>
         <a href="@Url.Action("Schedules")" class="btn btn-secondary">
-            <i class="bi bi-arrow-left me-2"></i>Quay lại
+            <i class="bi bi-arrow-left me-2"></i>Back to List
         </a>
     </div>
 
@@ -16,14 +32,14 @@
     <div class="card mb-4" id="tourSelectionSection">
         <div class="card-header bg-primary text-white">
             <h5 class="card-title mb-0">
-                <i class="bi bi-map me-2"></i>Chọn Tour
+                <i class="bi bi-map me-2"></i>Select Tour
             </h5>
         </div>
         <div class="card-body">
             <div class="row">
                 <div class="col-md-8">
                     <div class="input-group">
-                        <input type="text" class="form-control" id="tourSearch" placeholder="Tìm kiếm tour theo tên...">
+                        <input type="text" class="form-control" id="tourSearch" placeholder="Search tour by name...">
                         <button class="btn btn-outline-secondary" type="button" id="searchTourBtn">
                             <i class="bi bi-search"></i>
                         </button>
@@ -31,7 +47,7 @@
                 </div>
                 <div class="col-md-4">
                     <button class="btn btn-outline-primary w-100" type="button" data-bs-toggle="modal" data-bs-target="#tourModal">
-                        <i class="bi bi-list-ul me-2"></i>Xem danh sách Tour
+                        <i class="bi bi-list-ul me-2"></i>View Tour List
                     </button>
                 </div>
             </div>
@@ -40,12 +56,12 @@
             <div id="selectedTourInfo" class="mt-3 p-3 border rounded" style="display: none;">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="mb-1">Tour đã chọn:</h6>
+                        <h6 class="mb-1">Selected Tour:</h6>
                         <p class="mb-0 fw-bold text-primary" id="selectedTourName"></p>
                         <small class="text-muted">ID: <span id="selectedTourId"></span></small>
                     </div>
                     <button type="button" class="btn btn-sm btn-outline-danger" id="clearSelection">
-                        <i class="bi bi-x"></i> Chọn lại
+                        <i class="bi bi-x"></i> Change Selection
                     </button>
                 </div>
             </div>
@@ -56,7 +72,7 @@
     <div class="card" id="scheduleFormSection" style="display: none;">
         <div class="card-header bg-success text-white">
             <h5 class="card-title mb-0">
-                <i class="bi bi-calendar-plus me-2"></i>Thông tin Lịch trình
+                <i class="bi bi-calendar-plus me-2"></i>Schedule Information
             </h5>
         </div>
         <div class="card-body">
@@ -69,12 +85,12 @@
                             <label class="form-label">Tour *</label>
                             <div class="form-control bg-light" id="tourDisplay" style="border: none;">
                                 <i class="bi bi-info-circle text-muted me-2"></i>
-                                <span id="tourNameDisplay">Chưa chọn tour</span>
+                                <span id="tourNameDisplay">No tour selected</span>
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="DepartureDate" class="form-label">Ngày khởi hành *</label>
+                            <label asp-for="DepartureDate" class="form-label">Departure Date *</label>
                             <input asp-for="DepartureDate" type="date" class="form-control"
                                    min="@DateTime.Now.ToString("yyyy-MM-dd")" />
                             <span asp-validation-for="DepartureDate" class="text-danger"></span>
@@ -82,19 +98,19 @@
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label asp-for="ArrivalDate" class="form-label">Ngày kết thúc *</label>
+                            <label asp-for="ArrivalDate" class="form-label">Arrival Date *</label>
                             <input asp-for="ArrivalDate" type="date" class="form-control"
                                    min="@DateTime.Now.AddDays(1).ToString("yyyy-MM-dd")" />
                             <span asp-validation-for="ArrivalDate" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="ScheduleStatus" class="form-label">Trạng thái *</label>
+                            <label asp-for="ScheduleStatus" class="form-label">Status *</label>
                             <select asp-for="ScheduleStatus" class="form-select">
-                                <option value="Scheduled">Đã lên lịch</option>
-                                <option value="Ongoing">Đang diễn ra</option>
-                                <option value="Completed">Đã hoàn thành</option>
-                                <option value="Cancelled">Đã hủy</option>
+                                <option value="Scheduled">Scheduled</option>
+                                <option value="Ongoing">Ongoing</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Cancelled">Cancelled</option>
                             </select>
                             <span asp-validation-for="ScheduleStatus" class="text-danger"></span>
                         </div>
@@ -103,11 +119,11 @@
 
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-success">
-                        <i class="bi bi-check-circle me-2"></i>Thêm Lịch trình
+                        <i class="bi bi-check-circle me-2"></i>Create Schedule
                     </button>
-                    <a href="@Url.Action("Schedules")" class="btn btn-secondary">Hủy</a>
+                    <a href="@Url.Action("Schedules")" class="btn btn-secondary">Cancel</a>
                     <button type="button" class="btn btn-outline-primary" id="backToTourSelection">
-                        <i class="bi bi-arrow-left me-2"></i>Chọn lại Tour
+                        <i class="bi bi-arrow-left me-2"></i>Change Tour
                     </button>
                 </div>
             </form>
@@ -120,12 +136,12 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="tourModalLabel">Chọn Tour</h5>
+                <h5 class="modal-title" id="tourModalLabel">Select Tour</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="input-group mb-3">
-                    <input type="text" class="form-control" id="modalTourSearch" placeholder="Tìm kiếm tour...">
+                    <input type="text" class="form-control" id="modalTourSearch" placeholder="Search tours...">
                     <button class="btn btn-outline-secondary" type="button" id="modalSearchBtn">
                         <i class="bi bi-search"></i>
                     </button>
@@ -133,14 +149,13 @@
 
                 <div class="table-responsive" style="max-height: 400px;">
                     <table class="table table-hover">
-                        <!-- Cập nhật phần thead trong modal -->
                         <thead class="table-light sticky-top">
                             <tr>
-                                <th>Tên Tour</th>
-                                <th>Địa điểm bắt đầu</th>
-                                <th>Địa điểm kết thúc</th>
-                                <th>Danh mục</th>
-                                <th>Thao tác</th>
+                                <th>Tour Name</th>
+                                <th>Start Location</th>
+                                <th>End Location</th>
+                                <th>Category</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody id="tourList">
@@ -153,16 +168,16 @@
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
-                    <p class="mt-2 text-muted">Đang tải danh sách tour...</p>
+                    <p class="mt-2 text-muted">Loading tour list...</p>
                 </div>
 
                 <div id="noToursFound" class="text-center py-4" style="display: none;">
                     <i class="bi bi-inbox display-4 text-muted"></i>
-                    <p class="text-muted mt-2">Không tìm thấy tour nào</p>
+                    <p class="text-muted mt-2">No tours found</p>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -193,55 +208,53 @@
                         displayTours(data);
                     })
                     .fail(function () {
-                        $('#tourLoading').html('<div class="alert alert-danger">Lỗi khi tải danh sách tour</div>');
+                        $('#tourLoading').html('<div class="alert alert-danger">Error loading tour list</div>');
                     });
             }
 
             // Display tours in modal
-        // Trong function displayTours, cập nhật phần hiển thị tour:
-        function displayTours(tours) {
-            $('#tourLoading').hide();
-            $('#tourList').empty();
+            function displayTours(tours) {
+                $('#tourLoading').hide();
+                $('#tourList').empty();
 
-            if (tours.length === 0) {
-                $('#noToursFound').show();
-                return;
+                if (tours.length === 0) {
+                    $('#noToursFound').show();
+                    return;
+                }
+
+                tours.forEach(function (tour) {
+                    const row = `
+                        <tr>
+                            <td>
+                                <strong>${tour.name}</strong>
+                                ${tour.description ? `<br><small class="text-muted">${tour.description.substring(0, 50)}...</small>` : ''}
+                                <br>
+                                <small class="text-success">${tour.price}</small> •
+                                <small class="text-info">${tour.duration}</small>
+                            </td>
+                            <td>${tour.startLocationName || 'N/A'}</td>
+                            <td>${tour.endLocationName || 'N/A'}</td>
+                            <td>${tour.categoryName || 'N/A'}</td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-primary select-tour-btn"
+                                        data-tour-id="${tour.id}"
+                                        data-tour-name="${tour.name}">
+                                    <i class="bi bi-check me-1"></i>Select
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    $('#tourList').append(row);
+                });
+
+                // Add click event for select buttons
+                $('.select-tour-btn').on('click', function () {
+                    const tourId = $(this).data('tour-id');
+                    const tourName = $(this).data('tour-name');
+                    selectTour(tourId, tourName);
+                    $('#tourModal').modal('hide');
+                });
             }
-
-            tours.forEach(function (tour) {
-                const row = `
-                    <tr>
-                        <td>${tour.id}</td>
-                        <td>
-                            <strong>${tour.name}</strong>
-                            ${tour.description ? `<br><small class="text-muted">${tour.description.substring(0, 50)}...</small>` : ''}
-                            <br>
-                            <small class="text-success">${tour.price}</small> •
-                            <small class="text-info">${tour.duration}</small>
-                        </td>
-                        <td>${tour.startLocationName || 'N/A'}</td>
-                        <td>${tour.endLocationName || 'N/A'}</td>
-                        <td>${tour.categoryName || 'N/A'}</td>
-                        <td>
-                            <button type="button" class="btn btn-sm btn-primary select-tour-btn"
-                                    data-tour-id="${tour.id}"
-                                    data-tour-name="${tour.name}">
-                                <i class="bi bi-check me-1"></i>Chọn
-                            </button>
-                        </td>
-                    </tr>
-                `;
-                $('#tourList').append(row);
-            });
-
-            // Add click event for select buttons
-            $('.select-tour-btn').on('click', function () {
-                const tourId = $(this).data('tour-id');
-                const tourName = $(this).data('tour-name');
-                selectTour(tourId, tourName);
-                $('#tourModal').modal('hide');
-            });
-        }
 
             // Select a tour
             function selectTour(tourId, tourName) {
@@ -318,7 +331,7 @@
             $('#scheduleForm').on('submit', function (e) {
                 if (!$('#tourIdInput').val()) {
                     e.preventDefault();
-                    alert('Vui lòng chọn một tour trước khi tạo lịch trình.');
+                    alert('Please select a tour before creating schedule.');
                     return false;
                 }
 
@@ -327,7 +340,7 @@
 
                 if (arrivalDate <= departureDate) {
                     e.preventDefault();
-                    alert('Ngày kết thúc phải sau ngày khởi hành.');
+                    alert('Arrival date must be after departure date.');
                     return false;
                 }
             });
@@ -347,6 +360,11 @@
                         console.log('Could not load tour from URL parameter');
                     });
             }
+
+            // Auto-hide alerts after 5 seconds
+            setTimeout(function() {
+                $('.alert').alert('close');
+            }, 5000);
         });
     </script>
 
