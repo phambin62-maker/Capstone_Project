@@ -1,4 +1,4 @@
-﻿using BE_Capstone_Project.Application.Bookings.Services;
+﻿using BE_Capstone_Project.Application.BookingManagement.Services;
 using BE_Capstone_Project.Application.Services;
 using BE_Capstone_Project.Application.WishlistManagement.DTOs;
 using BE_Capstone_Project.Application.WishlistManagement.Services.Interfaces;

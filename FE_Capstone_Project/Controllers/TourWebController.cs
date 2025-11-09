@@ -31,7 +31,7 @@ namespace FE_Capstone_Project.Controllers
                 var destinationsResponse = await _apiHelper.GetAsync<LocationsResponse>("Locations/GetAllLocations");
                 var categoriesResponse = await _apiHelper.GetAsync<TourCategoriesResponse>("TourCategories/GetAllTourCategories");
 
-                var tours = toursResponse?.Tours ?? new List<TourViewModel>();
+                var tours = toursResponse?.Tours.FindAll(t => t.TourStatus) ?? new List<TourViewModel>();
                 var featuredTours = featuredToursResponse?.Tours ?? new List<TourViewModel>();
                 var destinations = destinationsResponse?.Data ?? new List<LocationViewModel>();
                 var categories = categoriesResponse?.Data ?? new List<TourCategoryViewModel>();

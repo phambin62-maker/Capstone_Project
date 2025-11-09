@@ -1,18 +1,21 @@
-﻿using BE_Capstone_Project.Application.Bookings.DTOs;
+﻿using BE_Capstone_Project.Application.BookingManagement.DTOs;
+using BE_Capstone_Project.Application.BookingManagement.Services.Interfaces;
 using BE_Capstone_Project.DAO;
 using BE_Capstone_Project.Domain.Enums;
 using BE_Capstone_Project.Domain.Models;
 using DocumentFormat.OpenXml.Office2010.Excel;
 
-namespace BE_Capstone_Project.Application.Bookings.Services
+namespace BE_Capstone_Project.Application.BookingManagement.Services
 {
-    public class BookingService
+    public class BookingService : IBookingService
     {
         private readonly BookingDAO _bookingDAO;
+        private readonly BookingCustomerDAO _bookingCustomerDAO;
 
-        public BookingService(BookingDAO bookingDAO)
+        public BookingService(BookingDAO bookingDAO, BookingCustomerDAO bookingCustomerDAO)
         {
             _bookingDAO = bookingDAO;
+            _bookingCustomerDAO = bookingCustomerDAO;
         }
 
         public async Task<IEnumerable<BookingDTO>> GetAllAsync()
@@ -73,7 +76,10 @@ namespace BE_Capstone_Project.Application.Bookings.Services
                 PaymentMethod = dto.PaymentMethod,
                 BookingStatus = dto.BookingStatus ?? BookingStatus.Pending,
                 BookingDate = DateTime.UtcNow,
-                ExpirationTime = DateTime.UtcNow.AddHours(1)
+                ExpirationTime = DateTime.UtcNow.AddHours(1),
+                RefundAmount = dto.RefundAmount,
+                RefundDate = dto.RefundDate,
+                PaymentDate = dto.PaymentDate
             };
 
             return await _bookingDAO.AddBookingAsync(newBooking);
@@ -130,6 +136,24 @@ namespace BE_Capstone_Project.Application.Bookings.Services
         public async Task<Booking?> GetBookingByUserIdAndTourId(int userId, int tourId)
         {
             return await _bookingDAO.GetBookingByUserIdAndTourIdAsync(userId, tourId);
+        }
+
+        public async Task AddBookingCustomersToBookId(int bookingId, List<BookingCustomerDTO> bookingCustomers)
+        {
+            foreach (BookingCustomerDTO dto in bookingCustomers)
+            {
+                BookingCustomer bookingCustomer = new BookingCustomer
+                {
+                    BookingId = bookingId,
+                    FirstName = dto.FirstName,
+                    LastName = dto.LastName,
+                    Email = dto.Email,
+                    PhoneNumber = dto.PhoneNumber,
+                    IdentityId = dto.IdentityID,
+                    CustomerType = dto.CustomerType
+                };
+                await _bookingCustomerDAO.AddBookingCustomerAsync(bookingCustomer);
+            }
         }
     }
 }

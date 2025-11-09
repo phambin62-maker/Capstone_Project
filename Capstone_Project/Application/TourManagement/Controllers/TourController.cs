@@ -1,4 +1,4 @@
-﻿using BE_Capstone_Project.Application.Bookings.Services;
+﻿using BE_Capstone_Project.Application.BookingManagement.Services.Interfaces;
 using BE_Capstone_Project.Application.Services;
 using BE_Capstone_Project.Application.TourManagement.DTOs;
 using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
@@ -255,7 +255,14 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
             return Ok(new { message = $"Tours in price range {minPrice}-{maxPrice} found successfully", tours });
         }
 
-
+        [HttpGet("GetToursByScheduleId/{scheduleId}")]
+        public async Task<IActionResult> GetTourByScheduleId(int scheduleId)
+        {
+            var tour = await _tourService.GetTourByScheduleId(scheduleId);
+            if (tour == null)
+                return NotFound(new { message = $"No tour found with schedule id {scheduleId}" });
+            return Ok(new { message = $"Tour with schedule id {scheduleId} found successfully", tour });
+        }
 
         [HttpGet("SearchTourByName")]
         public async Task<IActionResult> SearchTourByName(string name)
