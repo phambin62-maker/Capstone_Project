@@ -18,7 +18,7 @@ using FE_Capstone_Project.Filters;
 
 namespace FE_Capstone_Project.Controllers
 {
-    [Authorize(Roles = "Staff")]
+    [AuthorizeRole(2)]
     public class StaffController : Controller
     {
         private readonly HttpClient _httpClient;

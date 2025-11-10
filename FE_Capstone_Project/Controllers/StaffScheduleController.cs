@@ -8,7 +8,7 @@ using System.Text.Json;
 
 namespace FE_Capstone_Project.Controllers
 {
-    [Authorize(Roles = "Staff")]
+    [AuthorizeRole(2)]
     public class StaffScheduleController : Controller
     {
         private readonly HttpClient _httpClient;
