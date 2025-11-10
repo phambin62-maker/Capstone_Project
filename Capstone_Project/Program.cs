@@ -1,9 +1,8 @@
 ﻿using BE_Capstone_Project.Application.Auth.Services;
 using BE_Capstone_Project.Application.BookingManagement.Services;
 using BE_Capstone_Project.Application.BookingManagement.Services.Interfaces;
-﻿using BE_Capstone_Project.Application.Admin.Service;
+using BE_Capstone_Project.Application.Admin.Service;
 using BE_Capstone_Project.Application.Admin.Service.Interfaces;
-using BE_Capstone_Project.Application.Auth.Services;
 using BE_Capstone_Project.Application.CancelConditions.Services;
 using BE_Capstone_Project.Application.CancelConditions.Services.Interfaces;
 using BE_Capstone_Project.Application.Categories.Services;

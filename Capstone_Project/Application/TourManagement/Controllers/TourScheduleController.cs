@@ -1,6 +1,7 @@
 ﻿using BE_Capstone_Project.Application.TourManagement.DTOs;
 using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
 using DocumentFormat.OpenXml.Bibliography;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json.Serialization;
@@ -85,6 +86,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Staff")] // Chỉ Admin và Staff mới được tạo lịch tour
         public async Task<ActionResult<ApiResponse<int>>> CreateTourSchedule([FromBody] CreateTourScheduleRequest request)
         {
             try
@@ -103,6 +105,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,Staff")] // Chỉ Admin và Staff mới được cập nhật lịch tour
         public async Task<ActionResult<ApiResponse<bool>>> UpdateTourSchedule(int id, [FromBody] UpdateTourScheduleRequest request)
         {
             try
@@ -119,6 +122,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin,Staff")] // Chỉ Admin và Staff mới được xóa lịch tour
         public async Task<ActionResult<ApiResponse<bool>>> DeleteTourSchedule(int id)
         {
             try

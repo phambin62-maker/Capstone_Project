@@ -1,5 +1,6 @@
 ﻿using BE_Capstone_Project.Application.Report.Services.Interfaces;
 using DocumentFormat.OpenXml.Drawing.Charts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using BE_Capstone_Project.DAO;

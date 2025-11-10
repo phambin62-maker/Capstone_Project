@@ -1,9 +1,12 @@
-﻿using FE_Capstone_Project.Helpers;
+﻿using FE_Capstone_Project.Filters;
+using FE_Capstone_Project.Helpers;
 using FE_Capstone_Project.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FE_Capstone_Project.Controllers
 {
+    [Authorize(Roles = "Customer")] // Tất cả role đã đăng nhập đều có thể đặt tour
     public class BookingWebController : Controller
     {
         private readonly ApiHelper _apiHelper;

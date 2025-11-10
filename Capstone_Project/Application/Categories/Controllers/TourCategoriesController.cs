@@ -1,5 +1,6 @@
 ﻿using BE_Capstone_Project.Application.Categories.DTOs;
 using BE_Capstone_Project.Application.Categories.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BE_Capstone_Project.Application.Categories.Controllers
@@ -38,6 +39,7 @@ namespace BE_Capstone_Project.Application.Categories.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Staff")] // Chỉ Admin và Staff mới được tạo category
         public async Task<IActionResult> CreateTourCategory([FromBody] CreateTourCategoryDTO createDto)
         {
             if (!ModelState.IsValid)
@@ -55,6 +57,7 @@ namespace BE_Capstone_Project.Application.Categories.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,Staff")] // Chỉ Admin và Staff mới được cập nhật category
         public async Task<IActionResult> UpdateTourCategory(int id, [FromBody] UpdateTourCategoryDTO updateDto)
         {
             if (!ModelState.IsValid)
@@ -72,6 +75,7 @@ namespace BE_Capstone_Project.Application.Categories.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin,Staff")] // Chỉ Admin và Staff mới được xóa category
         public async Task<IActionResult> DeleteTourCategory(int id)
         {
             var result = await _tourCategoryService.DeleteTourCategoryAsync(id);

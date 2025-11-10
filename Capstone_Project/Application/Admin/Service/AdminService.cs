@@ -112,10 +112,7 @@ namespace BE_Capstone_Project.Application.Admin.Service
         {
             using var sha = SHA256.Create();
             var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(input));
-            var builder = new StringBuilder();
-            foreach (var b in bytes)
-                builder.Append(b.ToString("x2"));
-            return builder.ToString();
+            return Convert.ToBase64String(bytes);
         }
 
         // Get account statistics

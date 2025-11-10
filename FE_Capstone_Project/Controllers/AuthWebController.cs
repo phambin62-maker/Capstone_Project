@@ -87,7 +87,7 @@ namespace FE_Capstone_Project.Controllers
                     return RedirectToAction("Index", "Staff");
 
                 case 1:
-                    return RedirectToAction("Dashboard", "Admin");
+                    return RedirectToAction("Account", "AdminWeb");
                 default:
                    
                     return RedirectToAction("Index", "Home");
@@ -120,7 +120,7 @@ namespace FE_Capstone_Project.Controllers
             HttpContext.Session.SetString("UserName", name ?? "");
             HttpContext.Session.SetString("UserEmail", email);
 
-            // ✅ Gửi yêu cầu đến BE
+            //  Gửi yêu cầu đến BE
             var userPayload = new
             {
                 Email = email,

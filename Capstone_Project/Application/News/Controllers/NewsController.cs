@@ -1,6 +1,7 @@
 ﻿using BE_Capstone_Project.Application.Newses.DTOs;
 using BE_Capstone_Project.Application.Newses.Services;
 using BE_Capstone_Project.Domain.Enums;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BE_Capstone_Project.API.Controllers
@@ -39,6 +40,7 @@ namespace BE_Capstone_Project.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Staff")] // Chỉ Admin và Staff mới được tạo tin tức
         public async Task<IActionResult> Create([FromBody] CreateNewsDTO dto)
         {
             var newId = await _newsService.CreateAsync(dto);
@@ -49,6 +51,7 @@ namespace BE_Capstone_Project.API.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,Staff")] // Chỉ Admin và Staff mới được cập nhật tin tức
         public async Task<IActionResult> Update(int id, [FromBody] CreateNewsDTO dto)
         {
             var success = await _newsService.UpdateAsync(id, dto);
@@ -59,6 +62,7 @@ namespace BE_Capstone_Project.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin,Staff")] // Chỉ Admin và Staff mới được xóa tin tức
         public async Task<IActionResult> Delete(int id)
         {
             var success = await _newsService.DeleteAsync(id);

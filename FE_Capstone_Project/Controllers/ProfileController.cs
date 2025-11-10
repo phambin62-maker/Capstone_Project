@@ -1,4 +1,5 @@
 ﻿using BE_Capstone_Project.Domain.Models;
+using FE_Capstone_Project.Filters;
 using FE_Capstone_Project.Helpers;
 using FE_Capstone_Project.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -6,6 +7,7 @@ using static FE_Capstone_Project.Models.WishlistModels;
 
 namespace FE_Capstone_Project.Controllers
 {
+    [AuthorizeRole(1, 2, 3)] // Tất cả role đã đăng nhập đều có thể truy cập
     public class ProfileController : Controller
     {
         private readonly ApiHelper _apiHelper;

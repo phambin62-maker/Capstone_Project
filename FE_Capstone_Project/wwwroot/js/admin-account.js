@@ -4,6 +4,63 @@
 
     const API_BASE_URL = 'https://localhost:7160/api/admin';
 
+    // Helper: Get JWT token from cookie or meta tag
+    function getAuthToken() {
+        // Try to get token from cookie
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            const [name, value] = cookie.trim().split('=');
+            if (name === 'JwtToken' || name === 'jwtToken') {
+                return decodeURIComponent(value);
+            }
+        }
+        
+        // Try to get token from meta tag (if injected by server)
+        const tokenMeta = document.querySelector('meta[name="jwt-token"]');
+        if (tokenMeta) {
+            return tokenMeta.getAttribute('content');
+        }
+        
+        // Try to get token from hidden input (if injected by server)
+        const tokenInput = document.getElementById('jwtToken');
+        if (tokenInput) {
+            return tokenInput.value;
+        }
+        
+        return null;
+    }
+
+    // Helper: Get auth headers
+    function getAuthHeaders() {
+        const token = getAuthToken();
+        const headers = {
+            "Content-Type": "application/json"
+        };
+        
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+        
+        return headers;
+    }
+
+    // Helper: Handle API errors (401/403)
+    function handleApiError(response) {
+        if (response.status === 401) {
+            alert('⚠️ Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+            window.location.href = '/AuthWeb/Login';
+            return true;
+        }
+        
+        if (response.status === 403) {
+            alert('⚠️ Bạn không có quyền truy cập tài nguyên này.');
+            window.location.href = '/Home/Forbidden';
+            return true;
+        }
+        
+        return false;
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         console.log('✅ Admin Accounts JS loaded');
         // Load statistics when page loads
@@ -92,11 +149,13 @@
         try {
             const response = await fetch(`${API_BASE_URL}/create-account`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(payload)
             });
+
+            if (handleApiError(response)) {
+                return;
+            }
 
             if (!response.ok) {
                 const errorData = await response.json();
@@ -181,11 +240,13 @@
         try {
             const response = await fetch(`${API_BASE_URL}/account/${accountId}`, {
                 method: "PUT",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(payload)
             });
+
+            if (handleApiError(response)) {
+                return;
+            }
 
             if (!response.ok) {
                 const err = await response.text();
@@ -223,10 +284,13 @@
         try {
             const response = await fetch(`${API_BASE_URL}/account/${userId}/status?isActive=${isActive}`, {
                 method: "PUT",
-                headers: {
-                    "Content-Type": "application/json"
-                }
+                headers: getAuthHeaders()
             });
+
+            if (handleApiError(response)) {
+                checkbox.checked = !isActive;
+                return;
+            }
 
             if (!response.ok) {
                 const err = await response.text();
@@ -262,8 +326,13 @@
 
         try {
             const response = await fetch(`${API_BASE_URL}/account/${accountId}`, {
-                method: "DELETE"
+                method: "DELETE",
+                headers: getAuthHeaders()
             });
+
+            if (handleApiError(response)) {
+                return;
+            }
 
             if (!response.ok) {
                 const err = await response.text();
@@ -283,7 +352,13 @@
     // Load Account For Edit
     window.loadAccountForEdit = async function (accountId) {
         try {
-            const response = await fetch(`${API_BASE_URL}/account/${accountId}`);
+            const response = await fetch(`${API_BASE_URL}/account/${accountId}`, {
+                headers: getAuthHeaders()
+            });
+            
+            if (handleApiError(response)) {
+                return;
+            }
             
             if (!response.ok) {
                 throw new Error('Failed to load account');
@@ -358,7 +433,13 @@
     // Load Statistics
     async function loadStatistics() {
         try {
-            const response = await fetch(`${API_BASE_URL}/accounts/statistics`);
+            const response = await fetch(`${API_BASE_URL}/accounts/statistics`, {
+                headers: getAuthHeaders()
+            });
+            
+            if (handleApiError(response)) {
+                return;
+            }
             
             if (!response.ok) {
                 console.error('Failed to load statistics');
@@ -413,7 +494,13 @@
             if (status) url += `&status=${encodeURIComponent(status)}`;
             if (search) url += `&search=${encodeURIComponent(search)}`;
 
-            const response = await fetch(url);
+            const response = await fetch(url, {
+                headers: getAuthHeaders()
+            });
+            
+            if (handleApiError(response)) {
+                return;
+            }
             
             if (!response.ok) {
                 throw new Error('Failed to load accounts');
@@ -615,7 +702,13 @@
     // View Account Detail
     window.viewAccountDetail = async function (accountId) {
         try {
-            const response = await fetch(`${API_BASE_URL}/account/${accountId}`);
+            const response = await fetch(`${API_BASE_URL}/account/${accountId}`, {
+                headers: getAuthHeaders()
+            });
+            
+            if (handleApiError(response)) {
+                return;
+            }
             
             if (!response.ok) {
                 throw new Error('Failed to load account');

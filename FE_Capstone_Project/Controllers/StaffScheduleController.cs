@@ -1,4 +1,5 @@
 ﻿using BE_Capstone_Project.Domain.Models;
+using FE_Capstone_Project.Filters;
 using FE_Capstone_Project.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +8,7 @@ using System.Text.Json;
 
 namespace FE_Capstone_Project.Controllers
 {
-    //[Authorize(Roles = "Staff")]
+    [Authorize(Roles = "Staff")]
     public class StaffScheduleController : Controller
     {
         private readonly HttpClient _httpClient;

@@ -3,6 +3,7 @@ using BE_Capstone_Project.Application.BookingManagement.Services.Interfaces;
 using BE_Capstone_Project.Application.Services;
 using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
 using BE_Capstone_Project.Domain.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BE_Capstone_Project.Application.BookingManagement.Controllers
@@ -23,6 +24,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin,Staff")] // Chỉ Admin và Staff mới được xem tất cả booking
         public async Task<IActionResult> GetAll()
         {
             var list = await _bookingService.GetAllAsync();
@@ -30,6 +32,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize] // Cần đăng nhập để xem booking
         public async Task<IActionResult> GetById(int id)
         {
             var booking = await _bookingService.GetByIdAsync(id);
@@ -38,6 +41,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
         }
 
         [HttpGet("user/{userId}")]
+        [Authorize] // Cần đăng nhập để xem booking của user
         public async Task<IActionResult> GetByUserId(int userId)
         {
             var list = await _bookingService.GetByUserIdAsync(userId);
@@ -45,6 +49,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
         }
 
         [HttpPost]
+        [Authorize] // Cần đăng nhập để tạo booking
         public async Task<IActionResult> Create([FromBody] BookingRequest request, [FromQuery] string username)
         {
             try
@@ -105,6 +110,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize] // Cần đăng nhập để cập nhật booking
         public async Task<IActionResult> Update(int id, [FromBody] CreateBookingDTO dto)
         {
             var success = await _bookingService.UpdateAsync(id, dto);
@@ -113,6 +119,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize] // Cần đăng nhập để xóa booking
         public async Task<IActionResult> Delete(int id)
         {
             var success = await _bookingService.DeleteAsync(id);
