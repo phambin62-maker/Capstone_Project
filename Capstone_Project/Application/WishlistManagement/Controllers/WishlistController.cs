@@ -12,7 +12,7 @@ namespace BE_Capstone_Project.Application.WishlistManagement.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize]
+    [Authorize]
     public class WishlistController : ControllerBase
     {
         private readonly IWishlistService _wishlistService;

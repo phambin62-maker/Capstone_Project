@@ -4,6 +4,7 @@ using BE_Capstone_Project.Application.ReviewManagement.Services.Interfaces;
 using BE_Capstone_Project.Application.Services;
 using BE_Capstone_Project.Domain.Enums;
 using BE_Capstone_Project.Domain.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -26,6 +27,7 @@ namespace BE_Capstone_Project.Application.ReviewManagement.Controllers
         }
 
         [HttpPost("AddReview")]
+        [Authorize] // Cần đăng nhập để thêm review
         public async Task<IActionResult> AddReview([FromBody] ReviewCreateDTO review)
         {
             var user = await _userService.GetUserByUsername(review.Username);

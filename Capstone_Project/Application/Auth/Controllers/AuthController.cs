@@ -84,18 +84,18 @@ public async Task<IActionResult> Register([FromBody] RegisterDto request)
             
             // Check if user exists
             if (user == null)
-                return Unauthorized("Invalid username or password");
+                return Unauthorized("Invalid username");
 
             // Check if password is correct
             if (!VerifyPassword(request.Password, user.PasswordHash))
-                return Unauthorized("Invalid username or password");
+                return Unauthorized("Invalid password");
 
             // Check if account is banned
             if (user.UserStatus == UserStatus.Banned)
             {
                 return Unauthorized(new 
                 { 
-                    message = "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên để được hỗ trợ.",
+                    message = "AccountBanned",
                     error = "AccountBanned",
                     status = "Banned"
                 });

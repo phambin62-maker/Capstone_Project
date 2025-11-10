@@ -1,4 +1,5 @@
-﻿using FE_Capstone_Project.Helpers;
+﻿using FE_Capstone_Project.Filters;
+using FE_Capstone_Project.Helpers;
 using FE_Capstone_Project.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http;
@@ -8,6 +9,7 @@ using System.Text.Json;
 
 namespace FE_Capstone_Project.Controllers
 {
+    [AuthorizeRole(1)] // Chỉ Admin (RoleId = 1) mới được truy cập
     public class AdminWebController : Controller
     {
         

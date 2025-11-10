@@ -16,6 +16,7 @@ builder.Services.AddSession(options =>
 });
 builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<FE_Capstone_Project.Helpers.AuthHelper>();
 builder.Services.AddHttpClient<ApiHelper>(client =>
 {
     client.BaseAddress = new Uri("https://localhost:7160/api/");
@@ -27,7 +28,11 @@ builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 })
-.AddCookie()
+.AddCookie(options =>
+{
+    options.LoginPath = "/AuthWeb/Login";
+    options.AccessDeniedPath = "/Home/Forbidden";
+})
 
 .AddGoogle(options =>
 {
