@@ -33,6 +33,7 @@ public partial class OtmsdbContext : DbContext
         }
     }
     public virtual DbSet<Company> Companies { get; set; }
+    public virtual DbSet<Feature> Features { get; set; }
     public virtual DbSet<Booking> Bookings { get; set; }
 
     public virtual DbSet<BookingCustomer> BookingCustomers { get; set; }
@@ -119,6 +120,43 @@ public partial class OtmsdbContext : DbContext
                 .HasForeignKey(d => d.BookingId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__BookingCu__Booki__656C112C");
+        });
+
+        modelBuilder.Entity<Company>(entity =>
+        {
+            entity.HasKey(e => e.CompanyID).HasName("PK__Company__4D913760");
+
+            entity.ToTable("Company");
+
+            entity.Property(e => e.CompanyID).HasColumnName("CompanyID");
+            entity.Property(e => e.CompanyName).HasMaxLength(200);
+            entity.Property(e => e.LicenseNumber).HasMaxLength(50);
+            entity.Property(e => e.TaxCode).HasMaxLength(50);
+            entity.Property(e => e.Email).HasMaxLength(100);
+            entity.Property(e => e.Phone).HasMaxLength(20);
+            entity.Property(e => e.Website).HasMaxLength(200);
+            entity.Property(e => e.Address).HasMaxLength(255);
+            entity.Property(e => e.Description);
+            entity.Property(e => e.LogoUrl).HasMaxLength(300);
+            entity.Property(e => e.FoundedYear);
+            
+            // About Us Section Fields
+            entity.Property(e => e.AboutUsTitle).HasMaxLength(200);
+            entity.Property(e => e.AboutUsDescription1);
+            entity.Property(e => e.AboutUsDescription2);
+            entity.Property(e => e.AboutUsImageUrl).HasMaxLength(300);
+            entity.Property(e => e.AboutUsImageAlt).HasMaxLength(100);
+            entity.Property(e => e.ExperienceNumber).HasMaxLength(50);
+            entity.Property(e => e.ExperienceText).HasMaxLength(100);
+            
+            // Stats Fields
+            entity.Property(e => e.HappyTravelersCount);
+            entity.Property(e => e.CountriesCoveredCount);
+            entity.Property(e => e.YearsExperienceCount);
+            
+            entity.Property(e => e.IsActive);
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
         });
 
         modelBuilder.Entity<CancelCondition>(entity =>
@@ -379,6 +417,23 @@ public partial class OtmsdbContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Wishlist__UserID__5BE2A6F2");
+        });
+
+        modelBuilder.Entity<Feature>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Feature__3214EC27");
+
+            entity.ToTable("Feature");
+
+            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.Icon).HasMaxLength(100);
+            entity.Property(e => e.Title).HasMaxLength(200);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.Delay);
+            entity.Property(e => e.DisplayOrder);
+            entity.Property(e => e.IsActive);
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
         });
 
         OnModelCreatingPartial(modelBuilder);

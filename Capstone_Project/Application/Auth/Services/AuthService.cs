@@ -28,7 +28,7 @@ namespace BE_Capstone_Project.Application.Auth.Services
 
             var jwtSettings = _config.GetSection("Jwt");
 
-            // 🧩 Đảm bảo không null
+            //  Đảm bảo không null
             var username = !string.IsNullOrEmpty(user.Username)
                 ? user.Username
                 : (user.Email ?? $"User_{user.Id}");

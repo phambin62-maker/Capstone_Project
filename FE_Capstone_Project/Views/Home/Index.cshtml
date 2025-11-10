@@ -59,8 +59,7 @@
                             <h1 class="hero-title">Discover Your Perfect Journey</h1>
                             <p class="hero-subtitle">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.</p>
                             <div class="hero-buttons">
-                                <a href="#" class="btn btn-primary me-3">Start Exploring</a>
-                                <a href="#" class="btn btn-outline">Browse Tours</a>
+                                <a href="TourWeb/tours" class="btn btn-primary me-3">Start Exploring</a>
                             </div>
                         </div>
                     </div>
@@ -68,68 +67,61 @@
                         <div class="booking-form-wrapper" data-aos="fade-left" data-aos-delay="200">
                             <div class="booking-form">
                                 <h3 class="form-title">Plan Your Adventure</h3>
-                                <form action="" class="">
+                                <form asp-action="FilterTourList" asp-controller="TourWeb" method="get">
                                     <div class="form-group mb-3">
-                                        <label for="destination">Destination</label>
-                                        <select name="destination" id="destination" class="form-select" required="">
-                                            <option value="">Choose your destination</option>
-                                            <option value="europe">Europe</option>
-                                            <option value="asia">Asia</option>
-                                            <option value="america">America</option>
-                                            <option value="africa">Africa</option>
-                                            <option value="oceania">Oceania</option>
+                                        <label for="searchValue">Search Tour</label>
+                                        <input type="text" name="searchValue" id="searchValue" class="form-control" placeholder="Search by tour name...">
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        <label for="slcDestination">Destination</label>
+                                        <select name="slcDestination" id="slcDestination" class="form-select">
+                                            <option value="-1">All Destinations</option>
+                                            @* Options will be populated from ViewBag if available *@
+                                            @if (ViewBag.Destinations != null)
+                                            {
+                                                @foreach (var dest in ViewBag.Destinations)
+                                                {
+                                                    <option value="@dest.Id">@dest.LocationName</option>
+                                                }
+                                            }
                                         </select>
                                     </div>
 
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-group mb-3">
-                                                <label for="checkin">Departure Date</label>
-                                                <input type="date" name="checkin" id="checkin" class="form-control" required="">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group mb-3">
-                                                <label for="checkout">Return Date</label>
-                                                <input type="date" name="checkout" id="checkout" class="form-control" required="">
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-group mb-3">
-                                                <label for="adults">Adults</label>
-                                                <select name="adults" id="adults" class="form-select" required="">
-                                                    <option value="1">1 Adult</option>
-                                                    <option value="2">2 Adults</option>
-                                                    <option value="3">3 Adults</option>
-                                                    <option value="4">4+ Adults</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group mb-3">
-                                                <label for="children">Children</label>
-                                                <select name="children" id="children" class="form-select">
-                                                    <option value="0">No Children</option>
-                                                    <option value="1">1 Child</option>
-                                                    <option value="2">2 Children</option>
-                                                    <option value="3">3+ Children</option>
-                                                </select>
-                                            </div>
-                                        </div>
+                                    <div class="form-group mb-3">
+                                        <label for="slcCategory">Tour Type</label>
+                                        <select name="slcCategory" id="slcCategory" class="form-select">
+                                            <option value="-1">All Categories</option>
+                                            @* Options will be populated from ViewBag if available *@
+                                            @if (ViewBag.Categories != null)
+                                            {
+                                                @foreach (var cat in ViewBag.Categories)
+                                                {
+                                                    <option value="@cat.Id">@cat.CategoryName</option>
+                                                }
+                                            }
+                                        </select>
                                     </div>
 
                                     <div class="form-group mb-3">
-                                        <label for="tour-type">Tour Type</label>
-                                        <select name="tour_type" id="tour-type" class="form-select" required="">
-                                            <option value="">Select tour type</option>
-                                            <option value="adventure">Adventure</option>
-                                            <option value="cultural">Cultural</option>
-                                            <option value="relaxation">Relaxation</option>
-                                            <option value="family">Family</option>
-                                            <option value="luxury">Luxury</option>
+                                        <label for="slcDuration">Duration</label>
+                                        <select name="slcDuration" id="slcDuration" class="form-select">
+                                            <option value="">All Durations</option>
+                                            <option value="1-3">1-3 days</option>
+                                            <option value="4-7">4-7 days</option>
+                                            <option value="8-14">8-14 days</option>
+                                            <option value="15+">15+ days</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        <label for="slcPriceRange">Price Range</label>
+                                        <select name="slcPriceRange" id="slcPriceRange" class="form-select">
+                                            <option value="">All Prices</option>
+                                            <option value="0-1000000">Under 1,000,000 đ</option>
+                                            <option value="1000000-3000000">1,000,000 - 3,000,000 đ</option>
+                                            <option value="3000000-5000000">3,000,000 - 5,000,000 đ</option>
+                                            <option value="5000000+">Over 5,000,000 đ</option>
                                         </select>
                                     </div>
 
@@ -151,32 +143,56 @@
                 <div class="row align-items-center mb-5">
                     <div class="col-lg-6" data-aos="fade-right" data-aos-delay="200">
                         <div class="content">
-                            <h3>Explore the World with Confidence</h3>
-                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-                            <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-                            <div class="stats-row">
-                                <div class="stat-item">
-                                    <span data-purecounter-start="0" data-purecounter-end="1200" data-purecounter-duration="2" class="purecounter">0</span>
-                                    <div class="stat-label">Happy Travelers</div>
-                                </div>
-                                <div class="stat-item">
-                                    <span data-purecounter-start="0" data-purecounter-end="85" data-purecounter-duration="2" class="purecounter">0</span>
-                                    <div class="stat-label">Countries Covered</div>
-                                </div>
-                                <div class="stat-item">
-                                    <span data-purecounter-start="0" data-purecounter-end="15" data-purecounter-duration="2" class="purecounter">0</span>
-                                    <div class="stat-label">Years Experience</div>
-                                </div>
-                            </div>
+                            @if (Model.AboutUs != null)
+                            {
+                                <h3>@Model.AboutUs.Title</h3>
+                                @if (!string.IsNullOrEmpty(Model.AboutUs.Description1))
+                                {
+                                    <p>@Model.AboutUs.Description1</p>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.AboutUs.Description2))
+                                {
+                                    <p>@Model.AboutUs.Description2</p>
+                                }
+                                @if (Model.AboutUs.Stats != null && Model.AboutUs.Stats.Any())
+                                {
+                                    <div class="stats-row">
+                                        @foreach (var stat in Model.AboutUs.Stats)
+                                        {
+                                            <div class="stat-item">
+                                                <span data-purecounter-start="@stat.StartValue" 
+                                                      data-purecounter-end="@stat.EndValue" 
+                                                      data-purecounter-duration="@stat.Duration" 
+                                                      class="purecounter">0</span>
+                                                <div class="stat-label">@stat.Label</div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <p class="text-muted">About us content is not available.</p>
+                            }
                         </div>
                     </div>
                     <div class="col-lg-6" data-aos="fade-left" data-aos-delay="300">
                         <div class="about-image">
-                            <img src="~/assets/img/travel/showcase-8.webp" alt="Travel Experience" class="img-fluid rounded-4">
-                            <div class="experience-badge">
-                                <div class="experience-number">15+</div>
-                                <div class="experience-text">Years of Excellence</div>
-                            </div>
+                            @if (Model.AboutUs != null && !string.IsNullOrEmpty(Model.AboutUs.ImageUrl))
+                            {
+                                <img src="@Model.AboutUs.ImageUrl" alt="@Model.AboutUs.ImageAlt" class="img-fluid rounded-4">
+                                @if (!string.IsNullOrEmpty(Model.AboutUs.ExperienceNumber) && !string.IsNullOrEmpty(Model.AboutUs.ExperienceText))
+                                {
+                                    <div class="experience-badge">
+                                        <div class="experience-number">@Model.AboutUs.ExperienceNumber</div>
+                                        <div class="experience-text">@Model.AboutUs.ExperienceText</div>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <img src="~/assets/img/travel/showcase-8.webp" alt="Travel Experience" class="img-fluid rounded-4">
+                            }
                         </div>
                     </div>
                 </div><!-- End About Us Content -->
@@ -190,65 +206,27 @@
                     </div>
 
                     <div class="row g-4">
-                        <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
-                            <div class="feature-card">
-                                <div class="feature-icon">
-                                    <i class="bi bi-people-fill"></i>
+                        @if (Model.Features != null && Model.Features.Any())
+                        {
+                            @foreach (var feature in Model.Features)
+                            {
+                                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="@feature.Delay">
+                                    <div class="feature-card">
+                                        <div class="feature-icon">
+                                            <i class="@feature.Icon"></i>
+                                        </div>
+                                        <h4>@feature.Title</h4>
+                                        <p>@feature.Description</p>
+                                    </div>
                                 </div>
-                                <h4>Local Experts</h4>
-                                <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium totam.</p>
+                            }
+                        }
+                        else
+                        {
+                            <div class="col-12 text-center">
+                                <p class="text-muted">No features available.</p>
                             </div>
-                        </div>
-
-                        <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="250">
-                            <div class="feature-card">
-                                <div class="feature-icon">
-                                    <i class="bi bi-shield-check"></i>
-                                </div>
-                                <h4>Safe &amp; Secure</h4>
-                                <p>At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum.</p>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
-                            <div class="feature-card">
-                                <div class="feature-icon">
-                                    <i class="bi bi-cash"></i>
-                                </div>
-                                <h4>Best Prices</h4>
-                                <p>Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet consectetur adipisci velit.</p>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="350">
-                            <div class="feature-card">
-                                <div class="feature-icon">
-                                    <i class="bi bi-headset"></i>
-                                </div>
-                                <h4>24/7 Support</h4>
-                                <p>Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam nisi.</p>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="400">
-                            <div class="feature-card">
-                                <div class="feature-icon">
-                                    <i class="bi bi-geo-alt-fill"></i>
-                                </div>
-                                <h4>Global Destinations</h4>
-                                <p>Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae.</p>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="450">
-                            <div class="feature-card">
-                                <div class="feature-icon">
-                                    <i class="bi bi-star-fill"></i>
-                                </div>
-                                <h4>Premium Experience</h4>
-                                <p>Excepteur sint occaecat cupidatat non proident sunt in culpa qui officia deserunt mollit anim.</p>
-                            </div>
-                        </div>
+                        }
                     </div><!-- End Features Grid -->
                 </div><!-- End Why Choose Us -->
 
@@ -375,8 +353,8 @@
 
             <!-- Section Title -->
             <div class="container section-title" data-aos="fade-up">
-                <h2>Điểm Đến Nổi Bật</h2>
-                <div><span>Khám Phá</span> <span class="description-title">Các Tour Du Lịch Hấp Dẫn</span></div>
+                <h2>Featured Destinations</h2>
+                <div><span>Explore</span> <span class="description-title">Amazing Travel Tours</span></div>
             </div><!-- End Section Title -->
 
             <div class="container" data-aos="fade-up" data-aos-delay="100">
@@ -385,7 +363,7 @@
                 {
                     <div class="row">
 
-                        @* Tour nổi bật đầu tiên - Hiển thị lớn bên trái *@
+                        @* Featured tour - Display large on the left *@
                         @if (Model.TourRatings.Count() > 0)
                         {
                             var featuredTour = Model.TourRatings.First();
@@ -394,7 +372,7 @@
                                     <div class="destination-overlay">
                                         <img src="@featuredTour.Image" alt="@featuredTour.TourName" class="img-fluid">
                                         <div class="destination-info">
-                                            <span class="destination-tag">Phổ Biến Nhất</span>
+                                            <span class="destination-tag">Most Popular</span>
                                             <h3>@featuredTour.TourName</h3>
                                             <p class="description">@featuredTour.Description</p>
                                             <div class="destination-meta">
@@ -404,11 +382,11 @@
                                                 </div>
                                             </div>
                                             <div class="price-info">
-                                                <span class="starting-from">Chỉ từ</span>
+                                                <span class="starting-from">Starting from</span>
                                                 <span class="amount">@featuredTour.Price.ToString("N0") đ</span>
                                             </div>
                                             <a href="/TourWeb/TourDetails?tourId=@featuredTour.TourId" class="explore-btn">
-                                                <span>Khám Phá Ngay</span>
+                                                <span>Explore Now</span>
                                                 <i class="bi bi-arrow-right"></i>
                                             </a>
                                         </div>
@@ -417,7 +395,7 @@
                             </div>
                         }
 
-                        @* Các tour còn lại - Hiển thị compact bên phải *@
+                        @* Other tours - Display compact on the right *@
                         <div class="col-lg-6">
                             <div class="row g-3">
 
@@ -430,7 +408,7 @@
                                                 <img src="@tour.Image" alt="@tour.TourName" class="img-fluid">
                                                 @if (tour.AverageRating >= 4.8m)
                                                 {
-                                                    <div class="badge-offer">Đánh Giá Cao</div>
+                                                    <div class="badge-offer">Top Rated</div>
                                                 }
                                             </div>
                                             <div class="destination-details">
@@ -441,10 +419,10 @@
                                                         <i class="bi bi-star-fill"></i>
                                                         @tour.AverageRating.ToString("F1")
                                                     </span>
-                                                    <span class="price">từ @tour.Price.ToString("N0") đ</span>
+                                                    <span class="price">from @tour.Price.ToString("N0") đ</span>
                                                 </div>
                                                 <a href="/TourWeb/TourDetails?tourId=@tour.TourId" class="quick-link">
-                                                    Xem Chi Tiết <i class="bi bi-chevron-right"></i>
+                                                    View Details <i class="bi bi-chevron-right"></i>
                                                 </a>
                                             </div>
                                         </div>
@@ -459,7 +437,7 @@
                 else
                 {
                     <div class="alert alert-info text-center">
-                        <i class="bi bi-info-circle"></i> Hiện chưa có tour nào.
+                        <i class="bi bi-info-circle"></i> No tours available at the moment.
                     </div>
                 }
 
@@ -536,139 +514,6 @@
 
         </section><!-- /Testimonials Home Section -->
         <!-- Call To Action Section -->
-        <section id="call-to-action" class="call-to-action section light-background">
-
-            <div class="container" data-aos="fade-up" data-aos-delay="100">
-
-                <div class="hero-content" data-aos="zoom-in" data-aos-delay="200">
-                    <div class="content-wrapper">
-                        <div class="badge-wrapper">
-                            <span class="promo-badge">Limited Time Offer</span>
-                        </div>
-                        <h2>Discover Your Next Adventure</h2>
-                        <p>Unlock incredible destinations with our specially curated travel packages. From exotic beaches to mountain peaks, your perfect getaway awaits.</p>
-
-                        <div class="action-section">
-                            <div class="main-actions">
-                                <a href="destinations.html" class="btn btn-explore">
-                                    <i class="bi bi-compass"></i>
-                                    Explore Now
-                                </a>
-                                <a href="deals.html" class="btn btn-deals">
-                                    <i class="bi bi-percent"></i>
-                                    View Deals
-                                </a>
-                            </div>
-
-                            <div class="quick-contact">
-                                <span class="contact-label">Need help choosing?</span>
-                                <a href="tel:+1555123456" class="contact-link">
-                                    <i class="bi bi-telephone"></i>
-                                    Call +1 (555) 123-456
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="visual-element">
-                        <img src="~/assets/img/travel/showcase-3.webp" alt="Travel Adventure" class="hero-image" loading="lazy">
-                        <div class="image-overlay">
-                            <div class="stat-item">
-                                <span class="stat-number">500+</span>
-                                <span class="stat-label">Destinations</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-number">10K+</span>
-                                <span class="stat-label">Happy Travelers</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="newsletter-section" data-aos="fade-up" data-aos-delay="300">
-                    <div class="newsletter-card">
-                        <div class="newsletter-content">
-                            <div class="newsletter-icon">
-                                <i class="bi bi-envelope-heart"></i>
-                            </div>
-                            <div class="newsletter-text">
-                                <h3>Stay in the Loop</h3>
-                                <p>Get exclusive travel deals and destination guides delivered to your inbox</p>
-                            </div>
-                        </div>
-
-                        <form class="php-email-form newsletter-form" action="forms/newsletter.php" method="post">
-                            <div class="form-wrapper">
-                                <input type="email" name="email" class="email-input" placeholder="Your email address" required="">
-                                <button type="submit" class="subscribe-btn">
-                                    <i class="bi bi-arrow-right"></i>
-                                </button>
-                            </div>
-
-                            <div class="loading">Loading</div>
-                            <div class="error-message"></div>
-                            <div class="sent-message">Welcome aboard! Check your email for exclusive offers.</div>
-
-                            <div class="trust-indicators">
-                                <i class="bi bi-lock"></i>
-                                <span>We protect your privacy. Unsubscribe anytime.</span>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <div class="benefits-showcase" data-aos="fade-up" data-aos-delay="400">
-                    <div class="benefits-header">
-                        <h3>Why Choose Our Adventures</h3>
-                        <p>Experience the difference with our premium travel services</p>
-                    </div>
-
-                    <div class="benefits-grid">
-                        <div class="benefit-card" data-aos="flip-left" data-aos-delay="450">
-                            <div class="benefit-visual">
-                                <div class="benefit-icon-wrap">
-                                    <i class="bi bi-geo-alt"></i>
-                                </div>
-                                <div class="benefit-pattern"></div>
-                            </div>
-                            <div class="benefit-content">
-                                <h4>Handpicked Destinations</h4>
-                                <p>Every location is carefully selected by our travel experts for authentic experiences</p>
-                            </div>
-                        </div>
-
-                        <div class="benefit-card" data-aos="flip-left" data-aos-delay="500">
-                            <div class="benefit-visual">
-                                <div class="benefit-icon-wrap">
-                                    <i class="bi bi-award"></i>
-                                </div>
-                                <div class="benefit-pattern"></div>
-                            </div>
-                            <div class="benefit-content">
-                                <h4>Award-Winning Service</h4>
-                                <p>Recognized for excellence with 5-star ratings and industry awards</p>
-                            </div>
-                        </div>
-
-                        <div class="benefit-card" data-aos="flip-left" data-aos-delay="550">
-                            <div class="benefit-visual">
-                                <div class="benefit-icon-wrap">
-                                    <i class="bi bi-heart"></i>
-                                </div>
-                                <div class="benefit-pattern"></div>
-                            </div>
-                            <div class="benefit-content">
-                                <h4>Personalized Care</h4>
-                                <p>Tailored itineraries designed around your preferences and travel style</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-        </section><!-- /Call To Action Section -->
-
     </main>
     <!-- Scroll Top -->
     <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
