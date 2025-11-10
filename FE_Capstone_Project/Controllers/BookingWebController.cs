@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FE_Capstone_Project.Controllers
 {
-    [Authorize(Roles = "Customer")] // Tất cả role đã đăng nhập đều có thể đặt tour
+    //[Authorize(Roles = "Customer")] // Tất cả role đã đăng nhập đều có thể đặt tour
     public class BookingWebController : Controller
     {
         private readonly ApiHelper _apiHelper;

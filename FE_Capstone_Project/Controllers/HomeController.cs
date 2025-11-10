@@ -12,13 +12,10 @@ namespace FE_Capstone_Project.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-        private readonly HttpClient _httpClient;
         private readonly ApiHelper _apiHelper;
-        private readonly string _baseUrl = "https://localhost:7160/api/review";
-        public HomeController(ILogger<HomeController> logger, HttpClient httpClient, ApiHelper apiHelper)
+        public HomeController(ILogger<HomeController> logger, ApiHelper apiHelper)
         {
             _logger = logger;
-            _httpClient = httpClient;
             _apiHelper = apiHelper;
         }
 
@@ -30,27 +27,11 @@ namespace FE_Capstone_Project.Controllers
 
             try
             {
-                // --- Gọi API review ---
-                var reviewResponse = await _httpClient.GetAsync($"{_baseUrl}/get-all");
-                if (reviewResponse.IsSuccessStatusCode)
-                {
-                    var json = await reviewResponse.Content.ReadAsStringAsync();
-                    model.Reviews = JsonSerializer.Deserialize<List<ReviewViewModel>>(json, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    }) ?? new();
-                }
+                var reviewResponse = await _apiHelper.GetAsync<List<ReviewViewModel>>("Review/get-all");
+                model.Reviews = reviewResponse ?? new List<ReviewViewModel>();
 
-                // --- Gọi API rating ---
-                var ratingResponse = await _httpClient.GetAsync($"{_baseUrl}/tour-ratings");
-                if (ratingResponse.IsSuccessStatusCode)
-                {
-                    var json = await ratingResponse.Content.ReadAsStringAsync();
-                    model.TourRatings = JsonSerializer.Deserialize<List<TourRatingViewModel>>(json, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    }) ?? new();
-                }
+                var ratingResponse = await _apiHelper.GetAsync<List<TourRatingViewModel>>("Review/tour-ratings");
+                model.TourRatings = ratingResponse ?? new List<TourRatingViewModel>();
 
                 // --- Load Destinations và Categories cho form search ---
                 var destinationsResponse = await _apiHelper.GetAsync<LocationsResponse>("Locations/GetAllLocations");
