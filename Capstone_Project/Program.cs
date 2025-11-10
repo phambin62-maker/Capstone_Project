@@ -23,6 +23,8 @@ using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
 using BE_Capstone_Project.Application.TourPriceHistories.Services;
 using BE_Capstone_Project.Application.WishlistManagement.Services;
 using BE_Capstone_Project.Application.WishlistManagement.Services.Interfaces;
+using BE_Capstone_Project.Application.Company.Services;
+using BE_Capstone_Project.Application.Company.Services.Interfaces;
 using BE_Capstone_Project.DAO;
 using BE_Capstone_Project.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -52,6 +54,8 @@ builder.Services.AddScoped<ITourCategoryService, TourCategoryService>();
 builder.Services.AddScoped<ICancelConditionService, CancelConditionService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<ICompanyService, CompanyService>();
+builder.Services.AddScoped<IFeatureService, FeatureService>();
 //DAO
 builder.Services.AddScoped<BookingCustomerDAO>();
 builder.Services.AddScoped<BookingDAO>();
@@ -69,6 +73,8 @@ builder.Services.AddScoped<TourPriceHistoryDAO>();
 builder.Services.AddScoped<TourScheduleDAO>();
 builder.Services.AddScoped<UserDAO>();
 builder.Services.AddScoped<WishlistDAO>();
+builder.Services.AddScoped<CompanyDAO>();
+builder.Services.AddScoped<FeatureDAO>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

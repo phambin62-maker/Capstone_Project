@@ -41,6 +41,33 @@ namespace BE_Capstone_Project.Domain.Models
 
         public int? FoundedYear { get; set; }
 
+        // About Us Section Fields
+        [StringLength(200)]
+        public string? AboutUsTitle { get; set; }
+
+        public string? AboutUsDescription1 { get; set; }
+
+        public string? AboutUsDescription2 { get; set; }
+
+        [StringLength(300)]
+        public string? AboutUsImageUrl { get; set; }
+
+        [StringLength(100)]
+        public string? AboutUsImageAlt { get; set; }
+
+        [StringLength(50)]
+        public string? ExperienceNumber { get; set; }
+
+        [StringLength(100)]
+        public string? ExperienceText { get; set; }
+
+        // Stats Fields
+        public int? HappyTravelersCount { get; set; }
+
+        public int? CountriesCoveredCount { get; set; }
+
+        public int? YearsExperienceCount { get; set; }
+
         [Required]
         public bool IsActive { get; set; } = true;
 
