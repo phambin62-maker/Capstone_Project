@@ -73,21 +73,72 @@ namespace BE_Capstone_Project.Application.Services
                         _logger.LogWarning($"User Google chưa được kích hoạt: {dto.Email}");
                         return (false, "Tài khoản của bạn chưa được kích hoạt. Vui lòng liên hệ quản trị viên.", null, null);
                     }
+                    var emailPart = dto.Email.Split('@');
+                    var Baseusername = emailPart[0];
+                    var userName = Baseusername;
+                    // Nếu user Google đã tồn tại nhưng không có Username, tạo username từ email
+                    if (string.IsNullOrEmpty(existingUser.Username))
+                    {
+                        
+                        
+                        // Đảm bảo username là unique
+                        var counters = 1;
+                        while (await _userDAO.IsUsernameExists(userName))
+                        {
+                            userName = $"{Baseusername}{counters}";
+                            counters++;
+                        }
+                        
+                        // Update trực tiếp trong database
+                        existingUser.Username = userName;
+                        existingUser.Provider = dto.Provider ?? "Google";
+                        
+                        // Sử dụng UpdateAccountAsync để update Username
+                        var updatedUser = new User
+                        {
+                            Id = existingUser.Id,
+                            Username = userName,
+                            FirstName = existingUser.FirstName,
+                            LastName = existingUser.LastName,
+                            Email = existingUser.Email,
+                            PhoneNumber = existingUser.PhoneNumber,
+                            RoleId = existingUser.RoleId,
+                            Provider = dto.Provider ?? "Google"
+                        };
+                        
+                        await _userDAO.UpdateAccountAsync(updatedUser);
+                        
+                        // Lấy lại user sau khi update
+                        existingUser = await _userDAO.GetByEmailAsync(dto.Email);
+                        _logger.LogInformation($"Đã tạo username '{userName}' cho user Google: {dto.Email}");
+                    }
 
                     // Sinh token JWT cho user đã tồn tại
                     var existingToken = _authService.GenerateJwtToken(existingUser);
 
                     return (true, "User đã tồn tại", existingUser.Id, existingToken);
                 }
-
-                // Gán role mặc định là Customer
+                // nếu chưa có tài khoản trong db thì thêm mới tài khoản gg vào trong db 
+                var emailParts = dto.Email.Split('@');
+                var baseUsername = emailParts[0];
+                var username = baseUsername;
+                var counter = 1;
+                while (await _userDAO.IsUsernameExists(username))
+                {
+                    username = $"{baseUsername}{counter}";
+                    counter++;
+                }
                 var user = new User
                 {
+                    Username = username,
                     Email = dto.Email,
                     FirstName = dto.FullName?.Split(' ').FirstOrDefault() ?? "",
                     LastName = dto.FullName?.Split(' ').LastOrDefault() ?? "",
                     RoleId = (int)RoleType.Customer,
                     UserStatus = UserStatus.Active,
+                    Provider = dto.Provider ?? "Google",
+                    // PasswordHash có thể null cho Google user vì họ không dùng password
+                    PasswordHash = null
                 };
 
                 await _userDAO.CreateAsync(user);

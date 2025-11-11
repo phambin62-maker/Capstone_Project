@@ -47,14 +47,16 @@ namespace BE_Capstone_Project.Application.Auth.Services
             var roleId = user.RoleId > 0 ? user.RoleId.ToString() : ((int)RoleType.Customer).ToString();
 
             var claims = new List<Claim>
-    {
-        new Claim("UserId", user.Id.ToString()),
-        new Claim(JwtRegisteredClaimNames.UniqueName, username),
-        new Claim(JwtRegisteredClaimNames.Email, email),
-        new Claim(ClaimTypes.Role, roleName), // Use role name for authorization
-        new Claim("RoleId", roleId), // Keep roleId for reference
-        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-    };
+            {
+                new Claim("UserId", user.Id.ToString()),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()), // For User.Identity.Name and GetCurrentUserId()
+                new Claim(ClaimTypes.Name, username), // For User.Identity.Name
+                new Claim(JwtRegisteredClaimNames.UniqueName, username),
+                new Claim(JwtRegisteredClaimNames.Email, email),
+                new Claim(ClaimTypes.Role, roleName), // Use role name for authorization
+                new Claim("RoleId", roleId), // Keep roleId for reference
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

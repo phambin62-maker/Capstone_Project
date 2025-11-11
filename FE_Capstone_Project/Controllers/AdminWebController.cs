@@ -25,16 +25,39 @@ namespace FE_Capstone_Project.Controllers
         [HttpGet]
         public async Task<IActionResult> Account()
         {
-            var endpoint = $"{_baseUrl}/get-all-accounts";
-            var users = await _apiHelper.GetAsync<List<AccountViewModel>>(endpoint);
-
-            if (users == null)
+            try
             {
-                ViewBag.Error = "Không thể tải danh sách tài khoản!";
+                // Kiểm tra token trong session
+                var token = HttpContext.Session.GetString("JwtToken");
+                if (string.IsNullOrEmpty(token))
+                {
+                    ViewBag.Error = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+                    return RedirectToAction("Login", "AuthWeb");
+                }
+
+                // đẩy token lên html  để JavaScript có thể đọc
+                ViewBag.JwtToken = token;
+                var endpoint = "admin/get-all-accounts";
+                var users = await _apiHelper.GetAsync<List<AccountViewModel>>(endpoint);
+
+                if (users == null)
+                {
+                    ViewBag.Error = "Không thể tải danh sách tài khoản!";
+                    return View(new List<AccountViewModel>());
+                }
+
+                return View(users);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                ViewBag.Error = ex.Message;
+                return RedirectToAction("Login", "AuthWeb");
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Lỗi: {ex.Message}";
                 return View(new List<AccountViewModel>());
             }
-
-            return View(users);
         }
         public IActionResult Report()
         {

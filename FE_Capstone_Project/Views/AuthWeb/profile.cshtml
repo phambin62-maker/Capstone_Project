@@ -1,6 +1,6 @@
 ﻿@model FE_Capstone_Project.Models.UserProfileViewModel
 @{
-    ViewData["Title"] = "Thông tin cá nhân";
+    ViewData["Title"] = "Personal Information";
 }
 <head>
     <meta charset="utf-8">
@@ -34,7 +34,7 @@
 
         /* Giữ phần profile cố định giữa màn hình */
         .profile-wrapper {
-            min-height: 90vh; /* đủ cao nhưng không đè footer */
+            min-height: 90vh;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -69,171 +69,314 @@
             .profile-button:hover {
                 background: #0b5ed7;
             }
+
+        /* Password section styling */
+        .password-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            margin-top: 15px;
+            display: none;
+            border-left: 3px solid #0d6efd;
+        }
+
+            .password-section.show {
+                display: block;
+                animation: slideDown 0.3s ease-out;
+            }
+
+        @@keyframes slideDown {
+            from
+
+        {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        }
+
+        .form-check {
+            margin: 20px 0;
+        }
+
+        .form-check-input:checked {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+
+        .form-check-label {
+            cursor: pointer;
+            font-weight: 500;
+        }
     </style>
-
-
 </head>
 
 <body>
     <div class="profile-wrapper">
-    <div class="container rounded bg-white mt-5 mb-5 shadow">
-    <div class="row">
-            <!-- Avatar -->
-            <div class="col-md-3 border-end d-flex flex-column align-items-center text-center p-4">
-                <img class="rounded-circle mt-3 mb-2" width="150px"
-                     src="https://st3.depositphotos.com/15648834/17930/v/600/depositphotos_179308454-stock-illustration-unknown-person-silhouette-glasses-profile.jpg" />
-                <span class="fw-bold">User Name: @Model?.Username</span>
-                <span class="text-muted">@Model?.Email</span>
-            </div>
-
-            <!-- Form -->
-            <div class="col-md-9">
-                <div class="p-4">
-                    @if (Model != null)
-                    {
-                        <h4 class="mb-4">Profile Settings</h4>
-                            <form method="post" asp-controller="AuthWeb"  asp-action="Profile">
-                            <div class="row mt-2">
-                                <div class="col-md-6">
-                                    <label class="form-label">First Name</label>
-                                    <input asp-for="FirstName" type="text" class="form-control user-input" value="@Model.FirstName" readonly />
-        </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Last Name</label>
-                                    <input asp-for="LastName" type="text" class="form-control user-input" value="@Model.LastName" readonly />
+        <div class="container rounded bg-white mt-5 mb-5 shadow">
+            <div class="row">
+                <!-- Avatar -->
+                <div class="col-md-3 border-end d-flex flex-column align-items-center text-center p-4">
+                    <img class="rounded-circle mt-3 mb-2" width="150px"
+                         src="https://st3.depositphotos.com/15648834/17930/v/600/depositphotos_179308454-stock-illustration-unknown-person-silhouette-glasses-profile.jpg" />
+                    <span class="fw-bold">User Name: @Model?.Username</span>
+                    <span class="text-muted">@Model?.Email</span>
                 </div>
-                <div class="row mt-3">
-                                <div class="col-md-12">
-                                    <label class="form-label">Mobile Number</label>
-                                    <input asp-for="PhoneNumber" type="text" class="form-control user-input" value="@Model.PhoneNumber" readonly />
-                                </div>
-                                <div class="col-md-12">
-                                    <label class="form-label">New Password</label>
-                                     <input asp-for="NewPassword" type="text" class="form-control user-input" value="" readonly />
-                                </div>
-               
 
-                            <div class="mt-4 text-center">
-                                <button class="btn btn-primary profile-button" type="submit">💾 Save Profile</button>
+                <!-- Form -->
+                <div class="col-md-9">
+                    <div class="p-4">
+                        @if (Model != null)
+                        {
+                            <h4 class="mb-4">Profile Settings</h4>
+                            <form method="post" asp-controller="AuthWeb" asp-action="Profile">
+                                <div class="row mt-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label">First Name</label>
+                                        <input asp-for="FirstName" type="text" class="form-control user-input" value="@Model.FirstName" readonly />
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Last Name</label>
+                                        <input asp-for="LastName" type="text" class="form-control user-input" value="@Model.LastName" readonly />
+                                    </div>
+                                </div>
+
+                                <div class="row mt-3">
+                                    <div class="col-md-12">
+                                        <label class="form-label">Mobile Number</label>
+                                        <input asp-for="PhoneNumber" type="text" class="form-control user-input" value="@Model.PhoneNumber" readonly />
+                                    </div>
+                                </div>
+
+                                <!-- Change Password Checkbox -->
+                                <div class="form-check mt-3">
+                                    <input class="form-check-input" type="checkbox" id="changePasswordCheck" onchange="togglePasswordField()">
+                                    <label class="form-check-label" for="changePasswordCheck">
+                                        <i class="bi bi-shield-lock me-1"></i>Change Password
+                                    </label>
+                                </div>
+
+                                <!-- Password Section (Hidden by default) -->
+                                <div id="passwordSection" class="password-section">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">New Password <span class="text-danger">*</span></label>
+                                            <input asp-for="NewPassword" type="password" class="form-control" id="newPassword" placeholder="Enter new password" />
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
+                                            <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm new password" />
+                                        </div>
+                                    </div>
+                                    <small class="text-muted mt-2 d-block">
+                                        <i class="bi bi-info-circle me-1"></i>Password must be at least 6 characters long
+                                    </small>
+                                </div>
+
+                                <div class="mt-4 text-center">
+                                    <button class="btn btn-primary profile-button" type="submit">
+                                        <i class="bi bi-save me-2"></i>Save Profile
+                                    </button>
+                                </div>
+                            </form>
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning">Please edit your information on your Gmail account.</div>
+                        }
+                    </div>
+                </div>
             </div>
-                        </form>
-                    }
-                    else
-                    {
-                        <div class="alert alert-warning">Vui lòng chỉnh sửa thông tin trên Gmail của bạn .</div>
-                    }
         </div>
-       
     </div>
-</div>
 
-            <!-- SweetAlert2 CDN -->
-            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- SweetAlert2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+            // Toggle password field visibility
+            function togglePasswordField() {
+                const checkbox = document.getElementById('changePasswordCheck');
+                const passwordSection = document.getElementById('passwordSection');
 
-            <script>
-                // Cho phép click để chỉnh sửa
-                document.querySelectorAll('.user-input').forEach(input => {
-                    input.addEventListener('click', function () {
-                        if (this.hasAttribute('readonly')) {
-                            this.removeAttribute('readonly');
-                            this.classList.add('editable');
-                        }
-                    });
-
-                    // Chỉ cho nhập số và giới hạn 10 số ở PhoneNumber
-                    input.addEventListener('input', function () {
-                        if (this.getAttribute('name') === "PhoneNumber") {
-                            this.value = this.value.replace(/\D/g, ''); // chỉ số
-                            if (this.value.length > 10) this.value = this.value.slice(0, 10);
-                        }
-                    });
-
-                    // Kiểm tra khi người dùng rời khỏi input
-                    input.addEventListener('blur', function () {
-                        if (!this.value.trim()) {
-                            this.setAttribute('readonly', true);
-                            this.classList.remove('editable');
-                            return;
-                        }
-
-                        if (this.getAttribute('name') === "PhoneNumber") {
-                            const phone = this.value.trim();
-                            if (!/^\d{10}$/.test(phone)) {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Lỗi nhập liệu',
-                                    text: '📱 Số điện thoại phải gồm đúng 10 chữ số!',
-                                    confirmButtonText: 'OK',
-                                    confirmButtonColor: '#d33'
-                                }).then(() => {
-                                    this.focus();
-                                    this.select();
-                                });
-                            }
-                        }
-                    });
-                });
-
-                //  Kiểm tra dữ liệu trước khi submit form
-                document.querySelector("form").addEventListener("submit", async function (e) {
-                    e.preventDefault(); // luôn chặn trước, chỉ gửi nếu hợp lệ
-
-                    const requiredFields = ["FirstName", "LastName", "PhoneNumber"];
-                    let isValid = true;
-
-                    for (const field of requiredFields) {
-                        const input = document.querySelector(`[name='${field}']`);
-                        if (input && !input.value.trim()) {
-                            await Swal.fire({
-                                icon: 'warning',
-                                title: 'Thiếu thông tin',
-                                text: ` Vui lòng nhập ${field === 'FirstName' ? 'Họ' : field === 'LastName' ? 'Tên' : 'Số điện thoại'}.`,
-                                confirmButtonText: 'OK',
-                                confirmButtonColor: '#f39c12'
-                            });
-                            input.focus();
-                            isValid = false;
-                            return;
-                        }
+                if (checkbox && passwordSection) {
+                    if (checkbox.checked) {
+                        passwordSection.classList.add('show');
+                    } else {
+                        passwordSection.classList.remove('show');
+                        // Clear password fields when hiding
+                        const newPasswordInput = document.getElementById('newPassword');
+                        const confirmPasswordInput = document.getElementById('confirmPassword');
+                        if (newPasswordInput) newPasswordInput.value = '';
+                        if (confirmPasswordInput) confirmPasswordInput.value = '';
                     }
+                }
+            }
+    <script>
+        // Toggle password field visibility
+        function togglePasswordField() {
+            const checkbox = document.getElementById('changePasswordCheck');
+            const passwordSection = document.getElementById('passwordSection');
 
-                    const phoneInput = document.querySelector("[name='PhoneNumber']");
-                    if (phoneInput && !/^\d{10}$/.test(phoneInput.value.trim())) {
-                        await Swal.fire({
+            if (checkbox.checked) {
+                passwordSection.classList.add('show');
+            } else {
+                passwordSection.classList.remove('show');
+                // Clear password fields when hiding
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+            }
+        }
+
+        // Allow click to edit
+        document.querySelectorAll('.user-input').forEach(input => {
+            input.addEventListener('click', function () {
+                if (this.hasAttribute('readonly')) {
+                    this.removeAttribute('readonly');
+                    this.classList.add('editable');
+                }
+            });
+
+            // Only allow numbers and limit to 10 digits for PhoneNumber
+            input.addEventListener('input', function () {
+                if (this.getAttribute('name') === "PhoneNumber") {
+                    this.value = this.value.replace(/\D/g, '');
+                    if (this.value.length > 10) this.value = this.value.slice(0, 10);
+                }
+            });
+
+            // Validate when user leaves input
+            input.addEventListener('blur', function () {
+                if (!this.value.trim()) {
+                    this.setAttribute('readonly', true);
+                    this.classList.remove('editable');
+                    return;
+                }
+
+                if (this.getAttribute('name') === "PhoneNumber") {
+                    const phone = this.value.trim();
+                    if (!/^\d{10}$/.test(phone)) {
+                        Swal.fire({
                             icon: 'error',
-                            title: 'Sai định dạng',
-                            text: '📞 Số điện thoại phải có đúng 10 chữ số!',
+                            title: 'Input Error',
+                            text: '📱 Phone number must be exactly 10 digits!',
                             confirmButtonText: 'OK',
                             confirmButtonColor: '#d33'
+                        }).then(() => {
+                            this.focus();
+                            this.select();
                         });
-                        phoneInput.focus();
-                        isValid = false;
-                        return;
                     }
+                }
+            });
+        });
 
-                    if (isValid) {
-                        //  Xác nhận trước khi gửi
-                        const confirmResult = await Swal.fire({
-                            icon: 'question',
-                            title: 'Xác nhận cập nhật?',
-                            text: 'Bạn có chắc muốn lưu thay đổi này không?',
-                            showCancelButton: true,
-                            confirmButtonText: 'Có, lưu lại',
-                            cancelButtonText: 'Hủy',
-                            confirmButtonColor: '#0d6efd'
-                        });
+        // Validate data before submitting form
+        document.querySelector("form").addEventListener("submit", async function (e) {
+            e.preventDefault();
 
-                        if (confirmResult.isConfirmed) {
-                            //  Gửi form nếu người dùng xác nhận
-                            this.submit();
-                        }
-                    }
+            const requiredFields = ["FirstName", "LastName", "PhoneNumber"];
+            let isValid = true;
+
+            // Check required fields
+            for (const field of requiredFields) {
+                const input = document.querySelector(`[name='${field}']`);
+                if (input && !input.value.trim()) {
+                    await Swal.fire({
+                        icon: 'warning',
+                        title: 'Missing Information',
+                        text: `Please enter ${field === 'FirstName' ? 'First Name' : field === 'LastName' ? 'Last Name' : 'Phone Number'}.`,
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#f39c12'
+                    });
+                    input.focus();
+                    isValid = false;
+                    return;
+                }
+            }
+
+            // Validate phone number
+            const phoneInput = document.querySelector("[name='PhoneNumber']");
+            if (phoneInput && !/^\d{10}$/.test(phoneInput.value.trim())) {
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Format',
+                    text: '📞 Phone number must be exactly 10 digits!',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#d33'
                 });
-            </script>
+                phoneInput.focus();
+                isValid = false;
+                return;
+            }
 
+            // Validate password if change password is checked
+            const changePassword = document.getElementById('changePasswordCheck').checked;
+            if (changePassword) {
+                const newPass = document.getElementById('newPassword').value;
+                const confirmPass = document.getElementById('confirmPassword').value;
 
+                if (!newPass || !confirmPass) {
+                    await Swal.fire({
+                        icon: 'warning',
+                        title: 'Missing Password',
+                        text: 'Please enter both password fields!',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#f39c12'
+                    });
+                    document.getElementById('newPassword').focus();
+                    isValid = false;
+                    return;
+                }
 
+                if (newPass !== confirmPass) {
+                    await Swal.fire({
+                        icon: 'error',
+                        title: 'Password Mismatch',
+                        text: 'Passwords do not match!',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#d33'
+                    });
+                    document.getElementById('confirmPassword').focus();
+                    isValid = false;
+                    return;
+                }
 
+                if (newPass.length < 6) {
+                    await Swal.fire({
+                        icon: 'error',
+                        title: 'Weak Password',
+                        text: 'Password must be at least 6 characters long!',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#d33'
+                    });
+                    document.getElementById('newPassword').focus();
+                    isValid = false;
+                    return;
+                }
+            }
 
+            if (isValid) {
+                // Confirm before submitting
+                const confirmResult = await Swal.fire({
+                    icon: 'question',
+                    title: 'Confirm Update?',
+                    text: 'Are you sure you want to save these changes?',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, save it',
+                    cancelButtonText: 'Cancel',
+                    confirmButtonColor: '#0d6efd'
+                });
 
+                if (confirmResult.isConfirmed) {
+                    // Submit form if user confirms
+                    this.submit();
+                }
+            }
+        });
+    </script>
 </body>

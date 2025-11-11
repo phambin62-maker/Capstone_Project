@@ -2,6 +2,7 @@
 using BE_Capstone_Project.Application.Admin.Service;
 using BE_Capstone_Project.Application.Admin.Service.Interfaces;
 using BE_Capstone_Project.Application.BookingManagement.Services;
+using BE_Capstone_Project.Domain.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,7 +10,8 @@ namespace BE_Capstone_Project.Application.Admin.Controller
 {
     [ApiController]
     [Route("api/admin")]
-     
+    [Authorize(Roles="Admin")]
+
     public class AdminController : ControllerBase
     {
         private readonly IAdminService _adminService;

@@ -64,21 +64,19 @@
                         @* Menu cho Admin *@
                         @if (AuthHelper.IsAdmin())
                         {
-                            <li><a asp-controller="AdminWeb" asp-action="Account">Quản lý Admin</a></li>
+                            <li><a asp-controller="AdminWeb" asp-action="Account">Admin Manangement</a></li>
                         }
                         
                         @* Menu cho Admin và Staff *@
                         @if (AuthHelper.IsAdminOrStaff())
                         {
                             <li class="dropdown">
-                                <a href="#"><span>Quản lý</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+                                <a href="#"><span>Manangement</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
                                 <ul>
-                                    <li><a asp-controller="Staff" asp-action="Tours">Quản lý Tour</a></li>
-                                    <li><a asp-controller="StaffSchedule" asp-action="Schedules">Quản lý Lịch Tour</a></li>
-                                    <li><a asp-controller="Staff" asp-action="News">Quản lý Tin tức</a></li>
+                                    <li><a asp-controller="Staff" asp-action="Tours">Tour Manangement</a></li>
                                     @if (AuthHelper.IsAdmin())
                                     {
-                                        <li><a asp-controller="AdminWeb" asp-action="Report">Báo cáo</a></li>
+                                        <li><a asp-controller="AdminWeb" asp-action="Report">Report</a></li>
                                     }
                                 </ul>
                             </li>
@@ -103,7 +101,7 @@
                             </li>
 
                             <li class="dropdown">
-                                <a href="#">
+                                <a>
                                     <span>Welcome, @firstname</span>
                                     <i class="bi bi-chevron-down toggle-dropdown"></i>
                                 </a>
@@ -169,6 +167,8 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/notification.js" asp-append-version="true"></script>
+    
+    <!-- Global Error Handler - Bắt và xử lý lỗi từ extension trình duyệt hoặc script bên thứ ba -->
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

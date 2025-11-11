@@ -335,8 +335,8 @@
             }
 
             if (!response.ok) {
-                const err = await response.text();
-                alert("❌ Lỗi khi xóa: " + err);
+                const err = await response.json();
+                alert("❌ Lỗi khi xóa: " + (err.message || JSON.stringify(err)));
                 return;
             }
 

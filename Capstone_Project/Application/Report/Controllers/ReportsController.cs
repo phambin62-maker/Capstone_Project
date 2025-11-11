@@ -9,6 +9,7 @@ namespace BE_Capstone_Project.Application.Report.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles ="Admin")]
     public class ReportsController : ControllerBase
     {
         private readonly IReportService _reportService;

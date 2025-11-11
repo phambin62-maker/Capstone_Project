@@ -22,7 +22,7 @@ namespace FE_Capstone_Project.Filters
             var authHelper = context.HttpContext.RequestServices
                 .GetRequiredService<AuthHelper>();
 
-            // Kiểm tra đã đăng nhập chưa
+            
             if (!authHelper.IsAuthenticated())
             {
                 context.Result = new RedirectToActionResult("Login", "AuthWeb", null);

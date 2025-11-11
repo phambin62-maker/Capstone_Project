@@ -15,6 +15,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "AdminOrStaff")]
     public class TourController : ControllerBase
     {
         private readonly ITourService _tourService;
@@ -34,7 +35,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpPost("AddTour")]
-        [Authorize(Roles = "Admin,Staff")] // Chỉ Admin và Staff mới được thêm tour
+        [Authorize(Roles = "AdminOrStaff")] // Chỉ Admin và Staff mới được thêm tour
         public async Task<IActionResult> AddTour([FromForm] TourDTO tour, [FromForm] List<IFormFile> images)
         {
             var tourToAdd = new Tour
@@ -99,7 +100,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpPost("UpdateTour")]
-        [Authorize(Roles = "Admin,Staff")] // Chỉ Admin và Staff mới được cập nhật tour
+        [Authorize(Roles = "AdminOrStaff")] // Chỉ Admin và Staff mới được cập nhật tour
         public async Task<IActionResult> UpdateTour([FromForm] TourDTO tour, [FromForm] List<IFormFile> images)
         {
             var tourToUpdate = await _tourService.GetTourById(tour.Id.Value);

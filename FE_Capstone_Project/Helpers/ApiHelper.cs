@@ -19,24 +19,47 @@ namespace FE_Capstone_Project.Helpers
         }
 
         /// <summary>
-        /// Thêm token vào request header nếu có
+        /// Lấy token từ session
         /// </summary>
-        private void AddAuthHeader()
+        private string? GetToken()
         {
-            var token = _httpContextAccessor.HttpContext?.Session?.GetString("JwtToken");
+            return _httpContextAccessor.HttpContext?.Session?.GetString("JwtToken");
+        }
+
+        /// <summary>
+        /// Tạo HttpRequestMessage với Authorization header
+        /// </summary>
+        private HttpRequestMessage CreateRequest(HttpMethod method, string endpoint, HttpContent? content = null)
+        {
+            var request = new HttpRequestMessage(method, endpoint);
+            
+            // Thêm token vào header nếu có
+            var token = GetToken();
             if (!string.IsNullOrEmpty(token))
             {
-                _httpClient.DefaultRequestHeaders.Authorization = 
-                    new AuthenticationHeaderValue("Bearer", token);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                // Log để debug (có thể xóa sau)
+                Console.WriteLine($"[ApiHelper] Sending request to {endpoint} with token: {token.Substring(0, Math.Min(20, token.Length))}...");
             }
+            else
+            {
+                Console.WriteLine($"[ApiHelper] WARNING: No token found for request to {endpoint}");
+            }
+            
+            if (content != null)
+            {
+                request.Content = content;
+            }
+            
+            return request;
         }
 
         public async Task<T?> GetAsync<T>(string endpoint)
         {
             try
             {
-                AddAuthHeader();
-                var response = await _httpClient.GetAsync(endpoint);
+                var request = CreateRequest(HttpMethod.Get, endpoint);
+                var response = await _httpClient.SendAsync(request);
                 
                 // Xử lý 401 Unauthorized
                 if (response.StatusCode == HttpStatusCode.Unauthorized)
@@ -77,11 +100,11 @@ namespace FE_Capstone_Project.Helpers
         {
             try
             {
-                AddAuthHeader();
                 var json = JsonSerializer.Serialize(data);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var request = CreateRequest(HttpMethod.Post, endpoint, content);
 
-                var response = await _httpClient.PostAsync(endpoint, content);
+                var response = await _httpClient.SendAsync(request);
                 
                 // Xử lý 401 Unauthorized
                 if (response.StatusCode == HttpStatusCode.Unauthorized)
@@ -120,8 +143,8 @@ namespace FE_Capstone_Project.Helpers
         {
             try
             {
-                AddAuthHeader();
-                var response = await _httpClient.DeleteAsync(endpoint);
+                var request = CreateRequest(HttpMethod.Delete, endpoint);
+                var response = await _httpClient.SendAsync(request);
                 
                 // Xử lý 401 Unauthorized
                 if (response.StatusCode == HttpStatusCode.Unauthorized)
