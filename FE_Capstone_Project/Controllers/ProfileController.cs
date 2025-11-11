@@ -7,7 +7,7 @@ using static FE_Capstone_Project.Models.WishlistModels;
 
 namespace FE_Capstone_Project.Controllers
 {
-    [AuthorizeRole(1, 2, 3)] // Tất cả role đã đăng nhập đều có thể truy cập
+    [AuthorizeRole(1, 2, 3)]
     public class ProfileController : Controller
     {
         private readonly ApiHelper _apiHelper;

@@ -99,18 +99,7 @@ namespace BE_Capstone_Project.DAO
                 return false;
             }
         }
-        public async Task<bool> HasRelatedBookings(int userId)
-        {
-            try
-            {
-                return await _context.Bookings.AnyAsync(b => b.UserId == userId);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[UserDAO] Error checking related bookings: {ex.Message}");
-                return false;
-            }
-        }
+        
 
         public async Task<bool> DeleteUserById(int userId)
         {
@@ -120,70 +109,62 @@ namespace BE_Capstone_Project.DAO
                 if (user == null)
                     return false;
 
-                
-                
-                // Delete Reviews (has FK to Booking, so delete first)
-                var reviews = await _context.Reviews.Where(r => r.UserId == userId).ToListAsync();
-                if (reviews.Any())
+                // Kiểm tra các bảng liên quan trước khi xóa
+                var relatedData = new Dictionary<string, int>();
+
+                // 1. Reviews
+                var reviewCount = await _context.Reviews.CountAsync(r => r.UserId == userId);
+                if (reviewCount > 0)
+                    relatedData["Reviews"] = reviewCount;
+
+                // 2. Bookings
+                var bookingCount = await _context.Bookings.CountAsync(b => b.UserId == userId);
+                if (bookingCount > 0)
+                    relatedData["Bookings"] = bookingCount;
+
+                // 3. Notifications
+                var notificationCount = await _context.Notifications.CountAsync(n => n.UserId == userId);
+                if (notificationCount > 0)
+                    relatedData["Notifications"] = notificationCount;
+
+                // 4. News
+                var newsCount = await _context.News.CountAsync(n => n.UserId == userId);
+                if (newsCount > 0)
+                    relatedData["News"] = newsCount;
+
+                // 5. Wishlists
+                var wishlistCount = await _context.Wishlists.CountAsync(w => w.UserId == userId);
+                if (wishlistCount > 0)
+                    relatedData["Wishlists"] = wishlistCount;
+
+                // 6. Chats (as Customer)
+                var chatAsCustomerCount = await _context.Chats.CountAsync(c => c.CustomerId == userId);
+                if (chatAsCustomerCount > 0)
+                    relatedData["ChatsAsCustomer"] = chatAsCustomerCount;
+
+                // 7. Chats (as Staff)
+                var chatAsStaffCount = await _context.Chats.CountAsync(c => c.StaffId == userId);
+                if (chatAsStaffCount > 0)
+                    relatedData["ChatsAsStaff"] = chatAsStaffCount;
+
+                // Nếu có dữ liệu liên quan, throw exception với thông tin chi tiết
+                if (relatedData.Count > 0)
                 {
-                    _context.Reviews.RemoveRange(reviews);
+                    var relatedDataDetails = string.Join(", ", relatedData.Select(kvp => $"{kvp.Key}: {kvp.Value}"));
+                    throw new InvalidOperationException(
+                        $"Cannot delete user. User has related data in {relatedData.Count} table(s): {relatedDataDetails}. " +
+                        "Please handle related data before deletion or use force delete to remove all related data."
+                    );
                 }
 
-                //  Delete Bookings (has FK to TourSchedule, but we only delete user's bookings)
-                var bookings = await _context.Bookings.Where(b => b.UserId == userId).ToListAsync();
-                if (bookings.Any())
-                {
-                    // Delete BookingCustomers related to these bookings
-                    var bookingIds = bookings.Select(b => b.Id).ToList();
-                    var bookingCustomers = await _context.BookingCustomers
-                        .Where(bc => bookingIds.Contains(bc.BookingId))
-                        .ToListAsync();
-                    if (bookingCustomers.Any())
-                    {
-                        _context.BookingCustomers.RemoveRange(bookingCustomers);
-                    }
-                    
-                    _context.Bookings.RemoveRange(bookings);
-                }
-
-                //  Delete Notifications
-                var notifications = await _context.Notifications.Where(n => n.UserId == userId).ToListAsync();
-                if (notifications.Any())
-                {
-                    _context.Notifications.RemoveRange(notifications);
-                }
-
-                // Delete News
-                var news = await _context.News.Where(n => n.UserId == userId).ToListAsync();
-                if (news.Any())
-                {
-                    _context.News.RemoveRange(news);
-                }
-
-                //  Delete Wishlists
-                var wishlists = await _context.Wishlists.Where(w => w.UserId == userId).ToListAsync();
-                if (wishlists.Any())
-                {
-                    _context.Wishlists.RemoveRange(wishlists);
-                }
-
-                //  Delete Chats (both as Customer and Staff)
-                var chats = await _context.Chats
-                    .Where(c => c.CustomerId == userId || c.StaffId == userId)
-                    .ToListAsync();
-                if (chats.Any())
-                {
-                    _context.Chats.RemoveRange(chats);
-                }
-
-                // Save all deletions
-                await _context.SaveChangesAsync();
-
-                //  Finally, delete the User
                 _context.Users.Remove(user);
                 await _context.SaveChangesAsync();
 
                 return true;
+            }
+            catch (InvalidOperationException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -315,6 +296,9 @@ namespace BE_Capstone_Project.DAO
                 var total = await _context.Users.CountAsync();
                 var active = await _context.Users.CountAsync(u => u.UserStatus == UserStatus.Active);
                 var inactive = await _context.Users.CountAsync(u => u.UserStatus == UserStatus.Banned);
+
+
+
                 return (total, active, inactive);
             }
             catch (Exception ex)
@@ -391,6 +375,14 @@ namespace BE_Capstone_Project.DAO
                 existingUser.Email = user.Email ?? existingUser.Email;
                 existingUser.PhoneNumber = user.PhoneNumber ?? existingUser.PhoneNumber;
                 existingUser.RoleId = user.RoleId;
+                
+                // Update Username nếu có
+                if (!string.IsNullOrEmpty(user.Username))
+                    existingUser.Username = user.Username;
+                
+                // Update Provider nếu có
+                if (!string.IsNullOrEmpty(user.Provider))
+                    existingUser.Provider = user.Provider;
                 
                 if (!string.IsNullOrEmpty(user.PasswordHash))
                     existingUser.PasswordHash = user.PasswordHash;

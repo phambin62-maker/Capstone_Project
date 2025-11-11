@@ -104,6 +104,7 @@ namespace FE_Capstone_Project.Controllers
 
         public async Task<IActionResult> GoogleResponse()
         {
+            
             var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             var claims = result.Principal.Identities.FirstOrDefault()?.Claims.ToList();
 
@@ -136,24 +137,41 @@ namespace FE_Capstone_Project.Controllers
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
-
-                // ✅ Deserialize để lấy token BE trả về
                 using var doc = JsonDocument.Parse(content);
                 var root = doc.RootElement;
 
                 var token = root.TryGetProperty("token", out var tokenElement) ? tokenElement.GetString() : null;
                 var message = root.TryGetProperty("message", out var msgElement) ? msgElement.GetString() : "Đăng nhập thành công";
+                var userId = root.TryGetProperty("userId", out var userIdElement) ? userIdElement.GetInt32() : 0;
 
                 if (!string.IsNullOrEmpty(token))
                 {
                     HttpContext.Session.SetString("JwtToken", token);
-                    _logger.LogInformation($"Lưu token vào session thành công cho {email}");
+                    
+                    // Lấy username từ token để lưu vào session
+                    var handler = new JwtSecurityTokenHandler();
+                    var jwtToken = handler.ReadJwtToken(token);
+                    var payload = jwtToken.Payload;
+                    
+                    // Lấy username từ token (có thể là unique_name hoặc name claim)
+                    var username = payload.ContainsKey("unique_name") ? payload["unique_name"].ToString() 
+                                 : payload.ContainsKey("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name") 
+                                    ? payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"].ToString()
+                                    : name ?? email.Split('@')[0];
+                    
+                    // Lấy roleId từ token
+                    var roleId = payload.ContainsKey("RoleId") ? int.Parse(payload["RoleId"].ToString() ?? "3") : 3;
+                    
+                    HttpContext.Session.SetString("UserName", username ?? name ?? "");
+                    HttpContext.Session.SetString("UserEmail", email);
+                    HttpContext.Session.SetInt32("UserRoleId", roleId);
+                    
+                    _logger.LogInformation($"Lưu token vào session thành công cho {email}, username: {username}");
                 }
                 else
                 {
                     _logger.LogWarning($"BE không trả về token cho {email}. Message: {message}");
                 }
-
                 return RedirectToAction("Index", "Home");
             }
             else
