@@ -4,6 +4,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http;
+using System;
+using System.Net.Http;
 
 namespace FE_Capstone_Project.Helpers
 {
@@ -18,22 +20,15 @@ namespace FE_Capstone_Project.Helpers
             _httpContextAccessor = httpContextAccessor;
         }
 
-        /// <summary>
-        /// Lấy token từ session
-        /// </summary>
         private string? GetToken()
         {
             return _httpContextAccessor.HttpContext?.Session?.GetString("JwtToken");
         }
 
-        /// <summary>
-        /// Tạo HttpRequestMessage với Authorization header
-        /// </summary>
         private HttpRequestMessage CreateRequest(HttpMethod method, string endpoint, HttpContent? content = null)
         {
             var request = new HttpRequestMessage(method, endpoint);
-            
-            // Thêm token vào header nếu có
+
             var token = GetToken();
             if (!string.IsNullOrEmpty(token))
             {
@@ -43,12 +38,12 @@ namespace FE_Capstone_Project.Helpers
             {
                 Console.WriteLine($"[ApiHelper] WARNING: No token found for request to {endpoint}");
             }
-            
+
             if (content != null)
             {
                 request.Content = content;
             }
-            
+
             return request;
         }
 
@@ -58,22 +53,22 @@ namespace FE_Capstone_Project.Helpers
             {
                 var request = CreateRequest(HttpMethod.Get, endpoint);
                 var response = await _httpClient.SendAsync(request);
-                
-                // Xử lý 401 Unauthorized
+
                 if (response.StatusCode == HttpStatusCode.Unauthorized)
                 {
                     ClearSession();
                     throw new UnauthorizedAccessException("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
                 }
 
-                // Xử lý 403 Forbidden
                 if (response.StatusCode == HttpStatusCode.Forbidden)
                 {
                     throw new UnauthorizedAccessException("Bạn không có quyền truy cập tài nguyên này.");
                 }
 
                 if (!response.IsSuccessStatusCode)
-                    return default;
+                {
+                    throw new HttpRequestException($"API request failed at GET {endpoint}. Status: {response.StatusCode}.");
+                }
 
                 var json = await response.Content.ReadAsStringAsync();
 
@@ -85,12 +80,12 @@ namespace FE_Capstone_Project.Helpers
             }
             catch (UnauthorizedAccessException)
             {
-                throw; // Re-throw để controller xử lý
+                throw;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                Console.WriteLine("Error occurred while making GET request to " + ex);
-                return default;
+                Console.WriteLine($"Error occurred while making GET request: {ex.Message}");
+                throw new Exception($"ApiHelper GET Error: {ex.Message}", ex);
             }
         }
 
@@ -103,22 +98,22 @@ namespace FE_Capstone_Project.Helpers
                 var request = CreateRequest(HttpMethod.Post, endpoint, content);
 
                 var response = await _httpClient.SendAsync(request);
-                
-                // Xử lý 401 Unauthorized
+
                 if (response.StatusCode == HttpStatusCode.Unauthorized)
                 {
                     ClearSession();
                     throw new UnauthorizedAccessException("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
                 }
 
-                // Xử lý 403 Forbidden
                 if (response.StatusCode == HttpStatusCode.Forbidden)
                 {
                     throw new UnauthorizedAccessException("Bạn không có quyền thực hiện thao tác này.");
                 }
 
-                if(!response.IsSuccessStatusCode)
-                    return default;
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new HttpRequestException($"API request failed at POST {endpoint}. Status: {response.StatusCode}.");
+                }
 
                 var responseJson = await response.Content.ReadAsStringAsync();
                 return JsonSerializer.Deserialize<TResponse>(responseJson, new JsonSerializerOptions
@@ -129,11 +124,12 @@ namespace FE_Capstone_Project.Helpers
             }
             catch (UnauthorizedAccessException)
             {
-                throw; // Re-throw để controller xử lý
+                throw;
             }
-            catch
+            catch (Exception ex)
             {
-                return default;
+                Console.WriteLine($"Error occurred while making POST request: {ex.Message}");
+                throw new Exception($"ApiHelper POST Error: {ex.Message}", ex);
             }
         }
 
@@ -143,35 +139,35 @@ namespace FE_Capstone_Project.Helpers
             {
                 var request = CreateRequest(HttpMethod.Delete, endpoint);
                 var response = await _httpClient.SendAsync(request);
-                
-                // Xử lý 401 Unauthorized
+
                 if (response.StatusCode == HttpStatusCode.Unauthorized)
                 {
                     ClearSession();
                     throw new UnauthorizedAccessException("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
                 }
 
-                // Xử lý 403 Forbidden
                 if (response.StatusCode == HttpStatusCode.Forbidden)
                 {
                     throw new UnauthorizedAccessException("Bạn không có quyền thực hiện thao tác này.");
                 }
 
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new HttpRequestException($"API request failed at DELETE {endpoint}. Status: {response.StatusCode}.");
+                }
                 return response.IsSuccessStatusCode;
             }
             catch (UnauthorizedAccessException)
             {
-                throw; // Re-throw để controller xử lý
+                throw;
             }
-            catch
+            catch (Exception ex)
             {
-                return false;
+                Console.WriteLine($"Error occurred while making DELETE request: {ex.Message}");
+                throw new Exception($"ApiHelper DELETE Error: {ex.Message}", ex);
             }
         }
 
-        /// <summary>
-        /// Clear session khi token hết hạn
-        /// </summary>
         private void ClearSession()
         {
             _httpContextAccessor.HttpContext?.Session?.Clear();

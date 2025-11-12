@@ -1,6 +1,10 @@
 ﻿using BE_Capstone_Project.Infrastructure;
 using BE_Capstone_Project.Domain.Models;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace BE_Capstone_Project.DAO
 {
@@ -12,13 +16,13 @@ namespace BE_Capstone_Project.DAO
             _context = context;
         }
 
+        // (Các hàm Add, Update, Delete... giữ nguyên)
         public async Task<int> AddNotificationAsync(Notification notification)
         {
             try
             {
                 await _context.Notifications.AddAsync(notification);
                 await _context.SaveChangesAsync();
-                // SỬA LỖI: Khớp với Model C# (chữ 'i' thường)
                 return notification.Id;
             }
             catch (Exception ex)
@@ -27,7 +31,6 @@ namespace BE_Capstone_Project.DAO
                 return -1;
             }
         }
-
         public async Task<bool> UpdateNotificationAsync(Notification notification)
         {
             try
@@ -38,12 +41,10 @@ namespace BE_Capstone_Project.DAO
             }
             catch (Exception ex)
             {
-                // SỬA LỖI: Khớp với Model C# (chữ 'i' thường)
                 Console.WriteLine($"An error occurred while updating the notification with ID {notification.Id}: {ex.Message}");
                 return false;
             }
         }
-
         public async Task<bool> DeleteNotificationByIdAsync(int notificationId)
         {
             try
@@ -64,11 +65,12 @@ namespace BE_Capstone_Project.DAO
             }
         }
 
+        // (Các hàm "ĐỌC" (Get) phải có .AsNoTracking() - Đã đúng)
         public async Task<List<Notification>> GetAllNotificationsAsync()
         {
             try
             {
-                return await _context.Notifications.Include(n => n.User).ToListAsync();
+                return await _context.Notifications.Include(n => n.User).AsNoTracking().ToListAsync();
             }
             catch (Exception ex)
             {
@@ -76,13 +78,11 @@ namespace BE_Capstone_Project.DAO
                 return new List<Notification>();
             }
         }
-
         public async Task<Notification?> GetNotificationByIdAsync(int notificationId)
         {
             try
             {
-                // SỬA LỖI: Khớp với Model C# (chữ 'i' thường)
-                return await _context.Notifications.Include(n => n.User).FirstOrDefaultAsync(n => n.Id == notificationId);
+                return await _context.Notifications.Include(n => n.User).AsNoTracking().FirstOrDefaultAsync(n => n.Id == notificationId);
             }
             catch (Exception ex)
             {
@@ -90,22 +90,15 @@ namespace BE_Capstone_Project.DAO
                 return null;
             }
         }
-
         public async Task<List<Notification>> GetNotificationsByUserIdAsync(int userId, bool? isRead = null)
         {
             try
             {
-                var query = _context.Notifications
-                    .Include(n => n.User)
-                    // SỬA LỖI: Khớp với Model C# (chữ 'd' thường)
-                    .Where(n => n.UserId == userId)
-                    .AsQueryable();
-
+                var query = _context.Notifications.Include(n => n.User).Where(n => n.UserId == userId).AsNoTracking().AsQueryable();
                 if (isRead.HasValue)
                 {
                     query = query.Where(n => n.IsRead == isRead.Value);
                 }
-
                 return await query.OrderByDescending(n => n.CreatedDate).ToListAsync();
             }
             catch (Exception ex)
@@ -114,15 +107,11 @@ namespace BE_Capstone_Project.DAO
                 return new List<Notification>();
             }
         }
-
         public async Task<int> GetUnreadCountAsync(int userId)
         {
             try
             {
-                return await _context.Notifications
-                    // SỬA LỖI: Khớp với Model C# (chữ 'd' thường)
-                    .Where(n => n.UserId == userId && n.IsRead == false)
-                    .CountAsync();
+                return await _context.Notifications.AsNoTracking().Where(n => n.UserId == userId && n.IsRead == false).CountAsync();
             }
             catch (Exception ex)
             {
@@ -130,30 +119,76 @@ namespace BE_Capstone_Project.DAO
                 return 0;
             }
         }
+        public async Task<List<Notification>> GetRecentNotificationsAsync(int userId, int count = 5)
+        {
+            try
+            {
+                return await _context.Notifications.Include(n => n.User).Where(n => n.UserId == userId).AsNoTracking().OrderByDescending(n => n.CreatedDate).Take(count).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while retrieving recent notifications for user ID {userId}: {ex.Message}");
+                return new List<Notification>();
+            }
+        }
 
+        // (Hàm click-để-đọc, giữ nguyên)
+        public async Task<bool> MarkAsReadAsync(int notificationId, int userId)
+        {
+            try
+            {
+                var notification = await _context.Notifications.FirstOrDefaultAsync(n => n.Id == notificationId && n.UserId == userId);
+                if (notification == null || notification.IsRead)
+                {
+                    return false;
+                }
+                notification.IsRead = true;
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error marking notification {notificationId} as read: {ex.Message}");
+                return false;
+            }
+        }
+
+        // === BẮT ĐẦU SỬA LỖI ===
+        // (Sửa hàm này để dùng ExecuteUpdateAsync, hiệu quả hơn và tránh lỗi cache)
         public async Task<bool> MarkAllAsReadAsync(int userId)
         {
             try
             {
-                var unreadNotifications = await _context.Notifications
-                    // SỬA LỖI: Khớp với Model C# (chữ 'd' thường)
+                // Dùng ExecuteUpdateAsync để cập nhật thẳng xuống DB
+                // mà không cần tải (Load) bất cứ thứ gì vào bộ đệm (cache)
+                await _context.Notifications
                     .Where(n => n.UserId == userId && n.IsRead == false)
-                    .ToListAsync();
-
-                if (!unreadNotifications.Any())
-                {
-                    return true;
-                }
-
-                unreadNotifications.ForEach(n => n.IsRead = true);
-
-                await _context.SaveChangesAsync();
+                    .ExecuteUpdateAsync(s => s.SetProperty(n => n.IsRead, true)); // Đặt IsRead = true
 
                 return true;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"An error occurred while marking all notifications as read for user ID {userId}: {ex.Message}");
+                return false;
+            }
+        }
+        
+        public async Task<bool> DeleteAllByUserIdAsync(int userId)
+        {
+            try
+            {
+                // Dùng ExecuteDeleteAsync để xóa thẳng xuống DB
+                // (Hiệu quả, không gây lỗi cache)
+                await _context.Notifications
+                    .Where(n => n.UserId == userId)
+                    .ExecuteDeleteAsync();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while deleting all notifications for user ID {userId}: {ex.Message}");
                 return false;
             }
         }

@@ -14,6 +14,28 @@
         <div class="col-md-10 mx-auto">
             <div class="card shadow-sm">
                 <div class="card-body">
+
+                    @if (Model != null && Model.Any())
+                    {
+                        <div class="d-flex justify-content-end mb-3 gap-2">
+
+                            @if (Model.Any(n => !n.IsRead))
+                            {
+                                <form asp-controller="NotificationWeb" asp-action="MarkAllAsRead" method="post">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-check-all"></i> Mark all as read
+                                    </button>
+                                </form>
+                            }
+
+                            <form asp-controller="NotificationWeb" asp-action="DeleteAll" method="post"
+                                  onsubmit="return confirm('Are you sure you want to delete ALL notifications? This cannot be undone.');">
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    <i class="bi bi-trash"></i> Delete All
+                                </button>
+                            </form>
+                        </div>
+                    }
                     @if (Model == null || !Model.Any())
                     {
                         <div class="text-center text-muted p-5">
@@ -24,15 +46,40 @@
                     }
                     else
                     {
-                        <div class="list-group list-group-flush">
+                        <div class="list-group">
                             @foreach (var noti in Model.OrderByDescending(n => n.CreatedDate))
                             {
-                                <div class="list-group-item @(noti.IsRead ? "" : "list-group-item-light fw-bold")">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h5 class="mb-1">@noti.Title</h5>
-                                        <small class="text-muted">@noti.CreatedDate.ToString("dd/MM/yyyy HH:mm")</small>
+                                <div class="list-group-item @(noti.IsRead ? "" : "list-group-item-light")">
+                                    <div class="row align-items-center">
+
+                                        <div class="col-auto">
+                                            @if (noti.IsRead)
+                                            {
+                                                <i class="bi bi-check2-circle text-muted fs-3"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-bell-fill text-primary fs-3"></i>
+                                            }
+                                        </div>
+
+                                        <div class="col">
+                                            <div class="d-flex w-100 justify-content-between">
+                                                <h5 class="mb-1 @(noti.IsRead ? "" : "fw-bold")">@noti.Title</h5>
+                                                <small class="text-muted">@noti.CreatedDate.ToString("dd/MM/yyyy HH:mm")</small>
+                                            </div>
+                                            <p class="mb-1">@noti.Message</p>
+                                        </div>
+
+                                        <div class="col-auto">
+                                            <form asp-controller="NotificationWeb" asp-action="DeleteSingle" method="post">
+                                                <input type="hidden" name="notificationId" value="@noti.Id" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Delete notification">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </div>
-                                    <p class="mb-1">@noti.Message</p>
                                 </div>
                             }
                         </div>
