@@ -8,6 +8,7 @@ using System.Text.Json;
 
 namespace FE_Capstone_Project.Controllers
 {
+    [AuthorizeRole(2)]
     //[Authorize(Roles = "Staff")]
     public class StaffScheduleController : Controller
     {
