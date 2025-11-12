@@ -18,7 +18,7 @@ using FE_Capstone_Project.Filters;
 
 namespace FE_Capstone_Project.Controllers
 {
-    [AuthorizeRole(2)]
+    [AuthorizeRole(2,3)]
     //[Authorize(Roles = "Staff")]
     public class StaffController : Controller
     {

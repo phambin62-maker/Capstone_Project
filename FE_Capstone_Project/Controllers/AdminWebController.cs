@@ -35,7 +35,7 @@ namespace FE_Capstone_Project.Controllers
                     return RedirectToAction("Login", "AuthWeb");
                 }
 
-                // đẩy token lên html  để JavaScript có thể đọc
+                // đẩy token lên html  để JS có thể đọc 
                 ViewBag.JwtToken = token;
                 var endpoint = "admin/get-all-accounts";
                 var users = await _apiHelper.GetAsync<List<AccountViewModel>>(endpoint);
