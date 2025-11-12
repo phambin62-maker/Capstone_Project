@@ -1,6 +1,7 @@
 ﻿using BE_Capstone_Project.Application.Notifications.DTOs;
 using BE_Capstone_Project.Application.Notifications.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks; // <-- Thêm using
 
 namespace BE_Capstone_Project.Application.Notifications.Controllers
 {
@@ -44,12 +45,12 @@ namespace BE_Capstone_Project.Application.Notifications.Controllers
             return Ok(new { count = count });
         }
 
-        [HttpPut("mark-read/{userId}")]
+        [HttpPost("mark-read/{userId}")]
         public async Task<IActionResult> MarkAllAsRead(int userId)
         {
             var success = await _service.MarkAllAsReadAsync(userId);
             if (!success) return BadRequest("Could not mark all notifications as read.");
-            return NoContent();
+            return Ok(new { success = true });
         }
 
         [HttpPost]
@@ -67,12 +68,41 @@ namespace BE_Capstone_Project.Application.Notifications.Controllers
             return NoContent();
         }
 
+        // (API này đã tồn tại, dùng cho "Delete Single")
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             var success = await _service.DeleteAsync(id);
             if (!success) return NotFound();
             return NoContent();
+        }
+
+        // === THÊM MỚI: API "DELETE ALL" ===
+        [HttpDelete("user/{userId}")]
+        public async Task<IActionResult> DeleteAllByUserId(int userId)
+        {
+            var success = await _service.DeleteAllByUserIdAsync(userId);
+            if (!success) return BadRequest("Could not delete notifications.");
+            return Ok(new { success = true });
+        }
+        // === KẾT THÚC THÊM MỚI ===
+
+        [HttpPost("mark-read-single/{notificationId}/{userId}")]
+        public async Task<IActionResult> MarkSingleAsRead(int notificationId, int userId)
+        {
+            var result = await _service.MarkAsReadAsync(notificationId, userId);
+            if (!result)
+            {
+                return NotFound();
+            }
+            return Ok(result);
+        }
+
+        [HttpGet("recent/{userId}")]
+        public async Task<IActionResult> GetRecentByUserId(int userId)
+        {
+            var notifications = await _service.GetRecentAsync(userId);
+            return Ok(notifications);
         }
     }
 }

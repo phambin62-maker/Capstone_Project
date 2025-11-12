@@ -5,7 +5,6 @@
 }
 
 <div class="container-fluid">
-    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0 text-dark">@ViewData["Title"]</h1>
         <div>
@@ -15,31 +14,11 @@
         </div>
     </div>
 
-    <!-- Alert -->
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-
-    <!-- Form -->
     <div class="card shadow-sm">
         <div class="card-body">
-            <form method="post" enctype="multipart/form-data">
+            <form method="post" asp-action="EditNews" enctype="multipart/form-data">
                 <input type="hidden" asp-for="Id" />
-
-                <div class="row">
-                    <!-- Left -->
+                <input type="hidden" asp-for="UserId" /> <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label asp-for="Title" class="form-label fw-bold">Title *</label>
@@ -47,36 +26,30 @@
                             <span asp-validation-for="Title" class="text-danger"></span>
                         </div>
 
-                        @* <div class="mb-3">
-                            <label asp-for="UserId" class="form-label fw-bold">User ID *</label>
-                            <input asp-for="UserId" type="number" class="form-control" />
-                            <span asp-validation-for="UserId" class="text-danger"></span>
-                        </div> *@
-
                         <div class="mb-3">
                             <label asp-for="NewsStatus" class="form-label fw-bold">Status *</label>
                             <select asp-for="NewsStatus" class="form-select">
-                                <option value="Hidden" selected="@(Model.NewsStatus == "Hidden")">Hidden </option>
-                                <option value="Published" selected="@(Model.NewsStatus == "Published")">Published </option>
-                                <option value="Draft" selected="@(Model.NewsStatus == "Draft")">Draft </option>
+                                <option value="Hidden">Hidden</option>
+                                <option value="Published">Published</option>
+                                <option value="Draft">Draft</option>
                             </select>
                         </div>
 
                     </div>
 
-                    <!-- Right -->
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label asp-for="Image" class="form-label fw-bold">Image </label>
-                            <input asp-for="Image" type="file" class="form-control" accept="image/*" name="imageFile" />
+                            <label class="form-label fw-bold">New Image (Optional)</label>
+
+                            <input type="file" class="form-control" accept="image/*" name="imageFile" id="imageFile" />
                             <small class="text-muted">Select new image to replace current image.</small>
                         </div>
 
-                        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                        @if (!string.IsNullOrEmpty(Model.Image))
                         {
                             <div class="mb-3 text-center">
                                 <label class="form-label fw-bold">Current image</label><br />
-                                <img src="@Model.ImageUrl" alt="Current image" class="img-thumbnail rounded" style="max-height: 200px;" />
+                                <img src="@Model.Image" alt="Current image" class="img-thumbnail rounded" style="max-height: 200px;" />
                             </div>
                         }
 
@@ -88,7 +61,6 @@
                     </div>
                 </div>
 
-                <!-- Buttons -->
                 <div class="d-flex gap-2 mt-3">
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-save me-2"></i>News Update

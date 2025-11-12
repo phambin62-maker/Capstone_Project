@@ -2,6 +2,10 @@
 using BE_Capstone_Project.DAO;
 using BE_Capstone_Project.Domain.Enums;
 using BE_Capstone_Project.Domain.Models;
+using System; // Thêm
+using System.Collections.Generic; // Thêm
+using System.Linq; // Thêm
+using System.Threading.Tasks; // Thêm
 
 namespace BE_Capstone_Project.Application.Notifications.Services
 {
@@ -19,7 +23,6 @@ namespace BE_Capstone_Project.Application.Notifications.Services
             return new NotificationDTO
             {
                 Id = n.Id,
-                // ĐÃ SỬA: Khớp với Model (UserId chữ d thường)
                 UserId = n.UserId,
                 Title = n.Title,
                 Message = n.Message,
@@ -48,7 +51,6 @@ namespace BE_Capstone_Project.Application.Notifications.Services
         {
             var newNoti = new Notification
             {
-                // ĐÃ SỬA: Khớp với Model (UserId chữ d thường)
                 UserId = dto.UserId,
                 Title = dto.Title,
                 Message = dto.Message,
@@ -91,6 +93,25 @@ namespace BE_Capstone_Project.Application.Notifications.Services
         public async Task<bool> MarkAllAsReadAsync(int userId)
         {
             return await _notificationDAO.MarkAllAsReadAsync(userId);
+        }
+
+        // === HÀM MỚI (Sửa lỗi hiệu năng) ===
+        public async Task<IEnumerable<NotificationDTO>> GetRecentAsync(int userId)
+        {
+            // Gọi hàm DAO mới (chỉ lấy 5 cái)
+            var list = await _notificationDAO.GetRecentNotificationsAsync(userId, 5);
+            return list.Select(MapToDto);
+        }
+
+        // === HÀM MỚI (Sửa lỗi "Click để đọc") ===
+        public async Task<bool> MarkAsReadAsync(int notificationId, int userId)
+        {
+            // Chúng ta chuyển cả 2 ID cho DAO để bảo mật
+            return await _notificationDAO.MarkAsReadAsync(notificationId, userId);
+        }
+        public async Task<bool> DeleteAllByUserIdAsync(int userId)
+        {
+            return await _notificationDAO.DeleteAllByUserIdAsync(userId);
         }
     }
 }

@@ -124,7 +124,7 @@ builder.Services.AddControllers()
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
-
+builder.Services.AddHttpContextAccessor();
 var app = builder.Build();
 app.UseCors("AllowAll");
 app.Use(async (context, next) =>
@@ -151,6 +151,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseStaticFiles();
 
 // Configure the HTTP request pipeline.
 app.UseAuthentication();
