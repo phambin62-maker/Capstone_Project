@@ -38,8 +38,6 @@ namespace FE_Capstone_Project.Helpers
             if (!string.IsNullOrEmpty(token))
             {
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                // Log để debug (có thể xóa sau)
-                Console.WriteLine($"[ApiHelper] Sending request to {endpoint} with token: {token.Substring(0, Math.Min(20, token.Length))}...");
             }
             else
             {

@@ -236,6 +236,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpGet("GetToursByCategoryId")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetToursByCategoryId(int categoryId)
         {
             var tours = await _tourService.GetToursByCategoryId(categoryId);
@@ -247,6 +248,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpGet("GetToursByStartLocationId")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetToursByStartLocationId(int startLocationId)
         {
             var tours = await _tourService.GetToursByStartLocationId(startLocationId);
@@ -258,6 +260,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpGet("GetToursByEndLocationId")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetToursByEndLocationId(int endLocationId)
         {
             var tours = await _tourService.GetToursByEndLocationId(endLocationId);
@@ -269,6 +272,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpGet("GetToursByPriceRange")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetToursByPriceRange(decimal minPrice, decimal maxPrice)
         {
             var tours = await _tourService.GetToursByPriceRange(minPrice, maxPrice);
@@ -282,6 +286,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
 
 
         [HttpGet("SearchTourByName")]
+        [AllowAnonymous]
         public async Task<IActionResult> SearchTourByName(string name)
         {
             var tours = await _tourService.SearchTourByName(name);
@@ -294,6 +299,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
 
 
         [HttpGet("GetTotalTourCount")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetTotalTourCount()
         {
             var tourCount = await _tourService.GetTotalTourCount();
@@ -304,6 +310,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpGet("GetPaginatedTours")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetPaginatedTours(int page = 1, int pageSize = 10)
         {
             var tours = await _tourService.GetPaginatedTours(page, pageSize);
@@ -315,6 +322,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpPost("ToggleTourStatus")]
+        [AllowAnonymous]
         public async Task<IActionResult> ToggleTourStatus(int tourId)
         {
             try
@@ -344,6 +352,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpGet("GetTopToursByEachCategories")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetTopToursByEachCategories()
         {
             var tours = await _tourService.GetTopToursByEachCategories();
@@ -355,6 +364,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpGet("GetFilteredTours")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetFilteredTours(
         int page = 1,
         int pageSize = 10,
@@ -378,6 +388,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpGet("GetFilteredTourCount")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetFilteredTourCount(
             bool? status = null,
             int? startLocation = null,
@@ -437,6 +448,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
             }
         }
         [HttpGet("GetImage")]
+        [Authorize(Roles = "Admin,Staff")]
         public IActionResult GetImage([FromQuery] string path)
         {
             try
