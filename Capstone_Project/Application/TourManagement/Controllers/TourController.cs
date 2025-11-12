@@ -15,7 +15,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "AdminOrStaff")]
+    [Authorize(Roles = "Admin,Staff")]
     public class TourController : ControllerBase
     {
         private readonly ITourService _tourService;
@@ -35,7 +35,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpPost("AddTour")]
-        [Authorize(Roles = "AdminOrStaff")] // Chỉ Admin và Staff mới được thêm tour
+        [Authorize(Roles = "Admin,Staff")] // Chỉ Admin và Staff mới được thêm tour
         public async Task<IActionResult> AddTour([FromForm] TourDTO tour, [FromForm] List<IFormFile> images)
         {
             var tourToAdd = new Tour
@@ -100,7 +100,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpPost("UpdateTour")]
-        [Authorize(Roles = "AdminOrStaff")] // Chỉ Admin và Staff mới được cập nhật tour
+        [Authorize(Roles = "Admin,Staff")] // Chỉ Admin và Staff mới được cập nhật tour
         public async Task<IActionResult> UpdateTour([FromForm] TourDTO tour, [FromForm] List<IFormFile> images)
         {
             var tourToUpdate = await _tourService.GetTourById(tour.Id.Value);
@@ -322,7 +322,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpPost("ToggleTourStatus")]
-        [AllowAnonymous]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> ToggleTourStatus(int tourId)
         {
             try
@@ -420,7 +420,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
 
                         var imagesPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "tours");
 
-                        // Đảm bảo thư mục tồn tại
+
                         if (!Directory.Exists(imagesPath))
                         {
                             Directory.CreateDirectory(imagesPath);
@@ -428,7 +428,6 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
 
                         var fullPath = Path.Combine(imagesPath, fileName);
 
-                        // Lưu file
                         using (var stream = new FileStream(fullPath, FileMode.Create))
                         {
                             await image.CopyToAsync(stream);
@@ -448,7 +447,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
             }
         }
         [HttpGet("GetImage")]
-        [Authorize(Roles = "Admin,Staff")]
+        [AllowAnonymous]
         public IActionResult GetImage([FromQuery] string path)
         {
             try
@@ -456,13 +455,17 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
                 if (string.IsNullOrEmpty(path))
                     return NotFound(new { message = "Image path is required" });
 
-                // Xử lý đường dẫn an toàn
                 var safePath = path.TrimStart('/');
                 var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", safePath);
+                var rootPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"));
+                var requestedPath = Path.GetFullPath(fullPath);
 
+                if (!requestedPath.StartsWith(rootPath))
+                {
+                    return BadRequest(new { message = "Invalid image path" });
+                }
                 if (!System.IO.File.Exists(fullPath))
                 {
-                    // Trả về ảnh mặc định nếu không tìm thấy
                     var defaultImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "default-tour.jpg");
                     if (System.IO.File.Exists(defaultImagePath))
                     {

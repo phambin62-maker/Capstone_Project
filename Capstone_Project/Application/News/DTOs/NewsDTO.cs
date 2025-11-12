@@ -12,5 +12,6 @@ namespace BE_Capstone_Project.Application.Newses.DTOs
         public NewsStatus? NewsStatus { get; set; }  
         public string? AuthorName { get; set; }
         public string Content { get; set; }
+        public int UserId { get; set; }
     }
 }

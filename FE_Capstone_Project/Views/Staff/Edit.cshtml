@@ -22,13 +22,13 @@
         </a>
     </div>
 
-    @if (TempData["ErrorMessage"] != null)
+    @* @if (TempData["ErrorMessage"] != null)
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-    }
+    } *@
 
     <!-- Main Form -->
     <div class="row">
@@ -106,9 +106,16 @@
                                             <label asp-for="StartLocationId" class="form-label required">Start Location</label>
                                             <select asp-for="StartLocationId" class="form-select">
                                                 <option value="">-- Select Start Location --</option>
-                                                @foreach (var location in ViewBag.Locations)
+                                                @if (ViewBag.Locations != null)
                                                 {
-                                                    <option value="@location.Id">@location.LocationName</option>
+                                                    @foreach (var location in ViewBag.Locations)
+                                                    {
+                                                        <option value="@location.Id">@location.LocationName</option>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <option value="">No locations available</option>
                                                 }
                                             </select>
                                             <span asp-validation-for="StartLocationId" class="text-danger small"></span>
@@ -118,9 +125,16 @@
                                             <label asp-for="EndLocationId" class="form-label required">End Location</label>
                                             <select asp-for="EndLocationId" class="form-select">
                                                 <option value="">-- Select End Location --</option>
-                                                @foreach (var location in ViewBag.Locations)
+                                                @if (ViewBag.Locations != null)
                                                 {
-                                                    <option value="@location.Id">@location.LocationName</option>
+                                                    @foreach (var location in ViewBag.Locations)
+                                                    {
+                                                        <option value="@location.Id">@location.LocationName</option>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <option value="">No locations available</option>
                                                 }
                                             </select>
                                             <span asp-validation-for="EndLocationId" class="text-danger small"></span>
@@ -130,9 +144,16 @@
                                             <label asp-for="CategoryId" class="form-label required">Category</label>
                                             <select asp-for="CategoryId" class="form-select">
                                                 <option value="">-- Select Category --</option>
-                                                @foreach (var category in ViewBag.Categories)
+                                                @if (ViewBag.Categories != null)
                                                 {
-                                                    <option value="@category.Id">@category.CategoryName</option>
+                                                    @foreach (var category in ViewBag.Categories)
+                                                    {
+                                                        <option value="@category.Id">@category.CategoryName</option>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <option value="">No categories available</option>
                                                 }
                                             </select>
                                             <span asp-validation-for="CategoryId" class="text-danger small"></span>
@@ -142,9 +163,16 @@
                                             <label asp-for="CancelConditionId" class="form-label required">Cancellation Policy</label>
                                             <select asp-for="CancelConditionId" class="form-select">
                                                 <option value="">-- Select Cancellation Policy --</option>
-                                                @foreach (var condition in ViewBag.CancelConditions)
+                                                @if (ViewBag.CancelConditions != null)
                                                 {
-                                                    <option value="@condition.Id">@condition.Title</option>
+                                                    @foreach (var condition in ViewBag.CancelConditions)
+                                                    {
+                                                        <option value="@condition.Id">@condition.Title</option>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <option value="">No cancellation policies available</option>
                                                 }
                                             </select>
                                             <span asp-validation-for="CancelConditionId" class="text-danger small"></span>
@@ -223,12 +251,20 @@
                                 <div class="mb-4">
                                     <label class="form-label">Current Images</label>
                                     <div class="row g-2" id="currentImagesContainer">
-                                        @if (ViewBag.CurrentTourImages != null && ((List<TourImageViewModel>)ViewBag.CurrentTourImages).Count > 0)
+                                        @{
+                                            var currentImages = ViewBag.CurrentTourImages as List<TourImageViewModel> ?? new List<TourImageViewModel>();
+                                            var currentImageCount = currentImages.Count;
+                                        }
+                                        @if (currentImages != null && currentImageCount > 0)
                                         {
-                                            @for (int i = 0; i < ((List<TourImageViewModel>)ViewBag.CurrentTourImages).Count; i++)
+                                            @for (int i = 0; i < currentImageCount; i++)
                                             {
-                                                var image = ((List<TourImageViewModel>)ViewBag.CurrentTourImages)[i];
-                                                var imageUrl = $"{ViewBag.BaseApiUrl}Tour/GetImage?path={Uri.EscapeDataString(image.Image)}";
+                                                var image = currentImages[i];
+                                                // Safely handle null image or image.Image
+                                                var imagePath = image?.Image ?? string.Empty;
+                                                var imageUrl = !string.IsNullOrEmpty(imagePath)
+                                                ? $"{ViewBag.BaseApiUrl}Tour/GetImage?path={Uri.EscapeDataString(imagePath)}"
+                                                : $"{ViewBag.BaseApiUrl}Tour/GetImage?path=images/default-tour.jpg";
 
                                                 <div class="col-md-3 col-sm-4 col-6">
                                                     <div class="current-image-container position-relative">
@@ -267,7 +303,6 @@
                                         }
                                     </div>
                                 </div>
-
                                 <!-- Update Images -->
                                 <div class="mb-3">
                                     <label asp-for="Images" class="form-label">Add More Images</label>
@@ -278,7 +313,7 @@
                                         Hold Ctrl/Cmd to select multiple files.
                                         <br>
                                         <small class="text-muted" id="imageCountInfo">
-                                            Current: <span id="currentImageCount">@(((List<TourImageViewModel>)ViewBag.CurrentTourImages).Count)</span> images
+                                            Current: <span id="currentImageCount">@(ViewBag.CurrentTourImagesCount ?? 0)</span> images
                                         </small>
                                     </div>
                                     <div class="drop-message text-center mt-2 p-2 border rounded bg-light">
@@ -346,7 +381,7 @@
     <partial name="_ValidationScriptsPartial" />
     <script>
         // Biến toàn cục để theo dõi số lượng ảnh
-        let currentImageCount = @(((List<TourImageViewModel>)ViewBag.CurrentTourImages).Count);
+        let currentImageCount = @(ViewBag.CurrentTourImagesCount ?? 0);
         const MAX_TOTAL_IMAGES = 10;
 
         // Biến cho chức năng preview ảnh

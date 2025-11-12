@@ -73,23 +73,30 @@ namespace FE_Capstone_Project.Controllers
 
             var firstName = payload.ContainsKey("unique_name") ? payload["unique_name"].ToString() : "";
             var email = payload.ContainsKey("email") ? payload["email"].ToString() : "";
-            
+
+            // === SỬA 1: LẤY USERID TỪ TOKEN ===
+            // (Giả sử BE trả về ID trong claim "UserId" hoặc "sub")
+            var userId = payload.ContainsKey("UserId") ? payload["UserId"].ToString() :
+                         (payload.ContainsKey("sub") ? payload["sub"].ToString() : "0");
+
             HttpContext.Session.SetString("JwtToken", loginResult.Token);
             HttpContext.Session.SetString("UserName", firstName);
             HttpContext.Session.SetString("UserEmail", email);
             HttpContext.Session.SetInt32("UserRoleId", loginResult.RoleId);
+
+            // === THÊM DÒNG NÀY (1/2) ===
+            // (Lưu UserId (string) để NotificationWebController có thể đọc)
+            HttpContext.Session.SetString("UserId", userId);
+
             switch (loginResult.RoleId)
             {
-                case 3: 
+                case 3:
                     return RedirectToAction("Index", "Home");
-
-                case 2: 
+                case 2:
                     return RedirectToAction("Index", "Staff");
-
                 case 1:
                     return RedirectToAction("Account", "AdminWeb");
                 default:
-                   
                     return RedirectToAction("Index", "Home");
             }
         }
@@ -104,7 +111,7 @@ namespace FE_Capstone_Project.Controllers
 
         public async Task<IActionResult> GoogleResponse()
         {
-            
+
             var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             var claims = result.Principal.Identities.FirstOrDefault()?.Claims.ToList();
 
@@ -121,7 +128,7 @@ namespace FE_Capstone_Project.Controllers
             HttpContext.Session.SetString("UserName", name ?? "");
             HttpContext.Session.SetString("UserEmail", email);
 
-            //  Gửi yêu cầu đến BE
+            // Gửi yêu cầu đến BE
             var userPayload = new
             {
                 Email = email,
@@ -130,8 +137,6 @@ namespace FE_Capstone_Project.Controllers
             };
 
             var requestUrl = $"{_baseUrl}/google-sync";
-            //_logger.LogInformation($"Gửi request đồng bộ Google user đến {requestUrl}");
-
             var response = await _httpClient.PostAsJsonAsync(requestUrl, userPayload);
 
             if (response.IsSuccessStatusCode)
@@ -142,30 +147,33 @@ namespace FE_Capstone_Project.Controllers
 
                 var token = root.TryGetProperty("token", out var tokenElement) ? tokenElement.GetString() : null;
                 var message = root.TryGetProperty("message", out var msgElement) ? msgElement.GetString() : "Đăng nhập thành công";
+
+                // === SỬA 2: ĐỌC USERID TỪ BE RESPONSE ===
                 var userId = root.TryGetProperty("userId", out var userIdElement) ? userIdElement.GetInt32() : 0;
 
                 if (!string.IsNullOrEmpty(token))
                 {
                     HttpContext.Session.SetString("JwtToken", token);
-                    
-                    // Lấy username từ token để lưu vào session
+
                     var handler = new JwtSecurityTokenHandler();
                     var jwtToken = handler.ReadJwtToken(token);
                     var payload = jwtToken.Payload;
-                    
-                    // Lấy username từ token (có thể là unique_name hoặc name claim)
-                    var username = payload.ContainsKey("unique_name") ? payload["unique_name"].ToString() 
-                                 : payload.ContainsKey("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name") 
-                                    ? payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"].ToString()
-                                    : name ?? email.Split('@')[0];
-                    
-                    // Lấy roleId từ token
+
+                    var username = payload.ContainsKey("unique_name") ? payload["unique_name"].ToString()
+                                   : payload.ContainsKey("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")
+                                     ? payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"].ToString()
+                                     : name ?? email.Split('@')[0];
+
                     var roleId = payload.ContainsKey("RoleId") ? int.Parse(payload["RoleId"].ToString() ?? "3") : 3;
-                    
+
                     HttpContext.Session.SetString("UserName", username ?? name ?? "");
                     HttpContext.Session.SetString("UserEmail", email);
                     HttpContext.Session.SetInt32("UserRoleId", roleId);
-                    
+
+                    // === THÊM DÒNG NÀY (2/2) ===
+                    // (Lưu UserId (string) để NotificationWebController có thể đọc)
+                    HttpContext.Session.SetString("UserId", userId.ToString());
+
                     _logger.LogInformation($"Lưu token vào session thành công cho {email}, username: {username}");
                 }
                 else
@@ -182,20 +190,19 @@ namespace FE_Capstone_Project.Controllers
             }
         }
 
-
-
         public IActionResult Logout()
         {
-            
             HttpContext.Session.Clear();
             return RedirectToAction("Index", "Home");
         }
+
         [HttpGet]
         public IActionResult Register()
         {
             ViewData["HideHeader"] = true;
             return View(new RegisterViewModel());
         }
+
         [HttpPost]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
@@ -233,21 +240,24 @@ namespace FE_Capstone_Project.Controllers
             }
         }
 
-
-
         public IActionResult CheckSession()
         {
             var username = HttpContext.Session.GetString("UserName");
             var token = HttpContext.Session.GetString("JwtToken");
             var name = HttpContext.Session.GetString("UserName");
             var email = HttpContext.Session.GetString("UserEmail");
-            if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(email))
+
+            // === THÊM KIỂM TRA USERID ===
+            var userId = HttpContext.Session.GetString("UserId");
+
+            if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(userId))
             {
-                return Content("Session chưa được lưu hoặc đã hết hạn.");
+                return Content("Session chưa được lưu hoặc đã hết hạn. (Thiếu UserId, UserName hoặc Email)");
             }
 
-            return Content($"Session hợp lệ! UserName: {name}, Token: {token.Substring(0, 15)}..., username:{name}");
+            return Content($"Session hợp lệ! UserName: {name}, UserId: {userId}, Token: {token?.Substring(0, 15)}...");
         }
+
         [HttpGet]
         public async Task<IActionResult> Profile()
         {
@@ -275,6 +285,7 @@ namespace FE_Capstone_Project.Controllers
 
             return View(user);
         }
+
         [HttpPost]
         public async Task<IActionResult> Profile(UserProfileViewModel model)
         {
@@ -316,7 +327,6 @@ namespace FE_Capstone_Project.Controllers
             }
         }
 
-
         private static Dictionary<string, object> DecodeJwtPayload(string token)
         {
             var parts = token.Split('.');
@@ -336,16 +346,19 @@ namespace FE_Capstone_Project.Controllers
 
             return JsonSerializer.Deserialize<Dictionary<string, object>>(json);
         }
+
         public IActionResult Users()
         {
             return View();
         }
-        
+
     }
+
     public class LoginResponse
     {
         public string Token { get; set; }
         public int RoleId { get; set; }
+        // === BẠN CŨNG CÓ THỂ CẦN SỬA DTO NÀY ĐỂ LẤY UserId TỪ BE ===
+        // public int UserId { get; set; } 
     }
-
 }

@@ -13,13 +13,14 @@ using System.Threading.Tasks;
 using System.Globalization;
 using System.Text.Json.Serialization;
 using System.Security.Claims;
-
+using Microsoft.AspNetCore.Http;
+using System.Net.Http.Headers;
 using FE_Capstone_Project.Filters;
+using System.Net;
 
 namespace FE_Capstone_Project.Controllers
 {
     [AuthorizeRole(2)]
-    //[Authorize(Roles = "Staff")]
     public class StaffController : Controller
     {
         private readonly HttpClient _httpClient;
@@ -27,8 +28,9 @@ namespace FE_Capstone_Project.Controllers
         private const string BASE_API_URL = "https://localhost:7160/api/";
         private readonly JsonSerializerOptions _jsonOptions;
         private readonly DataService _dataService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public StaffController(IHttpClientFactory httpClientFactory, ILogger<StaffController> logger, DataService dataService)
+        public StaffController(IHttpClientFactory httpClientFactory, ILogger<StaffController> logger, DataService dataService, IHttpContextAccessor httpContextAccessor)
         {
             _httpClient = httpClientFactory.CreateClient();
             _httpClient.BaseAddress = new Uri(BASE_API_URL);
@@ -40,6 +42,23 @@ namespace FE_Capstone_Project.Controllers
                 Converters = { new JsonStringEnumConverter() }
             };
             _dataService = dataService;
+            _httpContextAccessor = httpContextAccessor;
+        }
+
+        private string? GetToken()
+        {
+            return _httpContextAccessor.HttpContext?.Session?.GetString("JwtToken");
+        }
+
+        private int GetCurrentUserId()
+        {
+            var userIdString = HttpContext.Session.GetString("UserId");
+            if (int.TryParse(userIdString, out int userId))
+            {
+                return userId;
+            }
+            _logger.LogWarning("Could not find 'UserId' in Session.");
+            return 0;
         }
 
         private async Task<(bool Success, T Data, string Error)> CallApiAsync<T>(
@@ -53,23 +72,44 @@ namespace FE_Capstone_Project.Controllers
                 if (content != null)
                     request.Content = content;
 
+                // === Add Token to Request ===
+                var token = GetToken();
+                if (string.IsNullOrEmpty(token))
+                {
+                    _logger.LogWarning($"[StaffController] No token found for request to {endpoint}");
+                    return (false, default, "Token not found. Please log in again.");
+                }
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                // === End adding Token ===
+
                 var response = await _httpClient.SendAsync(request);
                 var responseContent = await response.Content.ReadAsStringAsync();
 
                 _logger.LogInformation($"API Call: {endpoint}, Status: {response.StatusCode}, Response: {responseContent}");
 
+                // Handle different status codes separately
+                if (response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    // 401 - Token invalid/expired
+                    _logger.LogWarning($"Unauthorized access to {endpoint}");
+                    return (false, default, "Login session has expired. Please log in again.");
+                }
+                else if (response.StatusCode == HttpStatusCode.Forbidden)
+                {
+                    // 403 - Valid token but insufficient permissions
+                    _logger.LogWarning($"Forbidden access to {endpoint}. User lacks required permissions.");
+                    return (false, default, "You don't have permission to perform this action. Please contact administrator.");
+                }
+
                 if (response.IsSuccessStatusCode)
                 {
                     using var doc = JsonDocument.Parse(responseContent);
                     JsonElement root = doc.RootElement;
-
-                    
                     if (root.ValueKind == JsonValueKind.Object && root.TryGetProperty("data", out var dataElement))
                     {
                         var result = JsonSerializer.Deserialize<T>(dataElement.GetRawText(), _jsonOptions);
                         return (true, result, string.Empty);
                     }
-                    
                     else
                     {
                         var result = JsonSerializer.Deserialize<T>(responseContent, _jsonOptions);
@@ -78,8 +118,6 @@ namespace FE_Capstone_Project.Controllers
                 }
                 else
                 {
-                    _logger.LogWarning("API call failed: {Endpoint}, Status: {StatusCode}, Response: {Response}",
-                        endpoint, response.StatusCode, responseContent);
                     return (false, default, $"API Error: {response.StatusCode}");
                 }
             }
@@ -320,27 +358,42 @@ namespace FE_Capstone_Project.Controllers
                     return RedirectToAction("Tours");
                 }
 
+                // DEBUG: Log tour images information
+                _logger.LogInformation($"Tour {id} has {result.Tour.TourImages?.Count ?? 0} images");
+                if (result.Tour.TourImages != null)
+                {
+                    foreach (var img in result.Tour.TourImages)
+                    {
+                        _logger.LogInformation($"Image ID: {img?.Id}, Path: {img?.Image ?? "null"}");
+                    }
+                }
+
                 var (locSuccess, locations, _) = await CallApiAsync<List<Location>>("Locations");
                 var (catSuccess, categories, _) = await CallApiAsync<List<TourCategory>>("TourCategories");
                 var (cancelSuccess, cancelConditions, _) = await CallApiAsync<List<CancelCondition>>("CancelCondition");
-
-
 
                 ViewBag.Locations = locSuccess ? locations : new List<Location>();
                 ViewBag.Categories = catSuccess ? categories : new List<TourCategory>();
                 ViewBag.CancelConditions = cancelSuccess ? cancelConditions : new List<CancelCondition>();
                 ViewBag.BaseApiUrl = BASE_API_URL;
-                var currentTourImages = result.Tour.TourImages?.Select(img => new TourImageViewModel
-                {
-                    Id = img.Id,
-                    Image = img.Image,
-                    TourId = img.TourId
-                }).ToList() ?? new List<TourImageViewModel>();
+
+                var currentTourImages = result.Tour.TourImages?
+                    .Where(img => img != null) // Filter out any null images
+                    .Select(img => new TourImageViewModel
+                    {
+                        Id = img.Id,
+                        Image = img.Image ?? string.Empty, // Ensure Image is never null
+                        TourId = img.TourId
+                    })
+                    .ToList() ?? new List<TourImageViewModel>();
+
                 ViewBag.CurrentTourImages = currentTourImages;
+                ViewBag.CurrentTourImagesCount = currentTourImages.Count; // Add count for safety
+
                 var editModel = new TourEditModel
                 {
                     Id = result.Tour.Id,
-                    Name = result.Tour.Name,
+                    Name = result.Tour.Name,    
                     Description = result.Tour.Description,
                     Price = result.Tour.Price,
                     Duration = result.Tour.Duration,
@@ -367,7 +420,7 @@ namespace FE_Capstone_Project.Controllers
         }
 
 
-        
+
         [HttpPost]
         public async Task<IActionResult> Edit(TourEditModel model)
         {
@@ -379,6 +432,9 @@ namespace FE_Capstone_Project.Controllers
                 {
                     _logger.LogWarning($"Validation error: {error.ErrorMessage}");
                 }
+
+                // Reload ViewBag data when validation fails
+                await ReloadViewBagData();
                 return View(model);
             }
 
@@ -386,19 +442,44 @@ namespace FE_Capstone_Project.Controllers
             {
                 var formData = CreateTourFormData(model);
 
-                var response = await _httpClient.PostAsync("Tour/UpdateTour", formData);
+                // === ADD TOKEN TO REQUEST ===
+                var token = GetToken();
+                if (string.IsNullOrEmpty(token))
+                {
+                    TempData["ErrorMessage"] = "Login session has expired. Please log in again.";
+                    await ReloadViewBagData();
+                    return View(model);
+                }
+
+                // Create HttpRequestMessage to add headers
+                var request = new HttpRequestMessage(HttpMethod.Post, "Tour/UpdateTour");
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                request.Content = formData; 
+                var response = await _httpClient.SendAsync(request);
                 var responseContent = await response.Content.ReadAsStringAsync();
 
                 _logger.LogInformation($"UpdateTour Response: {response.StatusCode}, Content: {responseContent}");
 
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["SuccessMessage"] = "Cập nhật tour thành công!";
-                    return RedirectToAction("Edit");
+                    TempData["SuccessMessage"] = "Tour updated successfully!";
+                    return RedirectToAction("Edit", new { id = model.Id });
+                }
+                else if (response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    TempData["ErrorMessage"] = "Login session has expired. Please log in again.";
+                    await ReloadViewBagData();
+                    return View(model);
+                }
+                else if (response.StatusCode == HttpStatusCode.Forbidden)
+                {
+                    TempData["ErrorMessage"] = "You don't have permission to update tours. Please contact administrator.";
+                    await ReloadViewBagData();
+                    return View(model);
                 }
                 else
                 {
-                    var errorMessage = $"Cập nhật tour thất bại! Status: {response.StatusCode}";
+                    var errorMessage = $"Tour update failed! Status: {response.StatusCode}";
                     try
                     {
                         var errorResult = JsonSerializer.Deserialize<JsonElement>(responseContent);
@@ -411,17 +492,41 @@ namespace FE_Capstone_Project.Controllers
                     }
 
                     TempData["ErrorMessage"] = errorMessage;
+                    await ReloadViewBagData();
                     return View(model);
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating tour ID: {TourId}", model.Id);
-                TempData["ErrorMessage"] = $"Lỗi hệ thống: {ex.Message}";
+                TempData["ErrorMessage"] = $"System error: {ex.Message}";
+                await ReloadViewBagData();
                 return View(model);
             }
         }
 
+        private async Task ReloadViewBagData()
+        {
+            try
+            {
+                var (locSuccess, locations, _) = await CallApiAsync<List<Location>>("Locations");
+                var (catSuccess, categories, _) = await CallApiAsync<List<TourCategory>>("TourCategories");
+                var (cancelSuccess, cancelConditions, _) = await CallApiAsync<List<CancelCondition>>("CancelCondition");
+
+                ViewBag.Locations = locSuccess ? locations : new List<Location>();
+                ViewBag.Categories = catSuccess ? categories : new List<TourCategory>();
+                ViewBag.CancelConditions = cancelSuccess ? cancelConditions : new List<CancelCondition>();
+                ViewBag.BaseApiUrl = BASE_API_URL;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error reloading ViewBag data");
+                // Set default empty lists if there's an error
+                ViewBag.Locations = new List<Location>();
+                ViewBag.Categories = new List<TourCategory>();
+                ViewBag.CancelConditions = new List<CancelCondition>();
+            }
+        }
         [HttpPost]
         public async Task<IActionResult> Create(TourCreateModel model)
         {
@@ -430,25 +535,54 @@ namespace FE_Capstone_Project.Controllers
             if (!ModelState.IsValid)
             {
                 _logger.LogWarning("Model validation failed for tour creation");
+                await ReloadViewBagData();
                 return View(model);
             }
 
             try
             {
                 var formData = CreateTourFormData(model);
-                var response = await _httpClient.PostAsync("Tour/AddTour", formData);
+
+                // === ADD TOKEN TO REQUEST ===
+                var token = GetToken();
+                if (string.IsNullOrEmpty(token))
+                {
+                    TempData["ErrorMessage"] = "Login session has expired. Please log in again.";
+                    await ReloadViewBagData();
+                    return View(model);
+                }
+
+                // Create HttpRequestMessage to add headers
+                var request = new HttpRequestMessage(HttpMethod.Post, "Tour/AddTour");
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                request.Content = formData;
+
+                var response = await _httpClient.SendAsync(request);
                 var responseContent = await response.Content.ReadAsStringAsync();
 
                 _logger.LogInformation($"AddTour Response: {response.StatusCode}, Content: {responseContent}");
 
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["SuccessMessage"] = "Thêm tour thành công!";
+                    TempData["SuccessMessage"] = "Tour created successfully!";
                     return RedirectToAction("Tours");
                 }
+                else if (response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    TempData["ErrorMessage"] = "Login session has expired. Please log in again.";
+                    await ReloadViewBagData();
+                    return View(model);
+                }
+                else if (response.StatusCode == HttpStatusCode.Forbidden)
+                {
+                    TempData["ErrorMessage"] = "You don't have permission to update tours. Please contact administrator.";
+                    await ReloadViewBagData();
+                    return View(model);
+                }
+
                 else
                 {
-                    var errorMessage = $"Thêm tour thất bại! Status: {response.StatusCode}";
+                    var errorMessage = $"Tour creation failed! Status: {response.StatusCode}";
                     try
                     {
                         var errorResult = JsonSerializer.Deserialize<JsonElement>(responseContent);
@@ -461,13 +595,15 @@ namespace FE_Capstone_Project.Controllers
                     }
 
                     TempData["ErrorMessage"] = errorMessage;
+                    await ReloadViewBagData();
                     return View(model);
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating tour");
-                TempData["ErrorMessage"] = $"Lỗi hệ thống: {ex.Message}";
+                TempData["ErrorMessage"] = $"System error: {ex.Message}";
+                await ReloadViewBagData();
                 return View(model);
             }
         }
@@ -524,24 +660,39 @@ namespace FE_Capstone_Project.Controllers
         {
             try
             {
-                var response = await _httpClient.DeleteAsync($"Tour/DeleteTour?tourId={id}");
+                // === ADD TOKEN TO REQUEST ===
+                var token = GetToken();
+                if (string.IsNullOrEmpty(token))
+                {
+                    TempData["ErrorMessage"] = "Login session has expired. Please log in again.";
+                    return RedirectToAction("Tours");
+                }
+
+                var request = new HttpRequestMessage(HttpMethod.Delete, $"Tour/DeleteTour?tourId={id}");
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                var response = await _httpClient.SendAsync(request);
                 var responseContent = await response.Content.ReadAsStringAsync();
 
                 _logger.LogInformation($"DeleteTour Response: {response.StatusCode}, Content: {responseContent}");
 
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["SuccessMessage"] = "Xóa tour thành công!";
+                    TempData["SuccessMessage"] = "Tour deleted successfully!";
+                }
+                else if (response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    TempData["ErrorMessage"] = "Login session has expired. Please log in again.";
                 }
                 else
                 {
-                    TempData["ErrorMessage"] = "Xóa tour thất bại!";
+                    TempData["ErrorMessage"] = "Tour deletion failed!";
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting tour ID: {TourId}", id);
-                TempData["ErrorMessage"] = "Lỗi kết nối đến server!";
+                TempData["ErrorMessage"] = "Server connection error!";
             }
 
             return RedirectToAction("Tours");
@@ -552,7 +703,18 @@ namespace FE_Capstone_Project.Controllers
         {
             try
             {
-                var response = await _httpClient.PostAsync($"Tour/ToggleTourStatus?tourId={id}", null);
+                // === ADD TOKEN TO REQUEST ===
+                var token = GetToken();
+                if (string.IsNullOrEmpty(token))
+                {
+                    TempData["ErrorMessage"] = "Login session has expired. Please log in again.";
+                    return RedirectToAction("Tours");
+                }
+
+                var request = new HttpRequestMessage(HttpMethod.Post, $"Tour/ToggleTourStatus?tourId={id}");
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                var response = await _httpClient.SendAsync(request);
                 var responseContent = await response.Content.ReadAsStringAsync();
 
                 _logger.LogInformation($"ToggleTourStatus Response: {response.StatusCode}, Content: {responseContent}");
@@ -560,17 +722,21 @@ namespace FE_Capstone_Project.Controllers
                 if (response.IsSuccessStatusCode)
                 {
                     var result = JsonSerializer.Deserialize<TourStatusResponse>(responseContent, _jsonOptions);
-                    TempData["SuccessMessage"] = result?.Message ?? "Thay đổi trạng thái thành công!";
+                    TempData["SuccessMessage"] = result?.Message ?? "Status changed successfully!";
+                }
+                else if (response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    TempData["ErrorMessage"] = "Login session has expired. Please log in again.";
                 }
                 else
                 {
-                    TempData["ErrorMessage"] = "Thay đổi trạng thái tour thất bại!";
+                    TempData["ErrorMessage"] = "Tour status change failed!";
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error toggling tour status ID: {TourId}", id);
-                TempData["ErrorMessage"] = $"Lỗi hệ thống: {ex.Message}";
+                TempData["ErrorMessage"] = $"System error: {ex.Message}";
             }
 
             return RedirectToAction("Tours");
@@ -642,68 +808,78 @@ namespace FE_Capstone_Project.Controllers
             return normalized.ToLowerInvariant().Trim();
         }
 
-        public async Task<IActionResult> News(int page = 1, int pageSize = 10, string? search = null, DateTime? fromDate = null, DateTime? toDate = null, string? status = null)
+        public async Task<IActionResult> News(int page = 1, int pageSize = 5, string? search = null, DateTime? fromDate = null, DateTime? toDate = null, string? status = null)
         {
             ViewData["Title"] = "Quản lý Tin tức";
 
             try
             {
+                // === SỬA: Thêm Token Xác Thực ===
+                var token = HttpContext.Session.GetString("JwtToken");
+                if (string.IsNullOrEmpty(token))
+                {
+                    TempData["ErrorMessage"] = "Không thể xác định người dùng. Vui lòng đăng nhập lại.";
+                    return View(new NewsListViewModel { NewsList = new List<NewsViewModel>() });
+                }
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                // === KẾT THÚC SỬA ===
+
+
+                // === THÊM MỚI: GỌI API STATS ===
+                var statsResponse = await _httpClient.GetAsync("News/stats");
+                if (statsResponse.IsSuccessStatusCode)
+                {
+                    var statsContent = await statsResponse.Content.ReadAsStringAsync();
+                    // Dùng _jsonOptions (đã có trong file của bạn)
+                    ViewBag.NewsStats = JsonSerializer.Deserialize<NewsStatsDTO>(statsContent, _jsonOptions);
+                }
+                else
+                {
+                    ViewBag.NewsStats = new NewsStatsDTO(); 
+                }
+
                 var response = await _httpClient.GetAsync($"News");
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    TempData["ErrorMessage"] = "Không thể tải danh sách tin tức.";
+                    // Lỗi 401 (Unauthorized) sẽ bị bắt ở đây
+                    TempData["ErrorMessage"] = "Không thể tải danh sách tin tức. (Lỗi: " + response.StatusCode + ")";
                     return View(new NewsListViewModel { NewsList = new List<NewsViewModel>() });
                 }
 
                 var content = await response.Content.ReadAsStringAsync();
-
                 var newsList = JsonSerializer.Deserialize<List<NewsViewModel>>(content, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 }) ?? new List<NewsViewModel>();
 
+                // ... (Code filter của bạn giữ nguyên) ...
                 IEnumerable<NewsViewModel> filteredNews = newsList;
-
                 if (!string.IsNullOrWhiteSpace(search))
                 {
                     string normalizedSearch = NormalizeString(search);
-
                     filteredNews = filteredNews.Where(n =>
                     {
                         string normalizedTitle = NormalizeString(n.Title);
                         string normalizedAuthor = NormalizeString(n.AuthorName);
                         string normalizedContent = NormalizeString(n.Content);
-
                         return normalizedTitle.Contains(normalizedSearch) ||
                                normalizedAuthor.Contains(normalizedSearch) ||
                                normalizedContent.Contains(normalizedSearch);
                     }).ToList();
                 }
-
-                if (fromDate.HasValue)
-                {
-                    filteredNews = filteredNews.Where(n => n.CreatedDate?.Date >= fromDate.Value.Date);
-                }
-
-                if (toDate.HasValue)
-                {
-                    filteredNews = filteredNews.Where(n => n.CreatedDate?.Date <= toDate.Value.Date);
-                }
-
+                if (fromDate.HasValue) { filteredNews = filteredNews.Where(n => n.CreatedDate?.Date >= fromDate.Value.Date); }
+                if (toDate.HasValue) { filteredNews = filteredNews.Where(n => n.CreatedDate?.Date <= toDate.Value.Date); }
                 if (!string.IsNullOrWhiteSpace(status))
                 {
                     string lowerStatus = status.ToLowerInvariant();
                     filteredNews = filteredNews.Where(n => n.NewsStatus != null && n.NewsStatus.ToLowerInvariant() == lowerStatus);
                 }
-
                 var sortedNews = filteredNews.OrderByDescending(n => n.CreatedDate);
                 var finalNewsList = sortedNews.ToList();
                 int totalItems = finalNewsList.Count;
                 int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
                 var pagedNews = finalNewsList.Skip((page - 1) * pageSize).Take(pageSize).ToList();
-
-
                 var viewModel = new NewsListViewModel
                 {
                     NewsList = pagedNews,
@@ -714,6 +890,7 @@ namespace FE_Capstone_Project.Controllers
                     ToDate = toDate,
                     Status = status
                 };
+                // === KẾT THÚC CODE FILTER ===
 
                 return View(viewModel);
             }
@@ -729,35 +906,28 @@ namespace FE_Capstone_Project.Controllers
         {
             ViewData["Title"] = "Tạo Tin tức Mới";
 
-            // 2. LẤY USER ID TỪ CLAIMS (HOẶC SESSION)
-            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            int userId = GetCurrentUserId(); // Gọi hàm (đã được thêm ở dưới)
 
-            // Nếu dùng Session:
-            // var userIdString = HttpContext.Session.GetString("UserId");
-
-            if (!int.TryParse(userIdString, out int userId))
+            if (userId == 0)
             {
-                // Nếu không tìm thấy ID (chưa đăng nhập hoặc cookie lỗi)
                 TempData["ErrorMessage"] = "Không thể xác định người dùng. Vui lòng đăng nhập lại.";
                 return RedirectToAction("News");
             }
 
-            // 3. TRUYỀN ID VÀO MODEL
             var model = new NewsCreateModel
             {
-                UserId = userId // Tự động gán UserId vào Model
+                UserId = userId
             };
 
-            return View(model); // Trả về View với Model đã có UserId
+            return View(model);
         }
+
 
         [HttpPost]
         public async Task<IActionResult> CreateNews(NewsCreateModel model, IFormFile? imageFile)
         {
-            // Lấy UserId an toàn từ Claims/Session (ĐOẠN NÀY BẠN ĐÃ LÀM ĐÚNG)
-            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (!int.TryParse(userIdString, out int staffUserId))
+            int staffUserId = GetCurrentUserId();
+            if (staffUserId == 0)
             {
                 TempData["ErrorMessage"] = "Không thể xác định người dùng. Vui lòng đăng nhập lại.";
                 return View(model);
@@ -771,28 +941,39 @@ namespace FE_Capstone_Project.Controllers
                     return View(model);
                 }
 
-                string? imageBase64 = null;
+                // === SỬA: XÂY DỰNG FORMDATA THAY VÌ JSON ===
+                var formData = new MultipartFormDataContent();
+
+                // Thêm các trường dữ liệu (phải khớp với CreateNewsFormDTO của BE)
+                formData.Add(new StringContent(staffUserId.ToString()), "UserId");
+                formData.Add(new StringContent(model.Title ?? ""), "Title");
+                formData.Add(new StringContent(model.Content ?? ""), "Content");
+                formData.Add(new StringContent(model.NewsStatus.ToString() ?? "Draft"), "NewsStatus");
+
+                // Thêm file (nếu có)
                 if (imageFile != null && imageFile.Length > 0)
                 {
-                    using var memoryStream = new MemoryStream();
-                    await imageFile.CopyToAsync(memoryStream);
-                    var imageBytes = memoryStream.ToArray();
-                    imageBase64 = $"data:{imageFile.ContentType};base64,{Convert.ToBase64String(imageBytes)}";
+                    var imageContent = new StreamContent(imageFile.OpenReadStream());
+                    imageContent.Headers.ContentType = new MediaTypeHeaderValue(imageFile.ContentType);
+                    // "ImageFile" phải khớp với DTO của BE
+                    formData.Add(imageContent, "ImageFile", imageFile.FileName);
                 }
+                // === KẾT THÚC SỬA FORMDATA ===
 
-                var dto = new
+
+                // === SỬA: GỬI TOKEN VÀ FORMDATA ===
+                var token = HttpContext.Session.GetString("JwtToken");
+                if (string.IsNullOrEmpty(token))
                 {
-                    UserId = staffUserId, // (Đúng: Sử dụng staffUserId đã xác thực)
-                    Title = model.Title,
-                    Content = model.Content,
-                    Image = imageBase64,
-                    NewsStatus = model.NewsStatus
-                };
+                    TempData["ErrorMessage"] = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+                    return View(model);
+                }
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-                var jsonContent = new StringContent(JsonSerializer.Serialize(dto), Encoding.UTF8, "application/json");
-
-                var response = await _httpClient.PostAsync("News", jsonContent);
+                // Gửi formData thay vì jsonContent
+                var response = await _httpClient.PostAsync("News", formData); // "News" khớp với route [HttpPost]
                 var responseContent = await response.Content.ReadAsStringAsync();
+                // === KẾT THÚC SỬA GỬI ===
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -816,6 +997,16 @@ namespace FE_Capstone_Project.Controllers
         {
             try
             {
+                // === SỬA: Thêm Token Xác Thực ===
+                var token = HttpContext.Session.GetString("JwtToken");
+                if (string.IsNullOrEmpty(token))
+                {
+                    TempData["ErrorMessage"] = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+                    return RedirectToAction("News");
+                }
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                // === KẾT THÚC SỬA ===
+
                 var response = await _httpClient.GetAsync($"News/{id}");
                 if (!response.IsSuccessStatusCode)
                 {
@@ -824,7 +1015,6 @@ namespace FE_Capstone_Project.Controllers
                 }
 
                 var content = await response.Content.ReadAsStringAsync();
-
                 var newsItem = JsonSerializer.Deserialize<EditNewsModel>(content, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
@@ -845,6 +1035,16 @@ namespace FE_Capstone_Project.Controllers
         {
             try
             {
+                // === SỬA: Thêm Token Xác Thực ===
+                var token = HttpContext.Session.GetString("JwtToken");
+                if (string.IsNullOrEmpty(token))
+                {
+                    TempData["ErrorMessage"] = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+                    return RedirectToAction("News");
+                }
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                // === KẾT THÚC SỬA ===
+
                 var response = await _httpClient.GetAsync($"News/{id}");
                 if (!response.IsSuccessStatusCode)
                 {
@@ -853,7 +1053,6 @@ namespace FE_Capstone_Project.Controllers
                 }
 
                 var content = await response.Content.ReadAsStringAsync();
-
                 var newsItem = JsonSerializer.Deserialize<EditNewsModel>(content, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
@@ -870,8 +1069,15 @@ namespace FE_Capstone_Project.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> EditNews(int id, NewsCreateModel model, IFormFile? imageFile)
+        public async Task<IActionResult> EditNews(int id, EditNewsModel model, IFormFile? imageFile)
         {
+            // (Kiểm tra UserId từ Model, vì nó đã được gán ẩn trong form)
+            if (model.UserId == 0)
+            {
+                TempData["ErrorMessage"] = "Không thể xác định người dùng (UserId bị thiếu). Vui lòng thử lại.";
+                return View(model);
+            }
+
             try
             {
                 if (!ModelState.IsValid)
@@ -880,27 +1086,41 @@ namespace FE_Capstone_Project.Controllers
                     return View(model);
                 }
 
-                string? imageBase64 = model.Image;
+                // === SỬA: XÂY DỰNG FORMDATA THAY VÌ JSON ===
+                var formData = new MultipartFormDataContent();
+
+                // Thêm các trường dữ liệu (phải khớp với EditNewsFormDTO của BE)
+                formData.Add(new StringContent(model.Id.ToString()), "Id");
+                formData.Add(new StringContent(model.UserId.ToString()), "UserId");
+                formData.Add(new StringContent(model.Title ?? ""), "Title");
+                formData.Add(new StringContent(model.Content ?? ""), "Content");
+                formData.Add(new StringContent(model.NewsStatus.ToString() ?? "Draft"), "NewsStatus");
+
+                // Thêm file (nếu người dùng chọn file mới)
                 if (imageFile != null && imageFile.Length > 0)
                 {
-                    using var memoryStream = new MemoryStream();
-                    await imageFile.CopyToAsync(memoryStream);
-                    var imageBytes = memoryStream.ToArray();
-                    imageBase64 = $"data:{imageFile.ContentType};base64,{Convert.ToBase64String(imageBytes)}";
+                    var imageContent = new StreamContent(imageFile.OpenReadStream());
+                    imageContent.Headers.ContentType = new MediaTypeHeaderValue(imageFile.ContentType);
+                    // "ImageFile" phải khớp với DTO của BE
+                    formData.Add(imageContent, "ImageFile", imageFile.FileName);
                 }
+                // (Nếu imageFile là null, BE sẽ tự hiểu là "giữ nguyên ảnh cũ")
+                // === KẾT THÚC SỬA FORMDATA ===
 
-                var dto = new
+
+                // === SỬA: GỬI TOKEN VÀ FORMDATA (DÙNG PUT) ===
+                var token = HttpContext.Session.GetString("JwtToken");
+                if (string.IsNullOrEmpty(token))
                 {
-                    UserId = model.UserId,
-                    Title = model.Title,
-                    Content = model.Content,
-                    Image = imageBase64,
-                    NewsStatus = model.NewsStatus
-                };
+                    TempData["ErrorMessage"] = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+                    return View(model);
+                }
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-                var jsonContent = new StringContent(JsonSerializer.Serialize(dto), Encoding.UTF8, "application/json");
-                var response = await _httpClient.PutAsync($"News/{id}", jsonContent);
+                // Gửi formData bằng PUT
+                var response = await _httpClient.PutAsync($"News/{id}", formData);
                 var responseContent = await response.Content.ReadAsStringAsync();
+                // === KẾT THÚC SỬA GỬI ===
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -923,6 +1143,16 @@ namespace FE_Capstone_Project.Controllers
         {
             try
             {
+                // === SỬA: Thêm Token Xác Thực ===
+                var token = HttpContext.Session.GetString("JwtToken");
+                if (string.IsNullOrEmpty(token))
+                {
+                    TempData["ErrorMessage"] = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+                    return RedirectToAction("News");
+                }
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                // === KẾT THÚC SỬA ===
+
                 var response = await _httpClient.DeleteAsync($"News/{id}");
                 if (response.IsSuccessStatusCode)
                 {
@@ -940,6 +1170,7 @@ namespace FE_Capstone_Project.Controllers
 
             return RedirectToAction("News");
         }
+
         private string GetTourImageUrl(TourViewModel tour)
         {
             if (tour.TourImages != null && tour.TourImages.Any())
