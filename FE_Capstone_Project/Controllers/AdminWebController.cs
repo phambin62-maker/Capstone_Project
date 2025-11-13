@@ -59,9 +59,38 @@ namespace FE_Capstone_Project.Controllers
                 return View(new List<AccountViewModel>());
             }
         }
+        [HttpGet]
         public IActionResult Report()
         {
-            return View();
+            try
+            {
+                // 1. Kiểm tra token trong session (giống hệt action Account)
+                var token = HttpContext.Session.GetString("JwtToken");
+                if (string.IsNullOrEmpty(token))
+                {
+                    ViewBag.Error = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+                    return RedirectToAction("Login", "AuthWeb");
+                }
+
+                // 2. Đẩy token lên View (giống hệt action Account)
+                ViewBag.JwtToken = token;
+
+                // 3. Đẩy URL gốc của API lên View cho JavaScript
+                // (Vì _baseUrl của bạn là ".../api/admin",
+                // JavaScript cần URL gốc là "https://localhost:7160"
+                // để gọi /api/reports)
+                var apiBaseUrl = _baseUrl.Replace("/api/admin", "");
+                ViewBag.ApiBaseUrl = apiBaseUrl;
+
+                // 4. Trả về View (Views/AdminWeb/Report.cshtml)
+                return View();
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Lỗi: {ex.Message}";
+                // Nếu có lỗi, trả về trang dashboard chính hoặc trang lỗi
+                return RedirectToAction("Index", "Home"); // Hoặc View("Error")
+            }
         }
     }
 }

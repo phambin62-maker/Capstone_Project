@@ -29,6 +29,7 @@ public partial class User
     public string? PasswordResetTokenHash { get; set; } // hash của token
     public DateTime? PasswordResetExpires { get; set; }
 
+    public DateTime? CreatedDate { get; set; }
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
     public virtual ICollection<Chat> ChatCustomers { get; set; } = new List<Chat>();
