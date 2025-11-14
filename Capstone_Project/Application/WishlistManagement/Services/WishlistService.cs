@@ -4,6 +4,11 @@ using BE_Capstone_Project.DAO;
 using BE_Capstone_Project.Domain.Models;
 using BE_Capstone_Project.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using BE_Capstone_Project.Application.Notifications.Services;
+using BE_Capstone_Project.Application.Notifications.DTOs;
+using BE_Capstone_Project.Domain.Enums;
+using System;
+using System.Linq;
 
 namespace BE_Capstone_Project.Application.WishlistManagement.Services
 {
@@ -11,11 +16,13 @@ namespace BE_Capstone_Project.Application.WishlistManagement.Services
     {
         private readonly WishlistDAO _wishlistDAO;
         private readonly OtmsdbContext _context;
+        private readonly NotificationService _notificationService;
 
-        public WishlistService(WishlistDAO wishlistDAO, OtmsdbContext context)
+        public WishlistService(WishlistDAO wishlistDAO, OtmsdbContext context, NotificationService notificationService)
         {
             _wishlistDAO = wishlistDAO;
             _context = context;
+            _notificationService = notificationService;
         }
 
         public async Task<WishlistResponse> AddToWishlistAsync(int userId, int tourId)
@@ -43,6 +50,22 @@ namespace BE_Capstone_Project.Application.WishlistManagement.Services
 
             if (wishlistId == -1)
                 throw new Exception("Failed to add to wishlist");
+
+            try
+            {
+                var notificationDto = new CreateNotificationDTO
+                {
+                    UserId = userId,
+                    Title = "Added to Wishlist",
+                    Message = $"Tour '{tour.Name}' has been added to your wishlist.",
+                    NotificationType = NotificationType.System
+                };
+                await _notificationService.CreateAsync(notificationDto);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to send wishlist notification: {ex.Message}");
+            }
 
             return new WishlistResponse
             {

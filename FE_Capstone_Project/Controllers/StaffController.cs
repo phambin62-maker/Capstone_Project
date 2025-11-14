@@ -13,8 +13,10 @@ using System.Threading.Tasks;
 using System.Globalization;
 using System.Text.Json.Serialization;
 using System.Security.Claims;
-
+using Microsoft.AspNetCore.Http;
+using System.Net.Http.Headers;
 using FE_Capstone_Project.Filters;
+using System.Net;
 
 namespace FE_Capstone_Project.Controllers
 {
@@ -27,8 +29,9 @@ namespace FE_Capstone_Project.Controllers
         private const string BASE_API_URL = "https://localhost:7160/api/";
         private readonly JsonSerializerOptions _jsonOptions;
         private readonly DataService _dataService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public StaffController(IHttpClientFactory httpClientFactory, ILogger<StaffController> logger, DataService dataService)
+        public StaffController(IHttpClientFactory httpClientFactory, ILogger<StaffController> logger, DataService dataService, IHttpContextAccessor httpContextAccessor)
         {
             _httpClient = httpClientFactory.CreateClient();
             _httpClient.BaseAddress = new Uri(BASE_API_URL);
@@ -40,6 +43,23 @@ namespace FE_Capstone_Project.Controllers
                 Converters = { new JsonStringEnumConverter() }
             };
             _dataService = dataService;
+            _httpContextAccessor = httpContextAccessor;
+        }
+
+        private string? GetToken()
+        {
+            return _httpContextAccessor.HttpContext?.Session?.GetString("JwtToken");
+        }
+
+        private int GetCurrentUserId()
+        {
+            var userIdString = HttpContext.Session.GetString("UserId");
+            if (int.TryParse(userIdString, out int userId))
+            {
+                return userId;
+            }
+            _logger.LogWarning("Could not find 'UserId' in Session.");
+            return 0;
         }
 
         private async Task<(bool Success, T Data, string Error)> CallApiAsync<T>(
@@ -53,23 +73,36 @@ namespace FE_Capstone_Project.Controllers
                 if (content != null)
                     request.Content = content;
 
+                // === Thêm Token vào Request ===
+                var token = GetToken();
+                if (string.IsNullOrEmpty(token))
+                {
+                    _logger.LogWarning($"[StaffController] No token found for request to {endpoint}");
+                    return (false, default, "Token không tìm thấy. Vui lòng đăng nhập lại.");
+                }
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                // === Kết thúc thêm Token ===
+
                 var response = await _httpClient.SendAsync(request);
                 var responseContent = await response.Content.ReadAsStringAsync();
 
                 _logger.LogInformation($"API Call: {endpoint}, Status: {response.StatusCode}, Response: {responseContent}");
 
+                if (response.StatusCode == HttpStatusCode.Unauthorized || response.StatusCode == HttpStatusCode.Forbidden)
+                {
+                    return (false, default, "Không thể xác định người dùng. Vui lòng đăng nhập lại.");
+                }
+
                 if (response.IsSuccessStatusCode)
                 {
+                    // (Code cũ của bạn để parse "data")
                     using var doc = JsonDocument.Parse(responseContent);
                     JsonElement root = doc.RootElement;
-
-                    
                     if (root.ValueKind == JsonValueKind.Object && root.TryGetProperty("data", out var dataElement))
                     {
                         var result = JsonSerializer.Deserialize<T>(dataElement.GetRawText(), _jsonOptions);
                         return (true, result, string.Empty);
                     }
-                    
                     else
                     {
                         var result = JsonSerializer.Deserialize<T>(responseContent, _jsonOptions);
@@ -78,8 +111,6 @@ namespace FE_Capstone_Project.Controllers
                 }
                 else
                 {
-                    _logger.LogWarning("API call failed: {Endpoint}, Status: {StatusCode}, Response: {Response}",
-                        endpoint, response.StatusCode, responseContent);
                     return (false, default, $"API Error: {response.StatusCode}");
                 }
             }
@@ -642,68 +673,78 @@ namespace FE_Capstone_Project.Controllers
             return normalized.ToLowerInvariant().Trim();
         }
 
-        public async Task<IActionResult> News(int page = 1, int pageSize = 10, string? search = null, DateTime? fromDate = null, DateTime? toDate = null, string? status = null)
+        public async Task<IActionResult> News(int page = 1, int pageSize = 5, string? search = null, DateTime? fromDate = null, DateTime? toDate = null, string? status = null)
         {
             ViewData["Title"] = "Quản lý Tin tức";
 
             try
             {
+                // === SỬA: Thêm Token Xác Thực ===
+                var token = HttpContext.Session.GetString("JwtToken");
+                if (string.IsNullOrEmpty(token))
+                {
+                    TempData["ErrorMessage"] = "Không thể xác định người dùng. Vui lòng đăng nhập lại.";
+                    return View(new NewsListViewModel { NewsList = new List<NewsViewModel>() });
+                }
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                // === KẾT THÚC SỬA ===
+
+
+                // === THÊM MỚI: GỌI API STATS ===
+                var statsResponse = await _httpClient.GetAsync("News/stats");
+                if (statsResponse.IsSuccessStatusCode)
+                {
+                    var statsContent = await statsResponse.Content.ReadAsStringAsync();
+                    // Dùng _jsonOptions (đã có trong file của bạn)
+                    ViewBag.NewsStats = JsonSerializer.Deserialize<NewsStatsDTO>(statsContent, _jsonOptions);
+                }
+                else
+                {
+                    ViewBag.NewsStats = new NewsStatsDTO(); 
+                }
+
                 var response = await _httpClient.GetAsync($"News");
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    TempData["ErrorMessage"] = "Không thể tải danh sách tin tức.";
+                    // Lỗi 401 (Unauthorized) sẽ bị bắt ở đây
+                    TempData["ErrorMessage"] = "Không thể tải danh sách tin tức. (Lỗi: " + response.StatusCode + ")";
                     return View(new NewsListViewModel { NewsList = new List<NewsViewModel>() });
                 }
 
                 var content = await response.Content.ReadAsStringAsync();
-
                 var newsList = JsonSerializer.Deserialize<List<NewsViewModel>>(content, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 }) ?? new List<NewsViewModel>();
 
+                // ... (Code filter của bạn giữ nguyên) ...
                 IEnumerable<NewsViewModel> filteredNews = newsList;
-
                 if (!string.IsNullOrWhiteSpace(search))
                 {
                     string normalizedSearch = NormalizeString(search);
-
                     filteredNews = filteredNews.Where(n =>
                     {
                         string normalizedTitle = NormalizeString(n.Title);
                         string normalizedAuthor = NormalizeString(n.AuthorName);
                         string normalizedContent = NormalizeString(n.Content);
-
                         return normalizedTitle.Contains(normalizedSearch) ||
                                normalizedAuthor.Contains(normalizedSearch) ||
                                normalizedContent.Contains(normalizedSearch);
                     }).ToList();
                 }
-
-                if (fromDate.HasValue)
-                {
-                    filteredNews = filteredNews.Where(n => n.CreatedDate?.Date >= fromDate.Value.Date);
-                }
-
-                if (toDate.HasValue)
-                {
-                    filteredNews = filteredNews.Where(n => n.CreatedDate?.Date <= toDate.Value.Date);
-                }
-
+                if (fromDate.HasValue) { filteredNews = filteredNews.Where(n => n.CreatedDate?.Date >= fromDate.Value.Date); }
+                if (toDate.HasValue) { filteredNews = filteredNews.Where(n => n.CreatedDate?.Date <= toDate.Value.Date); }
                 if (!string.IsNullOrWhiteSpace(status))
                 {
                     string lowerStatus = status.ToLowerInvariant();
                     filteredNews = filteredNews.Where(n => n.NewsStatus != null && n.NewsStatus.ToLowerInvariant() == lowerStatus);
                 }
-
                 var sortedNews = filteredNews.OrderByDescending(n => n.CreatedDate);
                 var finalNewsList = sortedNews.ToList();
                 int totalItems = finalNewsList.Count;
                 int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
                 var pagedNews = finalNewsList.Skip((page - 1) * pageSize).Take(pageSize).ToList();
-
-
                 var viewModel = new NewsListViewModel
                 {
                     NewsList = pagedNews,
@@ -714,6 +755,7 @@ namespace FE_Capstone_Project.Controllers
                     ToDate = toDate,
                     Status = status
                 };
+                // === KẾT THÚC CODE FILTER ===
 
                 return View(viewModel);
             }
@@ -729,35 +771,28 @@ namespace FE_Capstone_Project.Controllers
         {
             ViewData["Title"] = "Tạo Tin tức Mới";
 
-            // 2. LẤY USER ID TỪ CLAIMS (HOẶC SESSION)
-            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            int userId = GetCurrentUserId(); // Gọi hàm (đã được thêm ở dưới)
 
-            // Nếu dùng Session:
-            // var userIdString = HttpContext.Session.GetString("UserId");
-
-            if (!int.TryParse(userIdString, out int userId))
+            if (userId == 0)
             {
-                // Nếu không tìm thấy ID (chưa đăng nhập hoặc cookie lỗi)
                 TempData["ErrorMessage"] = "Không thể xác định người dùng. Vui lòng đăng nhập lại.";
                 return RedirectToAction("News");
             }
 
-            // 3. TRUYỀN ID VÀO MODEL
             var model = new NewsCreateModel
             {
-                UserId = userId // Tự động gán UserId vào Model
+                UserId = userId
             };
 
-            return View(model); // Trả về View với Model đã có UserId
+            return View(model);
         }
+
 
         [HttpPost]
         public async Task<IActionResult> CreateNews(NewsCreateModel model, IFormFile? imageFile)
         {
-            // Lấy UserId an toàn từ Claims/Session (ĐOẠN NÀY BẠN ĐÃ LÀM ĐÚNG)
-            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (!int.TryParse(userIdString, out int staffUserId))
+            int staffUserId = GetCurrentUserId();
+            if (staffUserId == 0)
             {
                 TempData["ErrorMessage"] = "Không thể xác định người dùng. Vui lòng đăng nhập lại.";
                 return View(model);
@@ -771,28 +806,39 @@ namespace FE_Capstone_Project.Controllers
                     return View(model);
                 }
 
-                string? imageBase64 = null;
+                // === SỬA: XÂY DỰNG FORMDATA THAY VÌ JSON ===
+                var formData = new MultipartFormDataContent();
+
+                // Thêm các trường dữ liệu (phải khớp với CreateNewsFormDTO của BE)
+                formData.Add(new StringContent(staffUserId.ToString()), "UserId");
+                formData.Add(new StringContent(model.Title ?? ""), "Title");
+                formData.Add(new StringContent(model.Content ?? ""), "Content");
+                formData.Add(new StringContent(model.NewsStatus.ToString() ?? "Draft"), "NewsStatus");
+
+                // Thêm file (nếu có)
                 if (imageFile != null && imageFile.Length > 0)
                 {
-                    using var memoryStream = new MemoryStream();
-                    await imageFile.CopyToAsync(memoryStream);
-                    var imageBytes = memoryStream.ToArray();
-                    imageBase64 = $"data:{imageFile.ContentType};base64,{Convert.ToBase64String(imageBytes)}";
+                    var imageContent = new StreamContent(imageFile.OpenReadStream());
+                    imageContent.Headers.ContentType = new MediaTypeHeaderValue(imageFile.ContentType);
+                    // "ImageFile" phải khớp với DTO của BE
+                    formData.Add(imageContent, "ImageFile", imageFile.FileName);
                 }
+                // === KẾT THÚC SỬA FORMDATA ===
 
-                var dto = new
+
+                // === SỬA: GỬI TOKEN VÀ FORMDATA ===
+                var token = HttpContext.Session.GetString("JwtToken");
+                if (string.IsNullOrEmpty(token))
                 {
-                    UserId = staffUserId, // (Đúng: Sử dụng staffUserId đã xác thực)
-                    Title = model.Title,
-                    Content = model.Content,
-                    Image = imageBase64,
-                    NewsStatus = model.NewsStatus
-                };
+                    TempData["ErrorMessage"] = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+                    return View(model);
+                }
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-                var jsonContent = new StringContent(JsonSerializer.Serialize(dto), Encoding.UTF8, "application/json");
-
-                var response = await _httpClient.PostAsync("News", jsonContent);
+                // Gửi formData thay vì jsonContent
+                var response = await _httpClient.PostAsync("News", formData); // "News" khớp với route [HttpPost]
                 var responseContent = await response.Content.ReadAsStringAsync();
+                // === KẾT THÚC SỬA GỬI ===
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -816,6 +862,16 @@ namespace FE_Capstone_Project.Controllers
         {
             try
             {
+                // === SỬA: Thêm Token Xác Thực ===
+                var token = HttpContext.Session.GetString("JwtToken");
+                if (string.IsNullOrEmpty(token))
+                {
+                    TempData["ErrorMessage"] = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+                    return RedirectToAction("News");
+                }
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                // === KẾT THÚC SỬA ===
+
                 var response = await _httpClient.GetAsync($"News/{id}");
                 if (!response.IsSuccessStatusCode)
                 {
@@ -824,7 +880,6 @@ namespace FE_Capstone_Project.Controllers
                 }
 
                 var content = await response.Content.ReadAsStringAsync();
-
                 var newsItem = JsonSerializer.Deserialize<EditNewsModel>(content, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
@@ -845,6 +900,16 @@ namespace FE_Capstone_Project.Controllers
         {
             try
             {
+                // === SỬA: Thêm Token Xác Thực ===
+                var token = HttpContext.Session.GetString("JwtToken");
+                if (string.IsNullOrEmpty(token))
+                {
+                    TempData["ErrorMessage"] = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+                    return RedirectToAction("News");
+                }
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                // === KẾT THÚC SỬA ===
+
                 var response = await _httpClient.GetAsync($"News/{id}");
                 if (!response.IsSuccessStatusCode)
                 {
@@ -853,7 +918,6 @@ namespace FE_Capstone_Project.Controllers
                 }
 
                 var content = await response.Content.ReadAsStringAsync();
-
                 var newsItem = JsonSerializer.Deserialize<EditNewsModel>(content, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
@@ -870,8 +934,15 @@ namespace FE_Capstone_Project.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> EditNews(int id, NewsCreateModel model, IFormFile? imageFile)
+        public async Task<IActionResult> EditNews(int id, EditNewsModel model, IFormFile? imageFile)
         {
+            // (Kiểm tra UserId từ Model, vì nó đã được gán ẩn trong form)
+            if (model.UserId == 0)
+            {
+                TempData["ErrorMessage"] = "Không thể xác định người dùng (UserId bị thiếu). Vui lòng thử lại.";
+                return View(model);
+            }
+
             try
             {
                 if (!ModelState.IsValid)
@@ -880,27 +951,41 @@ namespace FE_Capstone_Project.Controllers
                     return View(model);
                 }
 
-                string? imageBase64 = model.Image;
+                // === SỬA: XÂY DỰNG FORMDATA THAY VÌ JSON ===
+                var formData = new MultipartFormDataContent();
+
+                // Thêm các trường dữ liệu (phải khớp với EditNewsFormDTO của BE)
+                formData.Add(new StringContent(model.Id.ToString()), "Id");
+                formData.Add(new StringContent(model.UserId.ToString()), "UserId");
+                formData.Add(new StringContent(model.Title ?? ""), "Title");
+                formData.Add(new StringContent(model.Content ?? ""), "Content");
+                formData.Add(new StringContent(model.NewsStatus.ToString() ?? "Draft"), "NewsStatus");
+
+                // Thêm file (nếu người dùng chọn file mới)
                 if (imageFile != null && imageFile.Length > 0)
                 {
-                    using var memoryStream = new MemoryStream();
-                    await imageFile.CopyToAsync(memoryStream);
-                    var imageBytes = memoryStream.ToArray();
-                    imageBase64 = $"data:{imageFile.ContentType};base64,{Convert.ToBase64String(imageBytes)}";
+                    var imageContent = new StreamContent(imageFile.OpenReadStream());
+                    imageContent.Headers.ContentType = new MediaTypeHeaderValue(imageFile.ContentType);
+                    // "ImageFile" phải khớp với DTO của BE
+                    formData.Add(imageContent, "ImageFile", imageFile.FileName);
                 }
+                // (Nếu imageFile là null, BE sẽ tự hiểu là "giữ nguyên ảnh cũ")
+                // === KẾT THÚC SỬA FORMDATA ===
 
-                var dto = new
+
+                // === SỬA: GỬI TOKEN VÀ FORMDATA (DÙNG PUT) ===
+                var token = HttpContext.Session.GetString("JwtToken");
+                if (string.IsNullOrEmpty(token))
                 {
-                    UserId = model.UserId,
-                    Title = model.Title,
-                    Content = model.Content,
-                    Image = imageBase64,
-                    NewsStatus = model.NewsStatus
-                };
+                    TempData["ErrorMessage"] = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+                    return View(model);
+                }
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-                var jsonContent = new StringContent(JsonSerializer.Serialize(dto), Encoding.UTF8, "application/json");
-                var response = await _httpClient.PutAsync($"News/{id}", jsonContent);
+                // Gửi formData bằng PUT
+                var response = await _httpClient.PutAsync($"News/{id}", formData);
                 var responseContent = await response.Content.ReadAsStringAsync();
+                // === KẾT THÚC SỬA GỬI ===
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -923,6 +1008,16 @@ namespace FE_Capstone_Project.Controllers
         {
             try
             {
+                // === SỬA: Thêm Token Xác Thực ===
+                var token = HttpContext.Session.GetString("JwtToken");
+                if (string.IsNullOrEmpty(token))
+                {
+                    TempData["ErrorMessage"] = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+                    return RedirectToAction("News");
+                }
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                // === KẾT THÚC SỬA ===
+
                 var response = await _httpClient.DeleteAsync($"News/{id}");
                 if (response.IsSuccessStatusCode)
                 {
@@ -940,6 +1035,7 @@ namespace FE_Capstone_Project.Controllers
 
             return RedirectToAction("News");
         }
+
         private string GetTourImageUrl(TourViewModel tour)
         {
             if (tour.TourImages != null && tour.TourImages.Any())
