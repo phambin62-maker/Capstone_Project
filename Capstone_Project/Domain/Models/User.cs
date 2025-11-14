@@ -23,7 +23,7 @@ public partial class User
     public string? Image { get; set; }
 
     public int RoleId { get; set; }
-    public string Provider { get; set; } = "Local";
+    public string? Provider { get; set; }
 
     public UserStatus? UserStatus { get; set; }
     public string? PasswordResetTokenHash { get; set; } // hash của token

@@ -73,11 +73,13 @@ namespace FE_Capstone_Project.Controllers
 
             var firstName = payload.ContainsKey("unique_name") ? payload["unique_name"].ToString() : "";
             var email = payload.ContainsKey("email") ? payload["email"].ToString() : "";
-            
+            var userId = int.Parse(payload.ContainsKey("UserId") ? payload["UserId"].ToString() : "0");
+            HttpContext.Session.SetInt32("UserId", userId);
             HttpContext.Session.SetString("JwtToken", loginResult.Token);
             HttpContext.Session.SetString("UserName", firstName);
             HttpContext.Session.SetString("UserEmail", email);
             HttpContext.Session.SetInt32("UserRoleId", loginResult.RoleId);
+            
             switch (loginResult.RoleId)
             {
                 case 3: 
@@ -166,6 +168,7 @@ namespace FE_Capstone_Project.Controllers
                     HttpContext.Session.SetString("UserEmail", email);
                     HttpContext.Session.SetInt32("UserRoleId", roleId);
                     
+
                     _logger.LogInformation($"Lưu token vào session thành công cho {email}, username: {username}");
                 }
                 else

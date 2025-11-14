@@ -2,7 +2,7 @@
 {
     public enum ChatType : byte
     {
-        Support = 1,
-        System = 2,
+        Customer = 1,
+        Staff = 2,
     }
 }
