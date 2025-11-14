@@ -1,28 +1,53 @@
 ﻿using BE_Capstone_Project.Infrastructure;
 using BE_Capstone_Project.Domain.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace BE_Capstone_Project.DAO
 {
     public class ChatDAO
     {
         private readonly OtmsdbContext _context;
-        public ChatDAO(OtmsdbContext context)
+        private readonly ILogger<ChatDAO> _logger;
+        
+        public ChatDAO(OtmsdbContext context, ILogger<ChatDAO> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         public async Task<int> AddChatAsync(Chat chat)
         {
             try
             {
+                _logger.LogInformation("Adding chat to database: CustomerId={CustomerId}, StaffId={StaffId}, MessageLength={MessageLength}",
+                    chat.CustomerId, chat.StaffId, chat.Message?.Length ?? 0);
+
                 await _context.Chats.AddAsync(chat);
                 await _context.SaveChangesAsync();
+                
+                _logger.LogInformation("Chat added successfully: chatId={ChatId}", chat.Id);
                 return chat.Id;
+            }
+            catch (DbUpdateException dbEx)
+            {
+                var innerMessage = dbEx.InnerException?.Message ?? dbEx.Message;
+                _logger.LogError(dbEx, "Database error while adding chat: CustomerId={CustomerId}, StaffId={StaffId}. Error: {Error}",
+                    chat.CustomerId, chat.StaffId, innerMessage);
+                
+                // Kiểm tra nếu là lỗi foreign key constraint
+                if (innerMessage.Contains("FOREIGN KEY") || innerMessage.Contains("The INSERT statement conflicted"))
+                {
+                    _logger.LogError("Foreign key constraint violation. CustomerId={CustomerId} or StaffId={StaffId} may not exist in User table.",
+                        chat.CustomerId, chat.StaffId);
+                }
+                
+                return -1;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"An error occurred while adding a chat: {ex.Message}");
+                _logger.LogError(ex, "An error occurred while adding a chat: CustomerId={CustomerId}, StaffId={StaffId}",
+                    chat.CustomerId, chat.StaffId);
                 return -1;
             }
         }
@@ -94,11 +119,30 @@ namespace BE_Capstone_Project.DAO
             {
                 return await _context.Chats
                     .Where(c => c.CustomerId == customerId && c.StaffId == staffId)
+                    .OrderBy(c => c.SentDate)
                     .ToListAsync();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"An error occurred while retrieving chats for Customer ID {customerId} and Staff ID {staffId}: {ex.Message}");
+                return new List<Chat>();
+            }
+        }
+
+        public async Task<List<Chat>> GetChatsByCustomerIdAndStaffIdWithUsersAsync(int customerId, int staffId)
+        {
+            try
+            {
+                return await _context.Chats
+                    .Include(c => c.Customer)
+                    .Include(c => c.Staff)
+                    .Where(c => c.CustomerId == customerId && c.StaffId == staffId)
+                    .OrderBy(c => c.SentDate)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while retrieving chats with users for Customer ID {customerId} and Staff ID {staffId}: {ex.Message}");
                 return new List<Chat>();
             }
         }

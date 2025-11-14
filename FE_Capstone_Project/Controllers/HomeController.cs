@@ -149,7 +149,7 @@ namespace FE_Capstone_Project.Controllers
                         Title = "Explore the World with Confidence",
                         Description1 = "Wanderlust Horizons Co., Ltd. Travel is proud to be a leading travel company dedicated to providing safe, comfortable, and memorable journeys for every customer. With a team of professional tour guides and a global network of partners, we are committed to delivering the highest quality service in every trip you take.",
                         Description2 = "From unique cultural discovery tours to luxurious relaxation experiences, FastRail Travel accompanies you on every journey. We believe that each trip is not only about exploring the world but also about enjoying life, making meaningful connections, and creating unforgettable memories.",
-                        ImageUrl = "~/assets/img/travel/showcase-8.webp",
+                        ImageUrl = "assets/img/travel/showcase-8.webp",
                         ImageAlt = "Travel Experience",
                         ExperienceNumber = "15+",
                         ExperienceText = "Years of Excellence",

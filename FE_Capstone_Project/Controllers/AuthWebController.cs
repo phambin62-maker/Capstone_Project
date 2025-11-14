@@ -73,21 +73,13 @@ namespace FE_Capstone_Project.Controllers
 
             var firstName = payload.ContainsKey("unique_name") ? payload["unique_name"].ToString() : "";
             var email = payload.ContainsKey("email") ? payload["email"].ToString() : "";
-
-            // === SỬA 1: LẤY USERID TỪ TOKEN ===
-            // (Giả sử BE trả về ID trong claim "UserId" hoặc "sub")
-            var userId = payload.ContainsKey("UserId") ? payload["UserId"].ToString() :
-                         (payload.ContainsKey("sub") ? payload["sub"].ToString() : "0");
-
+            var userId = int.Parse(payload.ContainsKey("UserId") ? payload["UserId"].ToString() : "0");
+            HttpContext.Session.SetInt32("UserId", userId);
             HttpContext.Session.SetString("JwtToken", loginResult.Token);
             HttpContext.Session.SetString("UserName", firstName);
             HttpContext.Session.SetString("UserEmail", email);
             HttpContext.Session.SetInt32("UserRoleId", loginResult.RoleId);
-
-            // === THÊM DÒNG NÀY (1/2) ===
-            // (Lưu UserId (string) để NotificationWebController có thể đọc)
-            HttpContext.Session.SetString("UserId", userId);
-
+            
             switch (loginResult.RoleId)
             {
                 case 3:
@@ -169,10 +161,7 @@ namespace FE_Capstone_Project.Controllers
                     HttpContext.Session.SetString("UserName", username ?? name ?? "");
                     HttpContext.Session.SetString("UserEmail", email);
                     HttpContext.Session.SetInt32("UserRoleId", roleId);
-
-                    // === THÊM DÒNG NÀY (2/2) ===
-                    // (Lưu UserId (string) để NotificationWebController có thể đọc)
-                    HttpContext.Session.SetString("UserId", userId.ToString());
+                    
 
                     _logger.LogInformation($"Lưu token vào session thành công cho {email}, username: {username}");
                 }
