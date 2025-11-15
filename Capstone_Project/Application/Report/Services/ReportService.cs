@@ -43,15 +43,13 @@ namespace BE_Capstone_Project.Application.Report.Services
                     .CountAsync();
             }
 
-            // === LOGIC MỚI: TÍNH ĐÁNH GIÁ TRUNG BÌNH ===
-            // 'to' đã được +1 ngày, nên dùng < to
+            //  TÍNH ĐÁNH GIÁ TRUNG BÌNH ===
             var fromDateTime = from.ToDateTime(TimeOnly.MinValue);
             var toDateTime = to.ToDateTime(TimeOnly.MinValue);
 
             var averageRating = await _context.Reviews
                 .Where(r => r.CreatedDate >= fromDateTime && r.CreatedDate < toDateTime)
                 .AverageAsync(r => (decimal?)r.Stars) ?? 0m;
-            // ============================================
 
             var tourRevenueQuery = from b in paid
                                    join ts in _context.TourSchedules on b.TourScheduleId equals ts.Id
@@ -98,7 +96,7 @@ namespace BE_Capstone_Project.Application.Report.Services
                 UniqueCustomers = uniqueCustomers,
                 TopToursByRevenue = topByRevenue,
                 TopToursByBookings = topByBookings,
-                AverageRating = averageRating // <-- ĐÃ THÊM
+                AverageRating = averageRating
             };
         }
 
@@ -238,19 +236,17 @@ namespace BE_Capstone_Project.Application.Report.Services
 
         private IQueryable<Booking> PaidBookingsInRange(DateOnly from, DateOnly to)
         {
-            // 'to' đã được +1 ngày, nên truy vấn là <= to
             var toDateTime = to.ToDateTime(TimeOnly.MinValue);
             return _context.Bookings.Where(b => b.PaymentStatus == PaymentStatus.Completed &&
                   b.PaymentDate != null &&
-                  b.PaymentDate >= from && // <-- SỬA Ở ĐÂY: So sánh DateOnly? với DateOnly
+                  b.PaymentDate >= from && 
                   b.PaymentDate < to
             );
         }
 
-        // === PHƯƠNG THỨC MỚI: PHÂN TÍCH KHÁCH HÀNG ===
+        //PHÂN TÍCH KHÁCH HÀNG ===
         public async Task<CustomerAnalysisDto> GetCustomerAnalysisAsync(DateOnly from, DateOnly to)
         {
-            // 'to' đã được controller + 1 ngày, nên truy vấn sẽ là >= from và < to
             var fromDateTime = from.ToDateTime(TimeOnly.MinValue);
             var toDateTime = to.ToDateTime(TimeOnly.MinValue);
 
@@ -278,25 +274,25 @@ namespace BE_Capstone_Project.Application.Report.Services
                 return new CustomerAnalysisDto { TotalCustomers = 0, LoyalCustomers = 0, NewCustomersInRange = 0, ReturnRate = 0 };
             }
 
-            // 4. Tính "Khách mới tháng này" (Khách hàng được tạo TRONG KHOẢNG NGÀY)
+            //  Tính "Khách mới tháng này" (Khách hàng được tạo TRONG KHOẢNG NGÀY)
             var newCustomersInRange = await allCustomersQuery
                 .Where(u => u.CreatedDate != null && // <-- THÊM KIỂM TRA NULL
                 u.CreatedDate.Value >= fromDateTime && // <-- DÙNG .Value
                 u.CreatedDate.Value < toDateTime) // <-- DÙNG .Value
                 .CountAsync();
 
-            // 5. Tính "Khách hàng thân thiết" (có > 1 booking đã thanh toán, tính all-time)
+            //  Tính "Khách hàng thân thiết" (có > 1 booking đã thanh toán, tính all-time)
             var loyalCustomers = await _context.Bookings
                 .Where(b => b.PaymentStatus == PaymentStatus.Completed)
-                .Join(allCustomersQuery, // Chỉ join với những user là customer
+                .Join(allCustomersQuery,
                       b => b.UserId,
                       u => u.Id,
-                      (b, u) => u.Id) // Chỉ cần UserID
+                      (b, u) => u.Id) 
                 .GroupBy(userId => userId)
                 .Where(g => g.Count() > 1) // Lọc những user có > 1 booking
                 .CountAsync(); // Đếm số lượng user đó
 
-            // 6. Tính "Tỷ lệ quay lại"
+            //  Tính "Tỷ lệ quay lại"
             var returnRate = (decimal)loyalCustomers / totalCustomers;
 
             return new CustomerAnalysisDto
