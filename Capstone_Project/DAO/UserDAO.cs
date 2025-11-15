@@ -34,6 +34,24 @@ namespace BE_Capstone_Project.DAO
             return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
         }
 
+        public async Task<User?> GetBotUserAsync()
+        {
+            try
+            {
+                return await _context.Users
+                    .FirstOrDefaultAsync(u => 
+                        (u.Email != null && u.Email.ToLower() == "bot@otms.com") || 
+                        (u.Username != null && u.Username.ToLower() == "bot") ||
+                        (u.FirstName != null && u.FirstName.ToLower() == "ai" && 
+                         u.LastName != null && u.LastName.ToLower() == "assistant"));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ [UserDAO] Error in GetBotUserAsync: {ex.Message}");
+                return null;
+            }
+        }
+
         public async Task CreateAsync(User user)
         {
             _context.Users.Add(user);
@@ -241,6 +259,66 @@ namespace BE_Capstone_Project.DAO
             catch (Exception ex)
             {
                 Console.WriteLine($"An error occurred while retrieving users with role id {roleId}: {ex.Message}");
+                return new List<User>();
+            }
+        }
+
+        /// <summary>
+        /// Lấy danh sách staff active (loại trừ bot)
+        /// </summary>
+        public async Task<List<User>> GetActiveStaffAsync()
+        {
+            try
+            {
+                const int STAFF_ROLE_ID = 2;
+                const int BOT_STAFF_ID = -1;
+                
+                // Sử dụng Select với xử lý NULL values ngay trong query
+                var staffData = await _context.Users
+                    .Where(u => u.RoleId == STAFF_ROLE_ID && 
+                           u.Id != BOT_STAFF_ID && 
+                           (u.UserStatus == null || u.UserStatus == Domain.Enums.UserStatus.Active))
+                    .Select(u => new
+                    {
+                        u.Id,
+                        Username = u.Username ?? string.Empty,
+                        FirstName = u.FirstName ?? string.Empty,
+                        LastName = u.LastName ?? string.Empty,
+                        Email = u.Email ?? string.Empty,
+                        u.PhoneNumber,
+                        u.Image,
+                        u.RoleId,
+                        Provider = u.Provider ?? "Local",
+                        u.UserStatus,
+                        u.PasswordHash,
+                        u.PasswordResetTokenHash,
+                        u.PasswordResetExpires
+                    })
+                    .ToListAsync();
+
+                // Map sang User objects
+                return staffData.Select(s => new User
+                {
+                    Id = s.Id,
+                    Username = s.Username,
+                    FirstName = s.FirstName,
+                    LastName = s.LastName,
+                    Email = s.Email,
+                    PhoneNumber = s.PhoneNumber,
+                    Image = s.Image,
+                    RoleId = s.RoleId,
+                    Provider = s.Provider,
+                    UserStatus = s.UserStatus,
+                    PasswordHash = s.PasswordHash,
+                    PasswordResetTokenHash = s.PasswordResetTokenHash,
+                    PasswordResetExpires = s.PasswordResetExpires
+                }).ToList();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ [UserDAO] Error in GetActiveStaffAsync: {ex.Message}");
+                if (ex.InnerException != null)
+                    Console.WriteLine($"🔍 Inner: {ex.InnerException.Message}");
                 return new List<User>();
             }
         }

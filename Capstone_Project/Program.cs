@@ -25,6 +25,9 @@ using BE_Capstone_Project.Application.WishlistManagement.Services;
 using BE_Capstone_Project.Application.WishlistManagement.Services.Interfaces;
 using BE_Capstone_Project.Application.Company.Services;
 using BE_Capstone_Project.Application.Company.Services.Interfaces;
+using BE_Capstone_Project.Application.ChatManagement.Hubs;
+using BE_Capstone_Project.Application.ChatManagement.Services;
+using BE_Capstone_Project.Application.ChatManagement.Services.Interfaces;
 using BE_Capstone_Project.DAO;
 using BE_Capstone_Project.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -56,6 +59,10 @@ builder.Services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<ICompanyService, CompanyService>();
 builder.Services.AddScoped<IFeatureService, FeatureService>();
+builder.Services.AddScoped<IChatService, ChatService>();
+builder.Services.AddScoped<IBotChatService, BotChatService>();
+builder.Services.AddScoped<IBotService, BotService>();
+builder.Services.AddHttpClient(); // Cần cho BotService sử dụng HttpClient
 //DAO
 builder.Services.AddScoped<BookingCustomerDAO>();
 builder.Services.AddScoped<BookingDAO>();
@@ -91,6 +98,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(jwtSettings["Key"]))
         };
+
+        // Cấu hình JWT cho SignalR
+        options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chathub"))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
+        };
     });
 builder.Services.AddAuthorization(options =>
 {
@@ -113,11 +135,15 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAll",
         policy =>
         {
-            policy.AllowAnyOrigin()      
+            policy.WithOrigins("https://localhost:5137")
                   .AllowAnyHeader()
-                  .AllowAnyMethod();
+                  .AllowAnyMethod()
+                  .AllowCredentials(); // Cần cho SignalR
         });
 });
+
+// Đăng ký SignalR
+builder.Services.AddSignalR();
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -158,4 +184,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Map SignalR Hub
+app.MapHub<BE_Capstone_Project.Application.ChatManagement.Hubs.ChatHub>("/chathub");
+
 app.Run();
