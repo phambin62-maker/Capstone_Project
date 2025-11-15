@@ -1,4 +1,5 @@
-﻿using FE_Capstone_Project.Filters;
+﻿using BE_Capstone_Project.Application.BookingManagement.DTOs;
+using FE_Capstone_Project.Filters;
 using FE_Capstone_Project.Helpers;
 using FE_Capstone_Project.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -63,6 +64,114 @@ namespace FE_Capstone_Project.Controllers
                 return BadRequest("Failed to create payment URL.");
 
             return Redirect(paymentResponse.PaymentUrl);
+        }
+        // ========== THÊM API MỚI: LẤY DANH SÁCH BOOKINGS CỦA USER ==========
+
+        [HttpGet]
+        public async Task<IActionResult> MyBookings()
+        {
+            try
+            {
+                var username = HttpContext.Session.GetString("UserName");
+                if (string.IsNullOrEmpty(username))
+                {
+                    return RedirectToAction("Login", "AuthWeb"); // Điều hướng đến trang login nếu chưa đăng nhập
+                }
+
+                // Lấy thông tin user để có userId
+                var userResponse = await _apiHelper.GetAsync<UserDto>($"User/by-username/{username}");
+                if (userResponse == null)
+                {
+                    TempData["Error"] = "Không thể lấy thông tin người dùng.";
+                    return View(new List<BookingDto>());
+                }
+
+                // Gọi API lấy danh sách bookings của user
+                var bookingsResponse = await _apiHelper.GetAsync<BookingResponse>($"Booking/user/{userResponse.Id}");
+
+                if (bookingsResponse == null || !bookingsResponse.Success)
+                {
+                    TempData["Error"] = "Không thể tải danh sách đặt tour.";
+                    return View(new List<BookingDto>());
+                }
+
+                return View(bookingsResponse.Data);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction("Login", "Account");
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Đã xảy ra lỗi: {ex.Message}";
+                return View(new List<BookingDto>());
+            }
+        }
+
+        // API endpoint để lấy bookings dưới dạng JSON (cho AJAX calls)
+        [HttpGet]
+        public async Task<IActionResult> GetUserBookingsJson()
+        {
+            try
+            {
+                var username = HttpContext.Session.GetString("UserName");
+                if (string.IsNullOrEmpty(username))
+                {
+                    return Unauthorized(new { success = false, message = "User not logged in" });
+                }
+
+                var userResponse = await _apiHelper.GetAsync<UserDto>($"User/by-username/{username}");
+                if (userResponse == null)
+                {
+                    return NotFound(new { success = false, message = "User not found" });
+                }
+
+                var bookingsResponse = await _apiHelper.GetAsync<BookingResponse>($"Booking/user/{userResponse.Id}");
+
+                if (bookingsResponse == null || !bookingsResponse.Success)
+                {
+                    return BadRequest(new { success = false, message = "Failed to get bookings" });
+                }
+
+                return Ok(new { success = true, data = bookingsResponse.Data });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { success = false, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        // Chi tiết booking
+        [HttpGet]
+        public async Task<IActionResult> BookingDetails(int id)
+        {
+            try
+            {
+                var bookingResponse = await _apiHelper.GetAsync<BookingDto>($"Booking/{id}");
+
+                if (bookingResponse == null)
+                {
+                    TempData["Error"] = "Không tìm thấy thông tin đặt tour.";
+                    return RedirectToAction("MyBookings");
+                }
+
+                return View(bookingResponse);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction("Login", "Account");
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Đã xảy ra lỗi: {ex.Message}";
+                return RedirectToAction("MyBookings");
+            }
         }
     }
 }

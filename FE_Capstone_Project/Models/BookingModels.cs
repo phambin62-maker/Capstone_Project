@@ -48,6 +48,21 @@ namespace FE_Capstone_Project.Models
                    $"  Travelers:\n  {travelerInfo}";
         }
     }
+    public class BookingDto
+    {
+        public int Id { get; set; }
+        public int UserId { get; set; }
+        public int TourScheduleId { get; set; }
+        public PaymentStatus? PaymentStatus { get; set; }
+        public decimal? TotalPrice { get; set; }
+        public DateTime? BookingDate { get; set; }
+        public BookingStatus? BookingStatus { get; set; }
+        public string? FullName { get; set; }
+        public string? PhoneNumber { get; set; }
+        public string? Email { get; set; }
+        public string? TourName { get; set; }
+        public string? Username { get; set; }
+    }
 
     public class BookingResponse
     {
@@ -58,6 +73,7 @@ namespace FE_Capstone_Project.Models
         public string LastName { get; set; } = string.Empty;
         public string Message { get; set; } = string.Empty;
         public bool Success { get; set; }
+        public List<BookingDto> Data { get; set; } = new List<BookingDto>();
 
         public override string ToString()
         {
