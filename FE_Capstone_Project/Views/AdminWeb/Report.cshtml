@@ -3,15 +3,55 @@
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
-<div class="row mb-4">
+<style>
+    @@media print {
+        .no-print {
+            display: none !important;
+        }
+        header,
+        nav,
+        footer,
+        .admin-header,
+        .admin-sidebar,
+        .admin-footer,
+        .navbar,
+        #header,
+        .header,
+        #main-nav,
+        #top-bar,
+        .top-bar {
+            display: none !important;
+        }
+        body,
+        .main-content,
+        .container-fluid {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+ 
+        .admin-card {
+            border: 1px solid #dee2e6 !important; 
+            box-shadow: none !important; 
+            page-break-inside: avoid; 
+        }
+        
+        canvas {
+            max-width: 100% !important;
+        }
+    }
+</style>
+
+<div class="row mb-4 no-print">
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center">
             <h2 class="mb-0">Báo cáo & Thống kê</h2>
             <div>
-                <button class="btn btn-outline-secondary me-2">
+                <button class="btn btn-outline-secondary me-2" id="printButton">
                     <i class="bi bi-printer me-2"></i>In báo cáo
                 </button>
-                <button class="btn btn-success">
+                <button class="btn btn-success" id="exportButton">
                     <i class="bi bi-file-earmark-excel me-2"></i>Xuất Excel
                 </button>
             </div>
@@ -20,30 +60,32 @@
 </div>
 
 <!-- Date Filter -->
-<div class="row mb-4">
+
+<div class="row mb-4 no-print">
     <div class="col-12">
         <div class="admin-card">
             <div class="card-body">
                 <div class="row align-items-end">
                     <div class="col-md-3">
                         <label class="form-label">Từ ngày</label>
-                        <input type="date" class="form-control" value="2025-11-01">
+                        <input type="date" class="form-control" id="fromDate">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Đến ngày</label>
-                        <input type="date" class="form-control" value="2025-11-08">
+                        <input type="date" class="form-control" id="toDate">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Loại báo cáo</label>
-                        <select class="form-select">
+                        <!-- Gỡ 'disabled' và thêm id/options -->
+                        <select class="form-select" id="reportTypeSelect">
                             <option value="all">Tất cả</option>
-                            <option value="booking">Đặt tour</option>
-                            <option value="revenue">Doanh thu</option>
-                            <option value="customer">Khách hàng</option>
+                            <option value="revenue">Chỉ xem Doanh thu</option>
+                            <option value="booking">Chỉ xem Đặt tour</option>
+                            <option value="customer">Chỉ xem Khách hàng</option>
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <button class="btn btn-primary w-100">
+                        <button class="btn btn-primary w-100" id="searchButton">
                             <i class="bi bi-search me-2"></i>Tìm kiếm
                         </button>
                     </div>
@@ -54,7 +96,7 @@
 </div>
 
 <!-- Overview Statistics -->
-<div class="row mb-4">
+<div class="row mb-4" id="overviewBlock">
     <div class="col-md-3">
         <div class="admin-card stat-card">
             <div class="card-body">
@@ -64,9 +106,9 @@
                         <i class="bi bi-currency-dollar"></i>
                     </div>
                 </div>
-                <h3 class="mb-1">2.456.000.000 VNĐ</h3>
-                <small class="text-success">
-                    <i class="bi bi-arrow-up"></i> +12.5% so với tháng trước
+                <h3 class="mb-1" id="statTotalRevenue">0 VNĐ</h3>
+                <small class="text-muted" id="statRevenueChange">
+                    (Dữ liệu trong khoảng đã chọn)
                 </small>
             </div>
         </div>
@@ -80,9 +122,9 @@
                         <i class="bi bi-ticket-perforated"></i>
                     </div>
                 </div>
-                <h3 class="mb-1">1,842</h3>
-                <small class="text-success">
-                    <i class="bi bi-arrow-up"></i> +8.2% so với tháng trước
+                <h3 class="mb-1" id="statTotalBookings">0</h3>
+                <small class="text-muted" id="statBookingsChange">
+                    (Dữ liệu trong khoảng đã chọn)
                 </small>
             </div>
         </div>
@@ -96,9 +138,9 @@
                         <i class="bi bi-person-plus"></i>
                     </div>
                 </div>
-                <h3 class="mb-1">486</h3>
-                <small class="text-success">
-                    <i class="bi bi-arrow-up"></i> +15.3% so với tháng trước
+                <h3 class="mb-1" id="statNewCustomers">0</h3>
+                <small class="text-muted" id="statNewCustomersChange">
+                    (Đăng ký trong khoảng đã chọn)
                 </small>
             </div>
         </div>
@@ -112,9 +154,9 @@
                         <i class="bi bi-star-fill"></i>
                     </div>
                 </div>
-                <h3 class="mb-1">4.7/5.0</h3>
-                <small class="text-success">
-                    <i class="bi bi-arrow-up"></i> +0.2 so với tháng trước
+                <h3 class="mb-1" id="statAvgRating">0/5.0</h3>
+                <small class="text-muted" id="statAvgRatingChange">
+                    (Trong khoảng đã chọn)
                 </small>
             </div>
         </div>
@@ -122,12 +164,13 @@
 </div>
 
 <!-- Revenue Chart -->
-<div class="row mb-4">
-    <div class="col-md-8">
+<div class="row mb-4" id="chartsBlock">
+
+    <div class="col-md-8" id="revenueChartBlock">
         <div class="admin-card">
             <div class="card-header">
                 <h5 class="card-title mb-0">
-                    <i class="bi bi-graph-up me-2"></i>Biểu đồ doanh thu
+                    <i class="bi bi-graph-up me-2"></i>Biểu đồ doanh thu (Theo năm)
                 </h5>
             </div>
             <div class="card-body">
@@ -135,11 +178,12 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+
+    <div class="col-md-4" id="tourChartBlock">
         <div class="admin-card">
             <div class="card-header">
                 <h5 class="card-title mb-0">
-                    <i class="bi bi-pie-chart me-2"></i>Tour phổ biến
+                    <i class="bi bi-pie-chart me-2"></i>Top 5 Tour phổ biến
                 </h5>
             </div>
             <div class="card-body">
@@ -150,73 +194,35 @@
 </div>
 
 <!-- Booking Statistics -->
-<div class="row mb-4">
-    <div class="col-md-6">
+<div class="row mb-4" id="tablesBlock">
+    
+    <div class="col-md-6" id="monthlyRevenueTableBlock">
         <div class="admin-card">
             <div class="card-header">
                 <h5 class="card-title mb-0">
-                    <i class="bi bi-calendar-check me-2"></i>Thống kê đặt tour theo tháng
+                    <i class="bi bi-calendar-check me-2"></i>Thống kê đặt tour (Theo năm)
                 </h5>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-hover">
+                    <table class="table table-hover" id="monthlyRevenueTable">
                         <thead>
                             <tr>
                                 <th>Tháng</th>
                                 <th class="text-center">Số booking</th>
                                 <th class="text-end">Doanh thu</th>
-                                <th class="text-center">Tăng trưởng</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>Tháng 11/2025</td>
-                                <td class="text-center">234</td>
-                                <td class="text-end">456.000.000 VNĐ</td>
-                                <td class="text-center">
-                                    <span class="badge bg-success">+12%</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Tháng 10/2025</td>
-                                <td class="text-center">289</td>
-                                <td class="text-end">567.000.000 VNĐ</td>
-                                <td class="text-center">
-                                    <span class="badge bg-success">+8%</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Tháng 9/2025</td>
-                                <td class="text-center">312</td>
-                                <td class="text-end">623.000.000 VNĐ</td>
-                                <td class="text-center">
-                                    <span class="badge bg-success">+15%</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Tháng 8/2025</td>
-                                <td class="text-center">198</td>
-                                <td class="text-end">389.000.000 VNĐ</td>
-                                <td class="text-center">
-                                    <span class="badge bg-danger">-5%</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Tháng 7/2025</td>
-                                <td class="text-center">276</td>
-                                <td class="text-end">521.000.000 VNĐ</td>
-                                <td class="text-center">
-                                    <span class="badge bg-success">+10%</span>
-                                </td>
-                            </tr>
+                            <!-- JavaScript sẽ chèn dữ liệu vào đây -->
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-6">
+    <!-- Thêm id="topToursTableBlock" -->
+    <div class="col-md-6" id="topToursTableBlock">
         <div class="admin-card">
             <div class="card-header">
                 <h5 class="card-title mb-0">
@@ -225,7 +231,7 @@
             </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-hover">
+                    <table class="table table-hover" id="topToursTable">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -235,48 +241,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>
-                                    <span class="badge bg-warning text-dark">
-                                        <i class="bi bi-trophy-fill"></i> 1
-                                    </span>
-                                </td>
-                                <td>Ha Long Bay Cruise</td>
-                                <td class="text-center">342</td>
-                                <td class="text-end">856.000.000 VNĐ</td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <span class="badge bg-secondary">
-                                        <i class="bi bi-trophy-fill"></i> 2
-                                    </span>
-                                </td>
-                                <td>Sapa Mountain Trek</td>
-                                <td class="text-center">289</td>
-                                <td class="text-end">520.000.000 VNĐ</td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <span class="badge bg-danger">
-                                        <i class="bi bi-trophy-fill"></i> 3
-                                    </span>
-                                </td>
-                                <td>Phu Quoc Island</td>
-                                <td class="text-center">256</td>
-                                <td class="text-end">486.000.000 VNĐ</td>
-                            </tr>
-                            <tr>
-                                <td><span class="badge bg-info">4</span></td>
-                                <td>Hanoi City Tour</td>
-                                <td class="text-center">234</td>
-                                <td class="text-end">234.000.000 VNĐ</td>
-                            </tr>
-                            <tr>
-                                <td><span class="badge bg-info">5</span></td>
-                                <td>Mekong Delta</td>
-                                <td class="text-center">198</td>
-                                <td class="text-end">297.000.000 VNĐ</td>
-                            </tr>
+                            <!-- JavaScript sẽ chèn dữ liệu vào đây -->
                         </tbody>
                     </table>
                 </div>
@@ -286,30 +251,31 @@
 </div>
 
 <!-- Customer Analysis -->
-<div class="row mb-4">
+<!-- Thêm id="customerBlock" -->
+<div class="row mb-4" id="customerBlock">
     <div class="col-md-12">
         <div class="admin-card">
             <div class="card-header">
                 <h5 class="card-title mb-0">
-                    <i class="bi bi-people me-2"></i>Phân tích khách hàng
+                    <i class="bi bi-people me-2"></i>Phân tích khách hàng (Tổng quan)
                 </h5>
             </div>
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-3 text-center border-end">
-                        <h4 class="text-primary">2,847</h4>
+                        <h4 class="text-primary" id="statTotalCustomersAllTime">0</h4>
                         <p class="text-muted mb-0">Tổng khách hàng</p>
                     </div>
                     <div class="col-md-3 text-center border-end">
-                        <h4 class="text-success">1,245</h4>
+                        <h4 class="text-success" id="statLoyalCustomers">0</h4>
                         <p class="text-muted mb-0">Khách hàng thân thiết</p>
                     </div>
                     <div class="col-md-3 text-center border-end">
-                        <h4 class="text-info">486</h4>
-                        <p class="text-muted mb-0">Khách mới tháng này</p>
+                        <h4 class="text-info" id="statNewCustomersMonth">0</h4>
+                        <p class="text-muted mb-0">Khách mới (trong kỳ)</p>
                     </div>
                     <div class="col-md-3 text-center">
-                        <h4 class="text-warning">73%</h4>
+                        <h4 class="text-warning" id="statReturnRate">0%</h4>
                         <p class="text-muted mb-0">Tỷ lệ quay lại</p>
                     </div>
                 </div>
@@ -318,165 +284,353 @@
     </div>
 </div>
 
-<!-- Staff Performance -->
-<div class="row">
-    <div class="col-md-12">
-        <div class="admin-card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-bar-chart me-2"></i>Hiệu suất nhân viên
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead>
-                            <tr>
-                                <th>Nhân viên</th>
-                                <th class="text-center">Số booking xử lý</th>
-                                <th class="text-end">Doanh thu</th>
-                                <th class="text-center">Đánh giá TB</th>
-                                <th class="text-center">Hiệu suất</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <img src="https://ui-avatars.com/api/?name=Nguyen+Van+A&background=0D8ABC&color=fff"
-                                             class="rounded-circle me-2" width="32" alt="Avatar">
-                                        <strong>Nguyễn Văn A</strong>
-                                    </div>
-                                </td>
-                                <td class="text-center">342</td>
-                                <td class="text-end">856.000.000 VNĐ</td>
-                                <td class="text-center">
-                                    <span class="badge bg-warning text-dark">
-                                        <i class="bi bi-star-fill"></i> 4.8
-                                    </span>
-                                </td>
-                                <td class="text-center">
-                                    <div class="progress" style="height: 20px;">
-                                        <div class="progress-bar bg-success" style="width: 95%">95%</div>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <img src="https://ui-avatars.com/api/?name=Tran+Thi+B&background=28A745&color=fff"
-                                             class="rounded-circle me-2" width="32" alt="Avatar">
-                                        <strong>Trần Thị B</strong>
-                                    </div>
-                                </td>
-                                <td class="text-center">298</td>
-                                <td class="text-end">745.000.000 VNĐ</td>
-                                <td class="text-center">
-                                    <span class="badge bg-warning text-dark">
-                                        <i class="bi bi-star-fill"></i> 4.7
-                                    </span>
-                                </td>
-                                <td class="text-center">
-                                    <div class="progress" style="height: 20px;">
-                                        <div class="progress-bar bg-success" style="width: 92%">92%</div>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <img src="https://ui-avatars.com/api/?name=Le+Van+C&background=6C757D&color=fff"
-                                             class="rounded-circle me-2" width="32" alt="Avatar">
-                                        <strong>Lê Văn C</strong>
-                                    </div>
-                                </td>
-                                <td class="text-center">267</td>
-                                <td class="text-end">668.000.000 VNĐ</td>
-                                <td class="text-center">
-                                    <span class="badge bg-warning text-dark">
-                                        <i class="bi bi-star-fill"></i> 4.6
-                                    </span>
-                                </td>
-                                <td class="text-center">
-                                    <div class="progress" style="height: 20px;">
-                                        <div class="progress-bar bg-info" style="width: 88%">88%</div>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
+<!-- Staff Performance (Đã ẩn đi vì không có API) -->
+<!--
+<div class="row"> ... </div>
+-->
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Revenue Chart
-        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-        const revenueChart = new Chart(revenueCtx, {
-            type: 'line',
-            data: {
-                labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'],
+        // === KHAI BÁO BIẾN TOÀN CỤC ===
+        let revenueChartInstance;
+        let tourChartInstance;
+
+        // === LẤY DỮ LIỆU TỪ CONTROLLER (RAZOR) ===
+        const API_BASE_URL = '@ViewBag.ApiBaseUrl'; // Từ AdminWebController
+        const JWT_TOKEN = '@ViewBag.JwtToken';      // Từ AdminWebController
+
+        // === HÀM HELPER ===
+
+        function getAuthHeader() {
+            if (!JWT_TOKEN) {
+                console.error('Không tìm thấy token!');
+                alert('Phiên đăng nhập hết hạn. Đang chuyển về trang đăng nhập.');
+                window.location.href = '/AuthWeb/Login'; // Điều chỉnh nếu cần
+                return {};
+            }
+            return {
+                'Authorization': `Bearer ${JWT_TOKEN}`,
+                'Content-Type': 'application/json'
+            };
+        }
+        function formatCurrencyVND(value) {
+            if (value === null || value === undefined) return "0 VNĐ";
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+        }
+        function formatPercentage(value) {
+            if (value === null || value === undefined) return "0%";
+            return (value * 100).toFixed(1) + '%';
+        }
+        function formatNumber(value) {
+            if (value === null || value === undefined) return "0";
+            return new Intl.NumberFormat('vi-VN').format(value);
+        }
+
+        // === HÀM ẨN/HIỆN CÁC KHỐI BÁO CÁO (MỚI) ===
+        function toggleReportBlocks(reportType) {
+            const overviewBlock = document.getElementById('overviewBlock');
+            const chartsBlock = document.getElementById('chartsBlock');
+            const tablesBlock = document.getElementById('tablesBlock');
+            const customerBlock = document.getElementById('customerBlock');
+
+            // Tách các khối con
+            const revenueChartBlock = document.getElementById('revenueChartBlock');
+            const tourChartBlock = document.getElementById('tourChartBlock');
+            const monthlyRevenueTableBlock = document.getElementById('monthlyRevenueTableBlock');
+            const topToursTableBlock = document.getElementById('topToursTableBlock');
+
+            // Ẩn tất cả các khối chính trước
+            overviewBlock.classList.add('d-none');
+            chartsBlock.classList.add('d-none');
+            tablesBlock.classList.add('d-none');
+            customerBlock.classList.add('d-none');
+
+            // Ẩn các khối con
+            revenueChartBlock.classList.add('d-none');
+            tourChartBlock.classList.add('d-none');
+            monthlyRevenueTableBlock.classList.add('d-none');
+            topToursTableBlock.classList.add('d-none');
+
+
+            // Luôn hiển thị 4 thẻ tổng quan
+            overviewBlock.classList.remove('d-none');
+
+            // Hiển thị các khối dựa trên lựa chọn
+            if (reportType === 'all') {
+                chartsBlock.classList.remove('d-none');
+                tablesBlock.classList.remove('d-none');
+                customerBlock.classList.remove('d-none');
+
+                // Hiển thị tất cả khối con
+                revenueChartBlock.classList.remove('d-none');
+                tourChartBlock.classList.remove('d-none');
+                monthlyRevenueTableBlock.classList.remove('d-none');
+                topToursTableBlock.classList.remove('d-none');
+
+            } else if (reportType === 'revenue') {
+                chartsBlock.classList.remove('d-none');
+                tablesBlock.classList.remove('d-none');
+
+                revenueChartBlock.classList.remove('d-none'); // Chỉ hiện biểu đồ doanh thu
+                monthlyRevenueTableBlock.classList.remove('d-none'); // Chỉ hiện bảng doanh thu
+
+            } else if (reportType === 'booking') {
+                chartsBlock.classList.remove('d-none');
+                tablesBlock.classList.remove('d-none');
+
+                tourChartBlock.classList.remove('d-none'); // Chỉ hiện biểu đồ tour
+                topToursTableBlock.classList.remove('d-none'); // Chỉ hiện bảng tour
+
+            } else if (reportType === 'customer') {
+                customerBlock.classList.remove('d-none');
+            }
+        }
+
+
+        // === CÁC HÀM CẬP NHẬT UI (Không đổi) ===
+        function updateOverviewCards(data) {
+            document.getElementById('statTotalRevenue').textContent = formatCurrencyVND(data.totalRevenue);
+            document.getElementById('statTotalBookings').textContent = formatNumber(data.totalBookings);
+            document.getElementById('statAvgRating').textContent = (data.averageRating || 0).toFixed(1) + '/5.0';
+        }
+
+        function updateCustomerAnalysis(data) {
+            document.getElementById('statTotalCustomersAllTime').textContent = formatNumber(data.totalCustomers);
+            document.getElementById('statLoyalCustomers').textContent = formatNumber(data.loyalCustomers);
+            document.getElementById('statNewCustomersMonth').textContent = formatNumber(data.newCustomersInRange);
+            document.getElementById('statReturnRate').textContent = formatPercentage(data.returnRate);
+            document.getElementById('statNewCustomers').textContent = formatNumber(data.newCustomersInRange);
+        }
+
+        function updateTopToursTable(data) {
+            const tableBody = document.querySelector("#topToursTable tbody");
+            if (!tableBody) return;
+            tableBody.innerHTML = '';
+            if (!data || data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4" class="text-center">Không có dữ liệu.</td></tr>';
+                return;
+            }
+            let rank = 1;
+            for (const tour of data) {
+                const row = `
+                            <tr>
+                                <td>
+                                    <span class="badge ${rank == 1 ? 'bg-warning text-dark' : (rank == 2 ? 'bg-secondary' : (rank == 3 ? 'bg-danger' : 'bg-info'))}">
+                                        <i class="bi ${rank <= 3 ? 'bi-trophy-fill' : 'bi-bookmark-star'}"></i> ${rank++}
+                                    </span>
+                                </td>
+                                <td>${tour.tourName}</td>
+                                <td class="text-center">${formatNumber(tour.bookingsCount)}</td>
+                                <td class="text-end">${formatCurrencyVND(tour.revenue)}</td>
+                            </tr>
+                        `;
+                tableBody.insertAdjacentHTML('beforeend', row);
+            }
+        }
+
+        function updateMonthlyRevenueTable(data) {
+            const tableBody = document.querySelector("#monthlyRevenueTable tbody");
+            if (!tableBody) return;
+            tableBody.innerHTML = '';
+            if (!data || data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="3" class="text-center">Không có dữ liệu cho năm này.</td></tr>';
+                return;
+            }
+            const monthNames = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"];
+            data.sort((a, b) => b.month - a.month);
+            for (const monthData of data) {
+                const row = `
+                            <tr>
+                                <td>${monthNames[monthData.month - 1]} / ${monthData.year}</td>
+                                <td class="text-center">${formatNumber(monthData.bookingsCount)}</td>
+                                <td class="text-end">${formatCurrencyVND(monthData.totalRevenue)}</td>
+                            </tr>
+                        `;
+                tableBody.insertAdjacentHTML('beforeend', row);
+            }
+        }
+
+        function updateRevenueChart(data) {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            const labels = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'];
+            const monthlyData = new Array(12).fill(0);
+            for (const month of data) {
+                monthlyData[month.month - 1] = month.totalRevenue / 1000000;
+            }
+            const chartData = {
+                labels: labels,
                 datasets: [{
                     label: 'Doanh thu (triệu VNĐ)',
-                    data: [420, 380, 450, 520, 480, 510, 521, 389, 623, 567, 456, 0],
+                    data: monthlyData,
                     borderColor: 'rgb(75, 192, 192)',
                     backgroundColor: 'rgba(75, 192, 192, 0.1)',
                     tension: 0.4,
                     fill: true
                 }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top',
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return value + 'M';
-                            }
-                        }
-                    }
-                }
+            };
+            if (revenueChartInstance) {
+                revenueChartInstance.data = chartData;
+                revenueChartInstance.update();
+            } else {
+                revenueChartInstance = new Chart(ctx, { type: 'line', data: chartData, options: { /* ... options ... */ } });
             }
-        });
+        }
 
-        // Tour Chart
-        const tourCtx = document.getElementById('tourChart').getContext('2d');
-        const tourChart = new Chart(tourCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Ha Long Bay', 'Sapa Trek', 'Phu Quoc', 'Hanoi Tour', 'Mekong'],
+        function updateTourChart(data) {
+            const ctx = document.getElementById('tourChart').getContext('2d');
+            const labels = data.map(t => t.tourName);
+            const bookings = data.map(t => t.bookingsCount);
+            const chartData = {
+                labels: labels,
                 datasets: [{
-                    data: [342, 289, 256, 234, 198],
+                    data: bookings,
                     backgroundColor: [
-                        'rgba(255, 99, 132, 0.8)',
-                        'rgba(54, 162, 235, 0.8)',
-                        'rgba(255, 206, 86, 0.8)',
-                        'rgba(75, 192, 192, 0.8)',
-                        'rgba(153, 102, 255, 0.8)'
+                        'rgba(0, 123, 255, 0.8)',  // Xanh dương
+                        'rgba(40, 167, 69, 0.8)',   // Xanh lá
+                        'rgba(255, 193, 7, 0.8)',   // Vàng
+                        'rgba(23, 162, 184, 0.8)',  //  Xanh mòng két (Teal)
+                        'rgba(220, 53, 69, 0.8)'    //  Đỏ
                     ]
                 }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                    }
-                }
+            };
+            if (tourChartInstance) {
+                tourChartInstance.data = chartData;
+                tourChartInstance.update();
+            } else {
+                tourChartInstance = new Chart(ctx, { type: 'doughnut', data: chartData, options: { /* ... options ... */ } });
             }
+        }
+
+        // === HÀM TẢI DỮ LIỆU CHÍNH (ĐÃ CẬP NHẬT) ===
+        async function loadDashboardData() {
+            const from = document.getElementById('fromDate').value;
+            const to = document.getElementById('toDate').value;
+            const reportType = document.getElementById('reportTypeSelect').value; // Đọc giá trị dropdown
+
+            if (!from || !to) {
+                alert('Vui lòng chọn Từ ngày và Đến ngày');
+                return;
+            }
+
+            const year = new Date(from).getFullYear();
+            const headers = getAuthHeader();
+            const searchButton = document.getElementById('searchButton');
+
+            // 1. Ẩn/hiện các khối trước khi tải
+            toggleReportBlocks(reportType);
+
+            try {
+                searchButton.disabled = true;
+                searchButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang tải...';
+
+                // 2. Chuẩn bị các promise
+                let overviewPromise = null;
+                let topToursPromise = null;
+                let monthlyPromise = null;
+                let customerPromise = null;
+
+                // Luôn tải Overview và Customer (vì overview cards cần cả hai)
+                overviewPromise = fetch(`${API_BASE_URL}/api/reports/overview?from=${from}&to=${to}&topN=5`, { headers }).then(res => res.json());
+                customerPromise = fetch(`${API_BASE_URL}/api/reports/customer-analysis?from=${from}&to=${to}`, { headers }).then(res => res.json());
+
+                if (reportType === 'all' || reportType === 'booking') {
+                    topToursPromise = fetch(`${API_BASE_URL}/api/reports/top-tours?from=${from}&to=${to}&topN=5`, { headers }).then(res => res.json());
+                }
+                if (reportType === 'all' || reportType === 'revenue') {
+                    monthlyPromise = fetch(`${API_BASE_URL}/api/reports/monthly?year=${year}`, { headers }).then(res => res.json());
+                }
+
+                // 3. Chờ các promise cần thiết
+                const overviewData = await overviewPromise;
+                const customerData = await customerPromise;
+
+                updateOverviewCards(overviewData);
+                updateCustomerAnalysis(customerData);
+
+                if (topToursPromise) {
+                    const topToursData = await topToursPromise;
+                    updateTopToursTable(topToursData);
+                    updateTourChart(topToursData);
+                }
+
+                if (monthlyPromise) {
+                    const monthlyData = await monthlyPromise;
+                    updateMonthlyRevenueTable(monthlyData);
+                    updateRevenueChart(monthlyData);
+                }
+
+            } catch (error) {
+                console.error('Lỗi khi tải dashboard:', error);
+                alert(error.message || 'Đã xảy ra lỗi không xác định.');
+            } finally {
+                searchButton.disabled = false;
+                searchButton.innerHTML = '<i class="bi bi-search me-2"></i>Tìm kiếm';
+            }
+        }
+
+        // === HÀM XUẤT EXCEL (Không đổi) ===
+        async function exportToExcel() {
+            // (Giữ nguyên logic export, nó vẫn export theo API 'export'
+            // bất kể dropdown đang chọn gì)
+            const from = document.getElementById('fromDate').value;
+            const to = document.getElementById('toDate').value;
+            if (!from || !to) { alert('Vui lòng chọn Từ ngày và Đến ngày'); return; }
+            const headers = getAuthHeader();
+            const button = document.getElementById('exportButton');
+
+            try {
+                button.disabled = true;
+                button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xuất...';
+                const response = await fetch(`${API_BASE_URL}/api/reports/export?from=${from}&to=${to}`, { headers });
+                if (!response.ok) throw new Error('Lỗi khi xuất file Excel.');
+                const blob = await response.blob();
+                const contentDisposition = response.headers.get('content-disposition');
+                let fileName = `Revenue_Overview_${from}_${to}.xlsx`;
+                if (contentDisposition) {
+                    const fileNameMatch = contentDisposition.match(/filename="(.+)"/);
+                    if (fileNameMatch && fileNameMatch.length === 2) fileName = fileNameMatch[1];
+                }
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none'; a.href = url; a.download = fileName;
+                document.body.appendChild(a); a.click();
+                window.URL.revokeObjectURL(url); a.remove();
+            } catch (error) {
+                console.error('Lỗi khi xuất Excel:', error);
+                alert(error.message || 'Đã xảy ra lỗi không xác định.');
+            } finally {
+                button.disabled = false;
+                button.innerHTML = '<i class="bi bi-file-earmark-excel me-2"></i>Xuất Excel';
+            }
+        }
+
+        // === HÀM IN ẤN (Không đổi) ===
+        function printReport() {
+            window.print();
+        }
+
+        // === GẮN SỰ KIỆN ===
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date();
+            const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            document.getElementById('fromDate').value = firstDayOfMonth.toISOString().split('T')[0];
+            document.getElementById('toDate').value = today.toISOString().split('T')[0];
+
+            // Gắn sự kiện click
+            document.getElementById('searchButton').addEventListener('click', loadDashboardData);
+            document.getElementById('exportButton').addEventListener('click', exportToExcel);
+            document.getElementById('printButton').addEventListener('click', printReport);
+
+            // Gắn sự kiện change cho dropdown (MỚI)
+            const reportTypeSelect = document.getElementById('reportTypeSelect');
+            reportTypeSelect.addEventListener('change', () => {
+                toggleReportBlocks(reportTypeSelect.value);
+            });
+
+            // Tải dữ liệu lần đầu khi trang mở
+            toggleReportBlocks(reportTypeSelect.value); // Đặt trạng thái hiển thị ban đầu
+            loadDashboardData();
         });
+
     </script>
 }
