@@ -34,5 +34,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Services.Interfaces
             string? search = null,
             string? fromDate = null,
             string? toDate = null);
+
+        Task<bool> IsScheduleFullAsync(int tourScheduleId);
     }
 }

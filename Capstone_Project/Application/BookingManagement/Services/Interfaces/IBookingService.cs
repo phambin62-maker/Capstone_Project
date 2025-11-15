@@ -14,5 +14,9 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services.Interfaces
         Task<bool> HasUserBookedTour(int userId, int tourId);
         Task<Booking?> GetBookingByUserIdAndTourId(int userId, int tourId);
         Task AddBookingCustomersToBookId(int bookingId, List<BookingCustomerDTO> bookingCustomers);
+        Task<bool> UpdatePaymentStatus(PaymentDTO payment);
+        Task<int> GetCustomerCountByBooking(int bookingId);
+        Task<List<ScheduleBookedSeatsDTO>> GetBookedSeatsByTour(int tourId);
+        Task<IEnumerable<UserBookingDTO>> GetByUserIdAsync2(int userId);
     }
 }
