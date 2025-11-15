@@ -1,45 +1,8 @@
-﻿<!DOCTYPE html>
-<html lang="en">
-    @{
-            var firstname = Context.Session.GetString("FirstName");
-                    @model FE_Capstone_Project.Models.HomePageViewModel
-
+﻿@model FE_Capstone_Project.Models.HomePageViewModel
+@{
+    var firstname = Context.Session.GetString("FirstName");
+    var BASE_API_URL = "https://localhost:7160/api/";
 }
-<head>
-    <meta charset="utf-8">
-    <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>Index - Tour Bootstrap Template</title>
-    <meta name="description" content="">
-    <meta name="keywords" content="">
-
-    <!-- Favicons -->
-    <link href="~/assets/img/favicon.png" rel="icon">
-    <link href="~/assets/img/apple-touch-icon.png" rel="apple-touch-icon">
-
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com" rel="preconnect">
-    <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
-
-    <!-- Vendor CSS Files -->
-    <link href="~/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-    <link href="~/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
-    <link href="~/assets/vendor/aos/aos.css" rel="stylesheet">
-    <link href="~/assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
-    <link href="~/assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
-
-    <!-- Main CSS File -->
-    <link href="~/assets/css/main.css" rel="stylesheet">
-
-    <!-- =======================================================
-    * Template Name: Tour
-    * Template URL: https://bootstrapmade.com/tour-bootstrap-travel-website-template/
-    * Updated: Jul 01 2025 with Bootstrap v5.3.7
-    * Author: BootstrapMade.com
-    * License: https://bootstrapmade.com/license/
-    ======================================================== -->
-</head>
-
 <body class="index-page">
     <main class="main">
         <!-- Travel Hero Section -->
@@ -59,7 +22,7 @@
                             <h1 class="hero-title">Discover Your Perfect Journey</h1>
                             <p class="hero-subtitle">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.</p>
                             <div class="hero-buttons">
-                                <a href="TourWeb/tours" class="btn btn-primary me-3">Start Exploring</a>
+                                <a asp-action="Tours" asp-controller="TourWeb" class="btn btn-primary me-3">Start Exploring</a>
                             </div>
                         </div>
                     </div>
@@ -257,7 +220,10 @@
                             <div class="col-lg-6" data-aos="zoom-in" data-aos-delay="200">
                                 <div class="featured-destination">
                                     <div class="destination-overlay">
-                                        <img src="@featuredTour.Image" alt="@featuredTour.TourName" class="img-fluid">
+                                        @{
+                                            var imageUrl = $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(featuredTour.Image)}";
+                                        }
+                                        <img src="@imageUrl" alt="@featuredTour.TourName" class="img-fluid">
                                         <div class="destination-info">
                                             <span class="destination-tag">Most Popular</span>
                                             <h3>@featuredTour.TourName</h3>
@@ -270,7 +236,7 @@
                                             </div>
                                             <div class="price-info">
                                                 <span class="starting-from">Starting from</span>
-                                                <span class="amount">@featuredTour.Price.ToString("N0") đ</span>
+                                                <span class="amount">@featuredTour.Price.ToString("N0") VND</span>
                                             </div>
                                             <a href="/TourWeb/TourDetails?tourId=@featuredTour.TourId" class="explore-btn">
                                                 <span>Explore Now</span>
@@ -292,7 +258,10 @@
                                     <div class="col-12" data-aos="fade-left" data-aos-delay="@delay">
                                         <div class="compact-destination">
                                             <div class="destination-image">
-                                                <img src="@tour.Image" alt="@tour.TourName" class="img-fluid">
+                                                @{
+                                                    var imageUrl = $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(tour.Image)}";
+                                                }
+                                                <img src="@imageUrl" alt="@tour.TourName" class="img-fluid">
                                                 @if (tour.AverageRating >= 4.8m)
                                                 {
                                                     <div class="badge-offer">Top Rated</div>
@@ -306,7 +275,7 @@
                                                         <i class="bi bi-star-fill"></i>
                                                         @tour.AverageRating.ToString("F1")
                                                     </span>
-                                                    <span class="price">from @tour.Price.ToString("N0") đ</span>
+                                                    <span class="price">from @tour.Price.ToString("N0") VND</span>
                                                 </div>
                                                 <a href="/TourWeb/TourDetails?tourId=@tour.TourId" class="quick-link">
                                                     View Details <i class="bi bi-chevron-right"></i>
@@ -419,5 +388,3 @@
     <script src="~/assets/js/main.js"></script>
 
 </body>
-
-</html>

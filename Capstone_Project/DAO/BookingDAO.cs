@@ -2,6 +2,7 @@
 using BE_Capstone_Project.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using BE_Capstone_Project.Domain.Enums;
+using BE_Capstone_Project.Application.BookingManagement.DTOs;
 
 namespace BE_Capstone_Project.DAO
 {
@@ -101,7 +102,9 @@ namespace BE_Capstone_Project.DAO
                 return await _context.Bookings
                 .Where(b => b.UserId == userId)
                 .Include(b => b.User)
-                .Include(b => b.TourSchedule)
+                .Include(b => b.TourSchedule).ThenInclude(b => b.Tour)
+                .Include(b => b.BookingCustomers)
+                .OrderByDescending(b => b.BookingDate)
                 .ToListAsync();
             }
             catch (Exception ex)
@@ -159,6 +162,25 @@ namespace BE_Capstone_Project.DAO
                 Console.WriteLine($"An error occurred while retrieving booking for user ID {userId} and tour ID {tourId}: {ex.Message}");
                 return null;
             }
+        }
+
+        public async Task<bool> UpdatePaymentStatusAsync(PaymentDTO payment)
+        {
+            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.Id == payment.BookingId);
+            if (booking == null) return false;
+
+            if (payment.Success)
+            {
+                booking.PaymentStatus = PaymentStatus.Completed;
+                booking.PaymentMethod = (byte)(payment.PaymentMethod == "VnPay" ? 1 : 0);
+                booking.BookingStatus = BookingStatus.Confirmed;
+                booking.PaymentDate = DateOnly.FromDateTime(DateTime.Now);
+                await _context.SaveChangesAsync();
+
+                return true;
+            }
+
+            return false;
         }
     }
 }

@@ -15,12 +15,18 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
         private readonly IBookingService _bookingService;
         private readonly IUserService _userService;
         private readonly ITourService _tourService;
+        private readonly ITourScheduleService _tourScheduleService;
 
-        public BookingController(IBookingService bookingService, IUserService userService, ITourService tourService)
+        public BookingController(
+            IBookingService bookingService, 
+            IUserService userService, 
+            ITourService tourService,
+            ITourScheduleService tourScheduleService)
         {
             _bookingService = bookingService;
             _userService = userService;
             _tourService = tourService;
+            _tourScheduleService = tourScheduleService;
         }
 
         [HttpGet]
@@ -40,11 +46,22 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
             return Ok(booking);
         }
 
-        [HttpGet("user/{userId}")]
+        //[HttpGet("user/{userId}")]
+        //[Authorize] // Cần đăng nhập để xem booking của user
+        //public async Task<IActionResult> GetByUserId(int userId)
+        //{
+        //    var list = await _bookingService.GetByUserIdAsync(userId);
+        //    return Ok(list);
+        //}
+
+        [HttpGet("user/{username}")]
         [Authorize] // Cần đăng nhập để xem booking của user
-        public async Task<IActionResult> GetByUserId(int userId)
+        public async Task<IActionResult> GetBookingsByUsername(string username)
         {
-            var list = await _bookingService.GetByUserIdAsync(userId);
+            var user = await _userService.GetUserByUsername(username);
+            if (user == null) return NotFound();
+            var list = await _bookingService.GetByUserIdAsync2(user!.Id);
+            if (list == null) return NotFound();
             return Ok(list);
         }
 
@@ -54,17 +71,13 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
         {
             try
             {
-                Console.WriteLine($"===========================================================");
-                Console.WriteLine($"{request.ToString()}");
-                Console.WriteLine($"===========================================================");
                 var user = await _userService.GetUserByUsername(username);
                 var tour = await _tourService.GetTourByScheduleId(request.Tour_Schedule);
-                decimal totalPrice = CalculateTotalPrice(request, tour);
-
+                decimal totalPrice = CalculateTotalPrice(request, tour!);
 
                 CreateBookingDTO booking = new CreateBookingDTO
                 {
-                    UserId = user.Id,
+                    UserId = user!.Id,
                     TourScheduleId = request.Tour_Schedule,
                     FirstName = request.First_Name,
                     LastName = request.Last_Name,
@@ -92,14 +105,16 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
                 else
                 {
                     await _bookingService.AddBookingCustomersToBookId(bookingId, request.Travelers);
-                    return Ok(new BookingSuccessResponse { 
+                    return Ok(new BookingSuccessResponse
+                    {
                         BookingId = bookingId,
                         TotalPrice = (int)totalPrice,
-                        TourName = tour.Name,
+                        TourName = tour!.Name!,
                         FirstName = request.First_Name,
                         LastName = request.Last_Name,
-                        Message = "Booking created successfully", 
-                        Success = true });
+                        Message = "Booking created successfully",
+                        Success = true
+                    });
                 }
             }
             catch (Exception ex)
@@ -127,6 +142,22 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
             return NoContent();
         }
 
+        [HttpPost("payment-update")]
+        public async Task<IActionResult> UpdatePaymentStatus(PaymentDTO payment)
+        {
+            var success = await _bookingService.UpdatePaymentStatus(payment);
+            if (!success) return NotFound();
+            return Ok(true);
+        }
+
+        [HttpGet("tours/{tourId}/booked-seats")]
+        public async Task<IActionResult> GetBookedSeats(int tourId)
+        {
+            var result = await _bookingService.GetBookedSeatsByTour(tourId);
+            if(result == null) return NotFound();
+            return Ok(result);
+        }
+
         private decimal CalculateTotalPrice(BookingRequest request, Tour tour)
         {
             if (tour.Price == null)
@@ -143,8 +174,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
                 groupDiscount = tour.GroupDiscount.Value / 100;
             }
 
-            decimal totalPrice = (request.Adults * basePrice) +
-                                 ((request.Children + request.Infants) * childPrice);
+            decimal totalPrice = (request.Adults * basePrice) + (request.Children * childPrice);
 
             totalPrice *= (1 - groupDiscount);
 

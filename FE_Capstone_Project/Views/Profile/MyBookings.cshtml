@@ -1,0 +1,67 @@
+﻿@model List<UserBookingResponse>
+@using BE_Capstone_Project.Domain.Enums
+
+<h2>My Booked Tours</h2>
+
+@if (!Model.Any())
+{
+    <p>You have no booked tours yet.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped text-center align-middle">
+            <thead>
+                <tr>
+                    <th>Tour</th>
+                    <th>Departure</th>
+                    <th>Arrival</th>
+                    <th>Adults</th>
+                    <th>Children</th>
+                    <th>Total Price</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var booking in Model)
+                {
+                    <tr>
+                        <td>@booking.TourName</td>
+                        <td>@booking.DepartureDate.ToString("MMMM dd, yyyy")</td>
+                        <td>@booking.ArrivalDate.ToString("MMMM dd, yyyy")</td>
+                        <td>@booking.Adults</td>
+                        <td>@booking.Children</td>
+                        <td>@booking.TotalPrice.ToString("N0") VND</td>
+                        <td>
+                            @switch (booking.Status)
+                            {
+                                case BookingStatus.Cancelled:
+                                        <span class="badge bg-danger">Cancelled</span>
+                                    break;
+                                case BookingStatus.Completed:
+                                        <span class="badge bg-secondary">Completed</span>
+                                    break;
+                                case BookingStatus.Pending:
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                    break;
+                                case BookingStatus.Confirmed:
+                                        <span class="badge bg-success">Confirmed</span>
+                                    break;
+                                default:
+                                    <span class="badge bg-light text-dark">Unknown</span>
+                                    break;
+                            }
+                        </td>
+                        <td>
+                            @if(booking.Status == BookingStatus.Confirmed)
+                            {
+                                <a asp-controller="Booking" asp-action="Cancel" class="btn btn-danger">Cancel booking</a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

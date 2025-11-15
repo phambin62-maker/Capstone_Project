@@ -10,6 +10,8 @@
     }
     bool isLoggedIn = !string.IsNullOrEmpty(Context.Session.GetString("UserName")); 
     var currentUsername = Context.Session.GetString("UserName");
+
+    var BASE_API_URL = "https://localhost:7160/api/";
 }
 <body class="tour-details-page">
     <main class="main">
@@ -35,15 +37,19 @@
                 <!-- Hero Section -->
                 <div class="tour-hero">
                     <div class="hero-image-wrapper">
-                        <img src="@(Model.TourImages != null && Model.TourImages.Any() ? Model.TourImages.First().Image : "/images/default-tour.jpg")"
-                             class="img-fluid w-100" />
+                        @{
+                            var mainImage = Model.TourImages!.First();
+                            var mainImageUrl = $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(mainImage!.Image!)}";
+                        }
+                        <img src="@mainImageUrl" class="img-fluid w-100" />
                         <div class="hero-overlay">
                             <div class="hero-content">
                                 <h1>@Model.Name</h1>
                                 <div class="hero-meta">
                                     <span class="duration"><i class="bi bi-calendar"></i> @Model.Duration Day@(Model.Duration == 1 ? "" : "s")</span>
                                     <span class="destination"><i class="bi bi-geo-alt"></i> @Model.EndLocation.LocationName</span>
-                                    <span class="rating"><i class="bi bi-star-fill"></i> @avgRatingText (@Model.Reviews.Count reviews)</span>
+                                    <span class="rating"><i class="bi bi-star-fill"></i> @avgRatingText (@Model.Reviews!.Count reviews)</span>
+                                    <span class="rating"><i class="bi bi-people-fill"></i> @Model.MaxSeats seats per booking</span>
                                 </div>
                                 <p class="hero-tagline">Experience ancient wonders, pristine beaches, and vibrant cultures across three magnificent countries</p>
                                 <a asp-controller="@(isLoggedIn ? "BookingWeb" : "AuthWeb")"
@@ -108,7 +114,7 @@
                             </div>
                         </div>
                         <div class="available-dates">
-                            <h3>@DateTime.Now.Year Departure Dates</h3>
+                            <h3>@DateTime.Now.Year-@DateTime.Now.AddYears(1).Year Departure Dates</h3>
                             <div class="dates-grid">
                                 @if(ViewBag.TourSchedules != null && ViewBag.TourSchedules.Count > 0)
                                 {
@@ -119,7 +125,15 @@
                                                 @schedule.DepartureDate.Value.ToString("MMM dd", CultureInfo.InvariantCulture) -
                                                 @schedule.ArrivalDate.Value.ToString("dd", CultureInfo.InvariantCulture)
                                             </div>
-                                            <div class="availability">Available</div>
+                                            @{
+                                                var bookedSeatsList = ViewBag.BookedSeats as List<ScheduleBookedSeatsResponse> ?? new List<ScheduleBookedSeatsResponse>();
+                                                var bookedSeats = bookedSeatsList
+                                                .FirstOrDefault(b => b.TourScheduleId == schedule.Id)?.BookedSeats ?? 0;
+
+                                                // Calculate available seats
+                                                var availableSeats = Model.MaxSeats - bookedSeats;
+                                            }
+                                            <div class="availability">Available (@availableSeats seats left)</div>
                                         </div>
                                     }
                                 }
@@ -139,8 +153,12 @@
                         @foreach (var images in Model.TourImages)
                         {
                             <div class="gallery-item">
-                                <a href="@images.Image" class="glightbox">
-                                    <img src="@images.Image" class="img-fluid" loading="lazy">
+                                @{
+                                    var image = images;
+                                    var imageUrl = $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(mainImage.Image!)}";
+                                }
+                                <a href="@imageUrl" class="glightbox">
+                                    <img src="@imageUrl" class="img-fluid" loading="lazy">
                                 </a>
                             </div>
                         }

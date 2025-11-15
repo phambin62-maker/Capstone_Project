@@ -245,6 +245,22 @@ namespace BE_Capstone_Project.DAO
             }
         }
 
+        public async Task<bool> IsScheduleFullAsync(int tourScheduleId)
+        {
+            var maxSeats = await _context.TourSchedules
+                .Where(ts => ts.Id == tourScheduleId)
+                .Select(ts => ts.Tour.MaxSeats)
+                .FirstOrDefaultAsync();
+
+            if (maxSeats == 0) return false;
+
+            var currentCustomers = await _context.BookingCustomers
+                .Where(bc => bc.Booking.TourScheduleId == tourScheduleId)
+                .CountAsync();
+
+            return currentCustomers >= maxSeats;
+        }
+
         // Helper method to apply filters
         private IQueryable<TourSchedule> ApplyFilters(
             IQueryable<TourSchedule> query,
@@ -326,6 +342,5 @@ namespace BE_Capstone_Project.DAO
                 _ => query.OrderByDescending(ts => ts.DepartureDate) // Default sort by departure date descending
             };
         }
-
     }
 }

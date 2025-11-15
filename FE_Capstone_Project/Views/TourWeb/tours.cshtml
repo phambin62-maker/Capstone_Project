@@ -1,4 +1,7 @@
 @model List<TourViewModel>
+@{
+    var BASE_API_URL = "https://localhost:7160/api/";
+}
 <body class="tours-page">
     <main class="main">
         <!-- Page Title -->
@@ -60,9 +63,12 @@
                                 {
                                     <div class="swiper-slide">
                                         <div class="featured-tour-card">
+                                            @{
+                                                var mainImage = featuredTour!.TourImages!.First();
+                                                var mainImageUrl = $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(mainImage!.Image!)}";
+                                            }
                                             <div class="tour-image">
-                                                <img src="@(featuredTour.TourImages != null && featuredTour.TourImages.Any() ? featuredTour.TourImages.First().Image : "/images/default-tour.jpg")"
-                                                    class="img-fluid w-100" />
+                                                <img src="@mainImageUrl" class="img-fluid w-100" />
                                                 <div class="tour-badge">@featuredTour.Category.CategoryName</div>
                                             </div>
                                             <div class="tour-content">
@@ -181,15 +187,18 @@
                                     string avgRatingText = "N/A";
                                     if (tour.Reviews != null && tour.Reviews.Any())
                                     {
-                                        decimal avgRating = (decimal)tour.Reviews.Average(r => r.Stars);
+                                        decimal avgRating = (decimal)tour.Reviews.Average(r => r.Stars)!;
                                         avgRatingText = avgRating.ToString("0.0");
                                     }
 
                                     <div class="col-lg-4 col-md-6 mb-4">
                                         <div class="tour-card">
                                             <div class="tour-image">
-                                                <img src="@(tour.TourImages != null && tour.TourImages.Any() ? tour.TourImages.First().Image : "/images/default-tour.jpg")"
-                                                    class="img-fluid w-100" />
+                                                @{
+                                                    var mainImage = tour.TourImages!.First();
+                                                    var mainImageUrl = $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(mainImage!.Image!)}";
+                                                }
+                                                <img src="@mainImageUrl" class="img-fluid w-100" />
                                                 <div class="tour-price">@string.Format("{0:N0} VND", tour.Price)</div>
                                             </div>
                                             <div class="tour-content">

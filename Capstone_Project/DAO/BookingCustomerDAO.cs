@@ -1,5 +1,6 @@
-﻿using BE_Capstone_Project.Infrastructure;
+﻿using BE_Capstone_Project.Application.BookingManagement.DTOs;
 using BE_Capstone_Project.Domain.Models;
+using BE_Capstone_Project.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
 namespace BE_Capstone_Project.DAO
@@ -106,6 +107,26 @@ namespace BE_Capstone_Project.DAO
                 Console.WriteLine($"An error occurred while retrieving booking customers for booking ID {bookingId}: {ex.Message}");
                 return new List<BookingCustomer>();
             }
+        }
+
+        public async Task<int> GetCustomerCountByBookingAsync(int bookingId)
+        {
+            return await _context.BookingCustomers
+                .Where(bc => bc.BookingId == bookingId)
+                .CountAsync();
+        }
+
+        public async Task<List<ScheduleBookedSeatsDTO>> GetBookedSeatsByTourAsync(int tourId)
+        {
+            return await _context.BookingCustomers
+                .Where(bc => bc.Booking.TourSchedule.TourId == tourId)
+                .GroupBy(bc => bc.Booking.TourScheduleId)
+                .Select(g => new ScheduleBookedSeatsDTO
+                {
+                    TourScheduleId = g.Key,
+                    BookedSeats = g.Count()
+                })
+                .ToListAsync();
         }
     }
 }
