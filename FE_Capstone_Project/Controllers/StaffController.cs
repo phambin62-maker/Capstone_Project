@@ -80,14 +80,12 @@ namespace FE_Capstone_Project.Controllers
                     return (false, default, "Token not found. Please log in again.");
                 }
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                // === End adding Token ===
 
                 var response = await _httpClient.SendAsync(request);
                 var responseContent = await response.Content.ReadAsStringAsync();
 
                 _logger.LogInformation($"API Call: {endpoint}, Status: {response.StatusCode}, Response: {responseContent}");
 
-                // Handle different status codes separately
                 if (response.StatusCode == HttpStatusCode.Unauthorized)
                 {
                     // 401 - Token invalid/expired
@@ -181,7 +179,7 @@ namespace FE_Capstone_Project.Controllers
         public async Task<IActionResult> Tours(
             int page = 1,
             int pageSize = 5,
-            string status = null, 
+            string status = null,
             int? startLocation = null,
             int? endLocation = null,
             int? category = null,
@@ -276,15 +274,115 @@ namespace FE_Capstone_Project.Controllers
                 ViewBag.CurrentSort = sort;
                 ViewBag.CurrentSearch = search;
 
+                // === THÊM MỚI: Tính toán statistics và truyền qua ViewBag ===
+                var totalTours = totalCount;
+                var activeTours = tours.Count(t => t.TourStatus);
+                var inactiveTours = tours.Count(t => !t.TourStatus);
+                var displayingTours = tours.Count;
+
+                ViewBag.TotalTours = totalTours;
+                ViewBag.ActiveTours = activeTours;
+                ViewBag.InactiveTours = inactiveTours;
+                ViewBag.DisplayingTours = displayingTours;
+
                 return View(tours);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error loading tours");
                 ViewBag.ErrorMessage = "Lỗi kết nối đến server. Vui lòng kiểm tra lại kết nối.";
+
+                // Set default values khi có lỗi
+                ViewBag.TotalTours = 0;
+                ViewBag.ActiveTours = 0;
+                ViewBag.InactiveTours = 0;
+                ViewBag.DisplayingTours = 0;
+
                 return View(new List<TourViewModel>());
             }
         }
+        // === THÊM MỚI: Method để lấy image cho TourDetails ===
+        [HttpGet]
+        public async Task<IActionResult> GetTourDetailImage(int tourId, int? imageIndex = null)
+        {
+            try
+            {
+                var (success, result, error) = await CallApiAsync<TourDetailResponse>($"Tour/GetTourById/{tourId}");
+
+                if (!success || result?.Tour == null || result.Tour.TourImages == null || !result.Tour.TourImages.Any())
+                {
+                    // Return default image
+                    return File(System.IO.File.ReadAllBytes("wwwroot/images/default-tour.jpg"), "image/jpeg");
+                }
+
+                // Get specific image or first image
+                TourImage image;
+                if (imageIndex.HasValue && imageIndex.Value < result.Tour.TourImages.Count)
+                {
+                    image = result.Tour.TourImages[imageIndex.Value];
+                }
+                else
+                {
+                    image = result.Tour.TourImages.First();
+                }
+
+                if (image.Image.StartsWith("data:image"))
+                {
+                    // Handle base64 images
+                    var base64Data = image.Image.Split(',')[1];
+                    var imageBytes = Convert.FromBase64String(base64Data);
+                    return File(imageBytes, "image/jpeg");
+                }
+                else if (!string.IsNullOrEmpty(image.Image))
+                {
+                    // Proxy the image request through controller
+                    var imageResponse = await _httpClient.GetAsync($"Tour/GetImage?path={Uri.EscapeDataString(image.Image)}");
+                    if (imageResponse.IsSuccessStatusCode)
+                    {
+                        var imageBytes = await imageResponse.Content.ReadAsByteArrayAsync();
+                        var contentType = imageResponse.Content.Headers.ContentType?.MediaType ?? "image/jpeg";
+                        return File(imageBytes, contentType);
+                    }
+                }
+
+                // Fallback to default image
+                return File(System.IO.File.ReadAllBytes("wwwroot/images/default-tour.jpg"), "image/jpeg");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting tour detail image for ID: {TourId}", tourId);
+                return File(System.IO.File.ReadAllBytes("wwwroot/images/default-tour.jpg"), "image/jpeg");
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetTourImageGallery(int tourId)
+        {
+            try
+            {
+                var (success, result, error) = await CallApiAsync<TourDetailResponse>($"Tour/GetTourById/{tourId}");
+
+                if (!success || result?.Tour == null || result.Tour.TourImages == null || !result.Tour.TourImages.Any())
+                {
+                    return Json(new { success = false, images = new List<object>() });
+                }
+
+                var images = result.Tour.TourImages.Select((img, index) => new
+                {
+                    index = index,
+                    url = Url.Action("GetTourDetailImage", "Staff", new { tourId = tourId, imageIndex = index }),
+                    isFeatured = index == 0
+                }).ToList<object>();
+
+                return Json(new { success = true, images = images });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting tour image gallery for ID: {TourId}", tourId);
+                return Json(new { success = false, images = new List<object>() });
+            }
+        }
+        
 
         // FIXED: TourDetails method
         public async Task<IActionResult> TourDetails(int id)
@@ -343,7 +441,115 @@ namespace FE_Capstone_Project.Controllers
             }
         }
 
+        // === THÊM MỚI: Method để lấy ảnh cho Edit và Create views ===
+        [HttpGet]
+        public async Task<IActionResult> GetTourEditImage(int tourId, int? imageIndex = null)
+        {
+            try
+            {
+                var (success, result, error) = await CallApiAsync<TourDetailResponse>($"Tour/GetTourById/{tourId}");
 
+                if (!success || result?.Tour == null || result.Tour.TourImages == null || !result.Tour.TourImages.Any())
+                {
+                    return await GetDefaultImage();
+                }
+
+                // Get specific image or first image
+                TourImage image;
+                if (imageIndex.HasValue && imageIndex.Value < result.Tour.TourImages.Count)
+                {
+                    image = result.Tour.TourImages[imageIndex.Value];
+                }
+                else
+                {
+                    image = result.Tour.TourImages.First();
+                }
+
+                if (image.Image.StartsWith("data:image"))
+                {
+                    var base64Data = image.Image.Split(',')[1];
+                    var imageBytes = Convert.FromBase64String(base64Data);
+                    return File(imageBytes, "image/jpeg");
+                }
+                else if (!string.IsNullOrEmpty(image.Image))
+                {
+                    var imageResponse = await _httpClient.GetAsync($"Tour/GetImage?path={Uri.EscapeDataString(image.Image)}");
+                    if (imageResponse.IsSuccessStatusCode)
+                    {
+                        var imageBytes = await imageResponse.Content.ReadAsByteArrayAsync();
+                        var contentType = imageResponse.Content.Headers.ContentType?.MediaType ?? "image/jpeg";
+                        return File(imageBytes, contentType);
+                    }
+                }
+
+                return await GetDefaultImage();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting tour edit image for ID: {TourId}", tourId);
+                return await GetDefaultImage();
+            }
+        }
+
+        // === THÊM MỚI: Method để xóa ảnh ===
+        [HttpPost]
+        public async Task<IActionResult> DeleteTourImage(int imageId)
+        {
+            try
+            {
+                var token = GetToken();
+                if (string.IsNullOrEmpty(token))
+                {
+                    return Json(new { success = false, message = "Authentication required" });
+                }
+
+                var request = new HttpRequestMessage(HttpMethod.Post, $"Tour/DeleteTourImage?imageId={imageId}");
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                var response = await _httpClient.SendAsync(request);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return Json(new { success = true, message = "Image deleted successfully" });
+                }
+                else
+                {
+                    return Json(new { success = false, message = "Failed to delete image" });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting tour image ID: {ImageId}", imageId);
+                return Json(new { success = false, message = "Error deleting image" });
+            }
+        }
+
+        // === THÊM MỚI: Method để lấy ảnh mặc định ===
+        [HttpGet]
+        public async Task<IActionResult> GetDefaultImage()
+        {
+            try
+            {
+                var imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "default-tour.jpg");
+                if (System.IO.File.Exists(imagePath))
+                {
+                    return File(System.IO.File.ReadAllBytes(imagePath), "image/jpeg");
+                }
+                else
+                {
+                    // Fallback: create a simple placeholder image
+                    var placeholderSvg = "<svg width='400' height='300' xmlns='http://www.w3.org/2000/svg'><rect width='400' height='300' fill='#f8f9fa'/><text x='200' y='150' text-anchor='middle' font-family='Arial' font-size='16' fill='#6c757d'>No Image</text></svg>";
+                    var bytes = Encoding.UTF8.GetBytes(placeholderSvg);
+                    return File(bytes, "image/svg+xml");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting default image");
+                return NotFound();
+            }
+        }
         public async Task<IActionResult> Edit(int id)
         {
             try
@@ -375,7 +581,6 @@ namespace FE_Capstone_Project.Controllers
                 ViewBag.Locations = locSuccess ? locations : new List<Location>();
                 ViewBag.Categories = catSuccess ? categories : new List<TourCategory>();
                 ViewBag.CancelConditions = cancelSuccess ? cancelConditions : new List<CancelCondition>();
-                ViewBag.BaseApiUrl = BASE_API_URL;
 
                 var currentTourImages = result.Tour.TourImages?
                     .Where(img => img != null) // Filter out any null images
@@ -516,12 +721,12 @@ namespace FE_Capstone_Project.Controllers
                 ViewBag.Locations = locSuccess ? locations : new List<Location>();
                 ViewBag.Categories = catSuccess ? categories : new List<TourCategory>();
                 ViewBag.CancelConditions = cancelSuccess ? cancelConditions : new List<CancelCondition>();
-                ViewBag.BaseApiUrl = BASE_API_URL;
+
+
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error reloading ViewBag data");
-                // Set default empty lists if there's an error
                 ViewBag.Locations = new List<Location>();
                 ViewBag.Categories = new List<TourCategory>();
                 ViewBag.CancelConditions = new List<CancelCondition>();

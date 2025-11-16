@@ -48,7 +48,7 @@
                                                                                  <p>
                                                                                      <strong>Thanh toán:</strong>
                                                                                      <span class="badge
-                                            @(booking.PaymentStatus == BE_Capstone_Project.Domain.Enums.PaymentStatus.Paid ? "bg-success" :
+                                            @(booking.PaymentStatus == BE_Capstone_Project.Domain.Enums.PaymentStatus.Completed ? "bg-success" :
                                                                             booking.PaymentStatus == BE_Capstone_Project.Domain.Enums.PaymentStatus.Pending ? "bg-warning" :
                                                                             "bg-secondary")">
                             @booking.PaymentStatus
