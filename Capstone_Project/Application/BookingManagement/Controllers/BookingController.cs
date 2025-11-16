@@ -92,7 +92,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
                     RefundDate = null,
                     PaymentMethod = null,
                     PaymentDate = null,
-                    ExpirationTime = DateTime.Now.AddHours(1),
+                    ExpirationTime = request.PaymentMethod == "vnpay" ? DateTime.Now.AddMinutes(10) : DateTime.Now.AddDays(3),
                     BookingDate = DateTime.Now,
                     TotalPrice = totalPrice
                 };
@@ -104,7 +104,13 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
                 }
                 else
                 {
+                    Console.WriteLine("===================");
+                    Console.WriteLine("Sccess");
+                    Console.WriteLine("===================");
                     await _bookingService.AddBookingCustomersToBookId(bookingId, request.Travelers);
+                    Console.WriteLine("===================");
+                    Console.WriteLine("Scces1123s");
+                    Console.WriteLine("===================");
                     return Ok(new BookingSuccessResponse
                     {
                         BookingId = bookingId,

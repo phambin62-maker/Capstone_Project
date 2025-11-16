@@ -29,6 +29,10 @@
                                     <span class="step-number">3</span>
                                     <span class="step-title">Travelers</span>
                                 </button>
+                                <button class="step nav-link" data-bs-toggle="tab" data-bs-target="#travel-booking-step-4">
+                                    <span class="step-number">4</span>
+                                    <span class="step-title">Payment Method</span>
+                                </button>
                             </div><!-- End Progress Steps -->
                             <!-- Booking Form -->
                             <form asp-action="BookTour" asp-controller="BookingWeb" method="post" class="booking-form" data-aos="fade-up" data-aos-delay="300">
@@ -112,11 +116,26 @@
                                     <!-- Step 3: Travelers -->
                                     <div class="form-step tab-pane fade" id="travel-booking-step-3" role="tabpanel">
                                         <div id="travelers-list" class="row gy-3 travelers-container"></div>
+                                    </div><!-- End Step 3 -->
+                                    <!-- Step 4: Payment Information -->
+                                    <div class="form-step tab-pane fade" id="travel-booking-step-4" role="tabpanel">
+                                        <h4>Payment Information</h4>
+
+                                        <div class="payment-methods">
+                                            <div class="method-selector">
+                                                <input type="radio" name="paymentMethod" id="vnpay" value="vnpay" checked="">
+                                                <label for="vnpay"><i class="bi bi-credit-card-fill"></i> VNPay</label>
+                                            </div>
+                                            <div class="method-selector">
+                                                <input type="radio" name="paymentMethod" id="cash" value="cash">
+                                                <label for="cash"><i class="bi bi-cash-stack"></i> Cash</label>
+                                            </div>
+                                        </div>
 
                                         <div class="form-navigation">
-                                            <button type="submit" class="btn btn-book" disabled>Complete Booking</button>
+                                            <button type="submit" class="btn btn-book">Complete Booking</button>
                                         </div>
-                                    </div><!-- End Step 3 -->
+                                    </div><!-- End Step 4 -->
 
                                 </div><!-- End Tab Content -->
 
@@ -222,6 +241,15 @@
             let previousChildren = 0;
             let previousInfants = 0;
 
+            const adultsInput = document.getElementById("adults");
+            const childrenInput = document.getElementById("children");
+            const infantsInput = document.getElementById("infants");
+
+            // Disable inputs at the beginning
+            adultsInput.disabled = true;
+            childrenInput.disabled = true;
+            infantsInput.disabled = true;
+
             step3Button.addEventListener("click", function () {
                 const adults = parseInt(document.getElementById("adults").value) || 0;
                 const children = parseInt(document.getElementById("children").value) || 0;
@@ -315,6 +343,18 @@
                 const scheduleId = document.getElementById("tour-schedule").value;
                 const available = calculateAvailableSeats(scheduleId);
 
+                if (scheduleId === "-1") {
+                    document.getElementById("availableSeats").textContent = "-";
+                    document.getElementById("numAdults").textContent = 0;
+                    document.getElementById("numChildren").textContent = 0;
+                    document.getElementById("totalTravelers").textContent = 0;
+                    document.getElementById("pricePerAdult").textContent = "0 VND";
+                    document.getElementById("pricePerChild").textContent = "0 VND";
+                    document.getElementById("groupDiscount").textContent = "0 VND";
+                    document.getElementById("totalPrice").textContent = "0 VND";
+                    return;
+                }
+
                 const seatEl = document.getElementById("availableSeats");
                 const remaining = available !== null ? available - totalTravelers : 0;
                 seatEl.textContent = remaining >= 0 ? remaining : "0";
@@ -358,14 +398,19 @@
             }
 
              //set tour schedule text
-            document.getElementById("tour-schedule").addEventListener("change", function() {
+            document.getElementById("tour-schedule").addEventListener("change", function () {
                 const selectedScheduleId = this.value;
-                const selectedText = this.options[this.selectedIndex].text.trim();
 
                 const spanToChange = document.getElementById("tSchedule");
 
                 if (selectedScheduleId && selectedScheduleId !== "-1") {
-                    spanToChange.textContent = selectedText;
+
+                    // ENABLE inputs when schedule selected
+                    adultsInput.disabled = false;
+                    childrenInput.disabled = false;
+                    infantsInput.disabled = false;
+
+                    spanToChange.textContent = this.options[this.selectedIndex].text.trim();
 
                     const available = calculateAvailableSeats(selectedScheduleId);
                     document.getElementById("availableSeats").textContent =
@@ -373,41 +418,73 @@
 
                 } else {
                     spanToChange.textContent = "N/A";
+
+                    // DISABLE & RESET inputs when schedule deselected
+                    adultsInput.disabled = true;
+                    childrenInput.disabled = true;
+                    infantsInput.disabled = true;
+
+                    adultsInput.value = 0;
+                    childrenInput.value = 0;
+                    infantsInput.value = 0;
+
+                    travelersList.innerHTML = "";
                 }
 
                 updateSummary();
             });
 
-            document.getElementById("adults").addEventListener("input", function() {
-                const numAdultsEl = document.getElementById("numAdults");
-                numAdultsEl.textContent = this.value || "0";
 
+            document.getElementById("adults").addEventListener("input", function() {
+                const scheduleId = document.getElementById("tour-schedule").value;
+                const maxSeats = calculateAvailableSeats(scheduleId); // your max value
+                let val = parseInt(this.value) || 0;
+
+                if (val > maxSeats) {
+                    val = maxSeats;
+                    this.value = val;
+                }
+
+                document.getElementById("numAdults").textContent = val;
                 updateSummary();
             });
 
             document.getElementById("children").addEventListener("input", function() {
-                const numChildrenEl = document.getElementById("numChildren");
-                const numInfantsEl = document.getElementById("infants");
+                const scheduleId = document.getElementById("tour-schedule").value;
+                const maxSeats = calculateAvailableSeats(scheduleId) || 0;
 
-                const children = parseInt(this.value) || 0;
-                const infants = parseInt(numInfantsEl.value) || 0;
+                let children = parseInt(this.value) || 0;
+                const adults = parseInt(document.getElementById("adults").value) || 0;
+                const infants = parseInt(document.getElementById("infants").value) || 0;
 
-                numChildrenEl.textContent = children + infants;
+                if (adults + children + infants > maxSeats) {
+                    children = maxSeats - adults - infants;
+                    if (children < 0) children = 0;
+                    this.value = children;
+                }
 
+                document.getElementById("numChildren").textContent = children + infants;
                 updateSummary();
             });
 
             document.getElementById("infants").addEventListener("input", function() {
-                const numChildrenEl = document.getElementById("numChildren");
-                const numChildrenInputEl = document.getElementById("children");
+                const scheduleId = document.getElementById("tour-schedule").value;
+                const maxSeats = calculateAvailableSeats(scheduleId) || 0;
 
-                const children = parseInt(numChildrenInputEl.value) || 0;
-                const infants = parseInt(this.value) || 0;
+                let infants = parseInt(this.value) || 0;
+                const adults = parseInt(document.getElementById("adults").value) || 0;
+                const children = parseInt(document.getElementById("children").value) || 0;
 
-                numChildrenEl.textContent = children + infants;
+                if (adults + children + infants > maxSeats) {
+                    infants = maxSeats - adults - children;
+                    if (infants < 0) infants = 0;
+                    this.value = infants;
+                }
 
+                document.getElementById("numChildren").textContent = children + infants;
                 updateSummary();
             });
+
 
             function calculateAvailableSeats(scheduleId) {
                 if (scheduleId === "-1") return null;

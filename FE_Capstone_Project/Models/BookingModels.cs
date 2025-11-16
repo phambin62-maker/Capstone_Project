@@ -8,7 +8,7 @@ namespace FE_Capstone_Project.Models
         public string LastName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string PhoneNumber { get; set; } = string.Empty;
-        public string IdentityID { get; set; } = string.Empty;
+        public string? IdentityID { get; set; }
         public CustomerType CustomerType { get; set; }
 
         public override string ToString()
@@ -30,6 +30,8 @@ namespace FE_Capstone_Project.Models
         public string Email { get; set; } = string.Empty;
         public string Phone { get; set; } = string.Empty;
         public string Certificate_Id { get; set; } = string.Empty;
+
+        public string PaymentMethod {  get; set; } = string.Empty;
 
         public List<TravelerDTO> Travelers { get; set; } = new();
 

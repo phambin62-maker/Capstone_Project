@@ -13,6 +13,8 @@
         public string Phone { get; set; } = string.Empty;
         public string Certificate_Id { get; set; } = string.Empty;
 
+        public string PaymentMethod {  get; set; } = string.Empty;
+
         public List<BookingCustomerDTO> Travelers { get; set; } = new();
 
         public override string ToString()
