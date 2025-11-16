@@ -2,9 +2,8 @@
 {
     public enum PaymentStatus : byte
     {
-        Failed = 0,
+        Pending = 0,
         Completed = 1,
-        Pending = 2,
-        Refunded = 3,
+        Refunded = 2,
     }
 }
