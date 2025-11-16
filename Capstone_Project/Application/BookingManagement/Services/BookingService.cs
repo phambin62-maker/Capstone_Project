@@ -10,7 +10,8 @@ using BE_Capstone_Project.Application.Notifications.DTOs;
 using System; // <-- Thêm Using này
 using System.Linq; // <-- Thêm Using này
 using System.Collections.Generic; // <-- Thêm Using này
-using System.Threading.Tasks; // <-- Thêm Using này
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http.HttpResults; // <-- Thêm Using này
 
 namespace BE_Capstone_Project.Application.BookingManagement.Services
 {
@@ -214,6 +215,22 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
             });
         }
 
+        public async Task<IEnumerable<UserBookingDTO>> GetByUserIdAsync2(int userId)
+        {
+            var list = await _bookingDAO.GetBookingsByUserIdAsync(userId);
+            return list.Select(b => new UserBookingDTO
+            {
+                BookingId = b.Id,
+                TourName = b.TourSchedule!.Tour!.Name!,
+                DepartureDate = b.TourSchedule!.DepartureDate!.Value,
+                ArrivalDate = b.TourSchedule!.ArrivalDate!.Value,
+                Adults = b.BookingCustomers.Count(bc => bc.CustomerType == CustomerType.Adult),
+                Children = b.BookingCustomers.Count(bc => bc.CustomerType == CustomerType.Child),
+                TotalPrice = b.TotalPrice!.Value,
+                Status = b.BookingStatus!.Value,
+            });
+        }
+
         public async Task<bool> HasUserBookedTour(int userId, int tourId)
         {
             return await _bookingDAO.HasUserBookedTourAsync(userId, tourId);
@@ -240,6 +257,21 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                 };
                 await _bookingCustomerDAO.AddBookingCustomerAsync(bookingCustomer);
             }
+        }
+
+        public async Task<bool> UpdatePaymentStatus(PaymentDTO payment)
+        {
+            return await _bookingDAO.UpdatePaymentStatusAsync(payment);
+        }
+
+        public async Task<int> GetCustomerCountByBooking(int bookingId)
+        {
+            return await _bookingCustomerDAO.GetCustomerCountByBookingAsync(bookingId);
+        }
+
+        public async Task<List<ScheduleBookedSeatsDTO>> GetBookedSeatsByTour(int tourId)
+        {
+            return await _bookingCustomerDAO.GetBookedSeatsByTourAsync(tourId);
         }
     }
 }

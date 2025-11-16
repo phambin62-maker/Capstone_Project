@@ -15,7 +15,6 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin,Staff")]
     public class TourController : ControllerBase
     {
         private readonly ITourService _tourService;
@@ -480,7 +479,6 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
             }
         }
         [HttpGet("GetImage")]
-        [AllowAnonymous]
         public IActionResult GetImage([FromQuery] string path)
         {
             try

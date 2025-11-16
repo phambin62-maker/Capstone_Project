@@ -26,13 +26,15 @@ namespace FE_Capstone_Project.Controllers
             var tourSchedulesResponse = await _apiHelper.GetAsync<TourScheduleListResponse>($"TourSchedule/tour/available/{tourId}");
             var userResponse = await _apiHelper.GetAsync<UserDto>($"User/by-username/{username}");
             var locationsResponse = await _apiHelper.GetAsync<LocationsResponse>("Locations/GetAllLocations");
+            var bookedSeatsResponse = await _apiHelper.GetAsync<List<ScheduleBookedSeatsResponse>>($"Booking/tours/{tourId}/booked-seats");
 
-            ViewBag.Tour = tourResponse.Tour;
-            ViewBag.TourSchedules = tourSchedulesResponse.Data;
+            ViewBag.Tour = tourResponse!.Tour;
+            ViewBag.TourSchedules = tourSchedulesResponse!.Data;
             ViewBag.User = userResponse;
-            ViewBag.DepartureLocations = locationsResponse.Data;
+            ViewBag.DepartureLocations = locationsResponse!.Data;
+            ViewBag.BookedSeats = bookedSeatsResponse;
 
-            var firstImage = tourResponse.Tour.TourImages?.First().Image;
+            var firstImage = tourResponse!.Tour!.TourImages?.First().Image;
             ViewBag.FirstImage = firstImage;
 
             return View();

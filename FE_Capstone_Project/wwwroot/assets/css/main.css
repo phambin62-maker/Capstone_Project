@@ -8542,3 +8542,13 @@ section,
 .disabled {
     pointer-events: none;
 }
+
+.form-control:disabled{
+    opacity: 0.5;
+}
+
+.travelers-container {
+    max-height: 900px;
+    overflow-y: auto;
+    padding-right: 10px;
+}

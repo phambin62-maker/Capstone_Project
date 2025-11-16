@@ -9,5 +9,6 @@ namespace BE_Capstone_Project.Application.Report.Services.Interfaces
         Task<List<TourRevenueDto>> GetTopToursByRevenueAsync(DateOnly from, DateOnly to, int topN = 10);
         Task<List<MonthlyRevenueDto>> GetMonthlyRevenueAsync(int year);
         Task<byte[]> ExportRevenueOverviewToExcelAsync(DateOnly from, DateOnly to);
+        Task<CustomerAnalysisDto> GetCustomerAnalysisAsync(DateOnly from, DateOnly to);
     }
 }

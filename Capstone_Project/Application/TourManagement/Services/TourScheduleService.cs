@@ -125,6 +125,12 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
                 return 0;
             }
         }
+
+        public async Task<bool> IsScheduleFullAsync(int tourScheduleId)
+        {
+            return await _tourScheduleDAO.IsScheduleFullAsync(tourScheduleId);
+        }
+
         private TourScheduleDTO MapToDTO(TourSchedule tourSchedule)
         {
             if (tourSchedule == null) return null;

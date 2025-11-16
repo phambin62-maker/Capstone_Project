@@ -2,13 +2,14 @@
 using FE_Capstone_Project.Filters;
 using FE_Capstone_Project.Helpers;
 using FE_Capstone_Project.Models;
-using Microsoft.AspNetCore.Mvc;
-using static FE_Capstone_Project.Models.WishlistModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-using System.Threading.Tasks;
-using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using static FE_Capstone_Project.Models.WishlistModels;
 
 namespace FE_Capstone_Project.Controllers
 {
@@ -157,6 +158,17 @@ namespace FE_Capstone_Project.Controllers
                 TempData["ErrorMessage"] = $"Error connecting to server: {ex.Message}";
                 return RedirectToAction("TourDetails", "TourWeb", new { tourId });
             }
+        }
+
+        public async Task<IActionResult> MyBookings()
+        {
+            var username = HttpContext.Session.GetString("UserName");
+            if (string.IsNullOrEmpty(username))
+                return RedirectToAction("Login", "Account");
+
+            var bookingsResponse = await _apiHelper.GetAsync<List<UserBookingResponse>>($"Booking/user/{username}");
+
+            return View(bookingsResponse);
         }
     }
 }
