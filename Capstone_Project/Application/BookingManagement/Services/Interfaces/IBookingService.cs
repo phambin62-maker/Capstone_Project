@@ -1,4 +1,5 @@
 ﻿using BE_Capstone_Project.Application.BookingManagement.DTOs;
+using BE_Capstone_Project.Domain.Enums;
 using BE_Capstone_Project.Domain.Models;
 
 namespace BE_Capstone_Project.Application.BookingManagement.Services.Interfaces
@@ -18,5 +19,11 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services.Interfaces
         Task<int> GetCustomerCountByBooking(int bookingId);
         Task<List<ScheduleBookedSeatsDTO>> GetBookedSeatsByTour(int tourId);
         Task<IEnumerable<UserBookingDTO>> GetByUserIdAsync2(int userId);
+        Task<BookingListResponse> GetBookingsForStaffAsync(BookingSearchRequest request);
+        Task<StaffBookingDTO?> GetBookingDetailForStaffAsync(int id);
+        Task<bool> UpdateBookingStatusAsync(int bookingId, UpdateBookingStatusRequest request);
+        Task<bool> UpdatePaymentStatusByStaffAsync(int bookingId, UpdatePaymentStatusRequest request);
+        Task<List<BookingStatus>> GetAvailableBookingStatusesAsync();
+        Task<List<PaymentStatus>> GetAvailablePaymentStatusesAsync();
     }
 }

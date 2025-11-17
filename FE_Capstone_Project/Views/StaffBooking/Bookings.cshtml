@@ -1,0 +1,243 @@
+﻿@using BE_Capstone_Project.Domain.Enums
+@model List<BookingDto>
+@{
+    ViewData["Title"] = "Quản lý Booking";
+    Layout = "~/Views/Shared/_StaffLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-calendar-check me-2"></i>Quản lý Booking
+        </h1>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-filter me-2"></i>Bộ lọc
+            </h6>
+        </div>
+        <div class="card-body">
+            <form id="filterForm" method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="searchTerm" class="form-label">Tìm kiếm</label>
+                    <input type="text" class="form-control" id="searchTerm" name="searchTerm" 
+                           value="@ViewBag.CurrentSearchTerm" placeholder="Tên, email, số điện thoại...">
+                </div>
+                <div class="col-md-2">
+                    <label for="bookingStatus" class="form-label">Trạng thái Booking</label>
+                    <select class="form-control" id="bookingStatus" name="bookingStatus">
+                        <option value="">Tất cả</option>
+                        @foreach (var status in ViewBag.BookingStatuses)
+                        {
+                            <option value="@status" selected="@(ViewBag.CurrentBookingStatus?.Equals(status) == true)">
+                                @GetBookingStatusText(status)
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="paymentStatus" class="form-label">Trạng thái Thanh toán</label>
+                    <select class="form-control" id="paymentStatus" name="paymentStatus">
+                        <option value="">Tất cả</option>
+                        @foreach (var status in ViewBag.PaymentStatuses)
+                        {
+                            <option value="@status" selected="@(ViewBag.CurrentPaymentStatus?.Equals(status) == true)">
+                                @GetPaymentStatusText(status)
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="pageSize" class="form-label">Số lượng / trang</label>
+                    <select class="form-control" id="pageSize" name="pageSize">
+                        <option value="10" selected="@(ViewBag.PageSize == 10)">10</option>
+                        <option value="25" selected="@(ViewBag.PageSize == 25)">25</option>
+                        <option value="50" selected="@(ViewBag.PageSize == 50)">50</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="fas fa-search me-1"></i>Tìm kiếm
+                    </button>
+                    <button type="button" id="resetFilter" class="btn btn-outline-secondary">
+                        <i class="fas fa-redo me-1"></i>Reset
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Booking List -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-list me-2"></i>Danh sách Booking
+            </h6>
+            <span class="badge bg-info text-white">Tổng: @ViewBag.TotalCount booking</span>
+        </div>
+        <div class="card-body">
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" id="bookingTable" width="100%" cellspacing="0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Khách hàng</th>
+                            <th>Tour</th>
+                            <th>Ngày booking</th>
+                            <th>Tổng tiền</th>
+                            <th>Trạng thái Booking</th>
+                            <th>Trạng thái Thanh toán</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var booking in Model)
+                            {
+                                <tr>
+                                    <td>@booking.Id</td>
+                                    <td>
+                                        <div class="fw-bold">@booking.FullName</div>
+                                        <small class="text-muted">@booking.Email</small>
+                                        <br>
+                                        <small class="text-muted">@booking.PhoneNumber</small>
+                                    </td>
+                                    <td>@booking.TourName</td>
+                                    <td>@booking.BookingDate?.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td class="fw-bold text-success">@booking.TotalPrice?.ToString("N0") ₫</td>
+                                    <td>
+                                        <span class="badge @GetBookingStatusBadge(booking.BookingStatus)">
+                                            @GetBookingStatusText(booking.BookingStatus)
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge @GetPaymentStatusBadge(booking.PaymentStatus)">
+                                            @GetPaymentStatusText(booking.PaymentStatus)
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <!-- Chỉ còn button Chi tiết -->
+                                        <a href="@Url.Action("Details", new { id = booking.Id })" 
+                                           class="btn btn-primary btn-sm" 
+                                           title="Xem chi tiết"
+                                           data-bs-toggle="tooltip">
+                                            <i class="fas fa-eye"></i>
+                                            <span class="d-none d-md-inline">Chi tiết</span>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    <i class="fas fa-inbox fa-2x text-muted mb-3"></i>
+                                    <p class="text-muted">Không có booking nào được tìm thấy</p>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (ViewBag.TotalPages > 1)
+            {
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                                <a class="page-link" 
+                                   href="@Url.Action("Bookings", new { 
+                                       page = i, 
+                                       pageSize = ViewBag.PageSize,
+                                       searchTerm = ViewBag.CurrentSearchTerm,
+                                       bookingStatus = ViewBag.CurrentBookingStatus,
+                                       paymentStatus = ViewBag.CurrentPaymentStatus
+                                   })">@i</a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Khởi tạo tooltip
+            $('[data-bs-toggle="tooltip"]').tooltip();
+
+            // Reset filter
+            $('#resetFilter').click(function() {
+                $('#searchTerm').val('');
+                $('#bookingStatus').val('');
+                $('#paymentStatus').val('');
+                $('#pageSize').val('10');
+                $('#filterForm').submit();
+            });
+
+            // Auto-hide alerts after 5 seconds
+            setTimeout(function() {
+                $('.alert').alert('close');
+            }, 5000);
+        });
+    </script>
+}
+
+@functions {
+    private string GetBookingStatusText(BookingStatus? status)
+    {
+        return status switch
+        {
+            BookingStatus.Pending => "Chờ xác nhận",
+            BookingStatus.Confirmed => "Đã xác nhận",
+            BookingStatus.Completed => "Hoàn thành",
+            BookingStatus.Cancelled => "Đã hủy",
+            _ => "Không xác định"
+        };
+    }
+
+    private string GetPaymentStatusText(PaymentStatus? status)
+    {
+        return status switch
+        {
+            PaymentStatus.Pending => "Chờ thanh toán",
+            PaymentStatus.Completed => "Đã thanh toán",
+            PaymentStatus.Refunded => "Đã hoàn tiền",
+            _ => "Không xác định"
+        };
+    }
+
+    private string GetBookingStatusBadge(BookingStatus? status)
+    {
+        return status switch
+        {
+            BookingStatus.Pending => "bg-warning",
+            BookingStatus.Confirmed => "bg-info",
+            BookingStatus.Completed => "bg-success",
+            BookingStatus.Cancelled => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetPaymentStatusBadge(PaymentStatus? status)
+    {
+        return status switch
+        {
+            PaymentStatus.Pending => "bg-warning",
+            PaymentStatus.Completed => "bg-success",
+            PaymentStatus.Refunded => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+}

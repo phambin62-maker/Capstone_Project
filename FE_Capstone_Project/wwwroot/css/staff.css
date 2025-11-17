@@ -428,6 +428,116 @@
 .stat-card .stat-icon.bg-secondary {
     background-color: #6c757d !important;
 }
+/* Staff Layout Enhancements */
+.content-header {
+    background: #fff;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+}
 
+.header-actions .btn {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+}
+
+.breadcrumb-nav .breadcrumb {
+    margin-bottom: 0;
+    background: transparent;
+    padding: 0;
+}
+
+/* Booking specific styles */
+.booking-stat-card {
+    border-left: 4px solid #007bff;
+}
+
+    .booking-stat-card.confirmed {
+        border-left-color: #28a745;
+    }
+
+    .booking-stat-card.pending {
+        border-left-color: #ffc107;
+    }
+
+    .booking-stat-card.cancelled {
+        border-left-color: #dc3545;
+    }
+
+/* Status badges */
+.badge-booking-pending {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.badge-booking-confirmed {
+    background-color: #28a745;
+}
+
+.badge-booking-cancelled {
+    background-color: #dc3545;
+}
+
+.badge-booking-completed {
+    background-color: #17a2b8;
+}
+
+.badge-payment-pending {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.badge-payment-completed {
+    background-color: #28a745;
+}
+
+.badge-payment-failed {
+    background-color: #dc3545;
+}
+
+.badge-payment-refunded {
+    background-color: #6f42c1;
+}
+
+/* Table enhancements */
+.booking-table th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.booking-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Action buttons */
+.btn-action {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    margin: 0.125rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .content-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+
+    .breadcrumb-nav {
+        order: 2;
+    }
+
+    .header-actions {
+        order: 1;
+    }
+}
 
 

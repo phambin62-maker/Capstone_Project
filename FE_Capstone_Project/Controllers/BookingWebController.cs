@@ -1,8 +1,10 @@
-﻿using FE_Capstone_Project.Filters;
+﻿using BE_Capstone_Project.Application.BookingManagement.DTOs;
+using FE_Capstone_Project.Filters;
 using FE_Capstone_Project.Helpers;
 using FE_Capstone_Project.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using BookingRequest = FE_Capstone_Project.Models.BookingRequest;
 
 namespace FE_Capstone_Project.Controllers
 {
@@ -78,6 +80,6 @@ namespace FE_Capstone_Project.Controllers
 
             return BadRequest("Invalid payment method.");
         }
-
+      
     }
 }

@@ -2,14 +2,12 @@
 @{
     ViewData["Title"] = "Tour Management";
     Layout = "~/Views/Shared/_StaffLayout.cshtml";
-    var BASE_API_URL = "https://localhost:7160/api/";
     
     var totalTours = Model?.Count ?? 0;
     var activeTours = Model?.Count(t => t.TourStatus) ?? 0;
     var inactiveTours = Model?.Count(t => !t.TourStatus) ?? 0;
     var displayingTours = Model?.Count ?? 0;
 
-    // Lấy các tham số filter từ URL
     var currentStatus = Context.Request.Query["status"].ToString();
     var currentStartLocation = Context.Request.Query["startLocation"].ToString();
     var currentEndLocation = Context.Request.Query["endLocation"].ToString();
@@ -39,69 +37,68 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
-    <!-- Quick statistics -->
     <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card stat-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon bg-primary">
-                            <i class="bi bi-map"></i>
-                        </div>
-                        <div class="ms-3">
-                            <h4 class="mb-0">@ViewBag.TotalCount</h4>
-                            <small class="text-muted">Total Tours</small>
-                        </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-primary">
+                        <i class="bi bi-map"></i>
                     </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card stat-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon bg-success">
-                            <i class="bi bi-eye"></i>
-                        </div>
-                        <div class="ms-3">
-                            <h4 class="mb-0">@activeTours</h4>
-                            <small class="text-muted">Active</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card stat-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon bg-secondary">
-                            <i class="bi bi-eye-slash"></i>
-                        </div>
-                        <div class="ms-3">
-                            <h4 class="mb-0">@inactiveTours</h4>
-                            <small class="text-muted">Inactive</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card stat-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon bg-info">
-                            <i class="bi bi-clock"></i>
-                        </div>
-                        <div class="ms-3">
-                            <h4 class="mb-0">@displayingTours</h4>
-                            <small class="text-muted">Displayed</small>
-                        </div>
+                    <div class="ms-3">
+                        <h4 class="mb-0">@ViewBag.TotalTours</h4>
+                        <small class="text-muted">Total Tours</small>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-success">
+                        <i class="bi bi-eye"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h4 class="mb-0">@ViewBag.ActiveTours</h4>
+                        <small class="text-muted">Active</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-secondary">
+                        <i class="bi bi-eye-slash"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h4 class="mb-0">@ViewBag.InactiveTours</h4>
+                        <small class="text-muted">Inactive</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-info">
+                        <i class="bi bi-clock"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h4 class="mb-0">@ViewBag.DisplayingTours</h4>
+                        <small class="text-muted">Displayed</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
     <div class="card">
         <div class="card-header bg-transparent">
@@ -501,7 +498,6 @@
         $(document).ready(function () {
             $('[data-bs-toggle="tooltip"]').tooltip();
 
-            // Apply all filters - chuyển hướng với các tham số filter
             $('#applyFilters').on('click', function () {
                 applyFiltersAndRedirect();
             });
@@ -517,12 +513,10 @@
                 applyFiltersAndRedirect();
             });
 
-            // Sort by Price - chuyển hướng khi thay đổi
             $('#sortByPrice').on('change', function () {
                 applyFiltersAndRedirect();
             });
 
-            // Reset filters - chuyển hướng về trang không có filter
             $('#resetFilters').on('click', function () {
                 window.location.href = '@Url.Action("Tours")';
             });
@@ -537,10 +531,8 @@
                 var sortByPrice = $('#sortByPrice').val();
                 var searchValue = $('#searchInput').val();
 
-                // Xây dựng URL với các tham số filter
-                var url = '@Url.Action("Tours", new { page = 1 })'; // Luôn về trang 1 khi filter
+                var url = '@Url.Action("Tours", new { page = 1 })';
                 
-                // Thêm các tham số filter nếu có
                 if (statusFilter) {
                     url += '&status=' + encodeURIComponent(statusFilter);
                 }
@@ -565,17 +557,13 @@
                 if (searchValue) {
                     url += '&search=' + encodeURIComponent(searchValue);
                 }
-
-                // Chuyển hướng đến URL mới
                 window.location.href = url;
             }
 
-            // Auto hide alerts after 5 seconds
             setTimeout(function() {
                 $('.alert').alert('close');
             }, 5000);
 
-            // Hover effect for table rows
             $('#toursTable tbody tr').hover(
                 function() { $(this).addClass('table-active'); },
                 function() { $(this).removeClass('table-active'); }

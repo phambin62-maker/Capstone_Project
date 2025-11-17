@@ -438,7 +438,7 @@ namespace BE_Capstone_Project.DAO
                 return 0;
             }
         }
-        // Thêm method này vào TourDAO
+
         public async Task<List<Tour>> GetActiveTours(string search = "")
         {
             try
