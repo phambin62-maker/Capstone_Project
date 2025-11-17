@@ -2,6 +2,9 @@
 @{
     ViewData["Title"] = Model?.Title ?? "News details";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    TimeZoneInfo vietnamZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+
+    DateTime createdDateLocal = Model.CreatedDate.HasValue ? TimeZoneInfo.ConvertTimeFromUtc(Model.CreatedDate.Value, vietnamZone) : DateTime.MinValue;
 }
 
 <div class="container my-5">
@@ -40,3 +43,57 @@
         </a>
     </div>
 </div>
+@section Styles {
+    <style>
+        .article-hero-section {
+            position: relative;
+            padding: 100px 0;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        .article-hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); /* Lớp phủ tối */
+        }
+
+        /* CSS cho nội dung (Description) đẹp hơn */
+        .article-content {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #333;
+        }
+
+            .article-content p {
+                margin-bottom: 1.5rem;
+            }
+
+            .article-content h2, .article-content h3 {
+                color: #1a4e78;
+                margin-top: 2.5rem;
+                margin-bottom: 1rem;
+                font-weight: 600;
+            }
+
+            .article-content blockquote {
+                border-left: 4px solid #007bff;
+                padding-left: 1.5rem;
+                margin: 2rem 0;
+                font-style: italic;
+                color: #555;
+            }
+
+            .article-content img {
+                max-width: 100%;
+                height: auto;
+                border-radius: 8px;
+                margin: 1.5rem 0;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            }
+    </style>
+}
