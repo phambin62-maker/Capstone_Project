@@ -105,13 +105,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
                 }
                 else
                 {
-                    Console.WriteLine("===================");
-                    Console.WriteLine("Sccess");
-                    Console.WriteLine("===================");
                     await _bookingService.AddBookingCustomersToBookId(bookingId, request.Travelers);
-                    Console.WriteLine("===================");
-                    Console.WriteLine("Scces1123s");
-                    Console.WriteLine("===================");
                     return Ok(new BookingSuccessResponse
                     {
                         BookingId = bookingId,

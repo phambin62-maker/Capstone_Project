@@ -72,16 +72,16 @@
                         @* Menu cho Admin *@
                         @if (AuthHelper.IsAdmin())
                         {
-                            <li><a asp-controller="AdminWeb" asp-action="Account">Admin Manangement</a></li>
+                            <li><a asp-controller="AdminWeb" asp-action="Account">Admin Management</a></li>
                         }
                         
                         @* Menu cho Admin và Staff *@
                         @if (AuthHelper.IsAdminOrStaff())
                         {
                             <li class="dropdown">
-                                <a href="#"><span>Manangement</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+                                <a href="#"><span>Management</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
                                 <ul>
-                                    <li><a asp-controller="Staff" asp-action="Tours">Tour Manangement</a></li>
+                                    <li><a asp-controller="Staff" asp-action="Tours">Tour Management</a></li>
                                     @if (AuthHelper.IsAdmin())
                                     {
                                         <li><a asp-controller="AdminWeb" asp-action="Report">Report</a></li>

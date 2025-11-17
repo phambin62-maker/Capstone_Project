@@ -31,8 +31,7 @@ else
                 <tr>
                     <th>Booking ID</th>
                     <th>Tour</th>
-                    <th>Departure</th>
-                    <th>Arrival</th>
+                    <th>Departure Date</th>
                     <th>Adults</th>
                     <th>Children</th>
                     <th>Total Price</th>
@@ -47,7 +46,6 @@ else
                         <td>#@booking.BookingId</td>
                         <td>@booking.TourName</td>
                         <td>@booking.DepartureDate.ToString("MMMM dd, yyyy")</td>
-                        <td>@booking.ArrivalDate.ToString("MMMM dd, yyyy")</td>
                         <td>@booking.Adults</td>
                         <td>@booking.Children</td>
                         <td>@booking.TotalPrice.ToString("N0") VND</td>

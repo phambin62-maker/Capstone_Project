@@ -8552,3 +8552,8 @@ section,
     overflow-y: auto;
     padding-right: 10px;
 }
+
+.step.nav-link.disabled-step {
+    pointer-events: none;
+    cursor: not-allowed;
+}
