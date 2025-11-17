@@ -18,5 +18,6 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services.Interfaces
         Task<int> GetCustomerCountByBooking(int bookingId);
         Task<List<ScheduleBookedSeatsDTO>> GetBookedSeatsByTour(int tourId);
         Task<IEnumerable<UserBookingDTO>> GetByUserIdAsync2(int userId);
+        Task DeleteExpiredPendingBookingsAsync();
     }
 }

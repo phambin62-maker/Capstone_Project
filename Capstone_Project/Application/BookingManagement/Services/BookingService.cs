@@ -192,6 +192,9 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
 
         public async Task<bool> DeleteAsync(int id)
         {
+            var success = await _bookingCustomerDAO.DeleteBookingCustomerByBookingIdAsync(id);
+            if (!success) return false;
+
             return await _bookingDAO.DeleteBookingByIdAsync(id);
         }
 
@@ -223,7 +226,6 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                 BookingId = b.Id,
                 TourName = b.TourSchedule!.Tour!.Name!,
                 DepartureDate = b.TourSchedule!.DepartureDate!.Value,
-                ArrivalDate = b.TourSchedule!.ArrivalDate!.Value,
                 Adults = b.BookingCustomers.Count(bc => bc.CustomerType == CustomerType.Adult),
                 Children = b.BookingCustomers.Count(bc => bc.CustomerType == CustomerType.Child),
                 TotalPrice = b.TotalPrice!.Value,
@@ -272,6 +274,11 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
         public async Task<List<ScheduleBookedSeatsDTO>> GetBookedSeatsByTour(int tourId)
         {
             return await _bookingCustomerDAO.GetBookedSeatsByTourAsync(tourId);
+        }
+        
+        public async Task DeleteExpiredPendingBookingsAsync()
+        {
+            await _bookingDAO.DeleteExpiredPendingBookingsAsync();
         }
     }
 }

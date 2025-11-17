@@ -69,15 +69,32 @@ namespace BE_Capstone_Project.Application.Payment.Controller
             {
                 var response = _vnPayService.PaymentExecute(Request.Query);
 
+                // Extract amount safely
+                var amountStr = Request.Query["vnp_Amount"].ToString();
+                if (string.IsNullOrEmpty(amountStr))
+                {
+                    amountStr = "0";
+                }
+
+                var transactionId = response.TransactionId;
+                if (string.IsNullOrEmpty(transactionId) || transactionId == "0")
+                {
+                    _logger.LogWarning("Payment callback returned invalid transaction ID.");
+                    transactionId = "0"; // fallback
+                    response.Success = false;
+                    response.OrderDescription ??= "Unknown order";
+                }
+
                 // Build query string
                 var queryParams = new Dictionary<string, string>
-                {
-                    { "success", response.Success.ToString() },
-                    { "orderDescription", WebUtility.UrlEncode(response.OrderDescription) },
-                    { "amount", Request.Query["vnp_Amount"].ToString() },
-                    { "transactionId", response.TransactionId },
-                    { "paymentMethod", response.PaymentMethod }
-                };
+    {
+        { "success", response.Success.ToString() },
+        { "orderDescription", WebUtility.UrlEncode(response.OrderDescription ?? "") },
+        { "amount", amountStr },
+        { "transactionId", transactionId },
+        { "paymentMethod", response.PaymentMethod ?? "" },
+        { "error", response.Success ? "" : "Invalid transaction or other error" }
+    };
 
                 // Build URL with query string
                 var queryString = string.Join("&", queryParams.Select(kvp => $"{kvp.Key}={kvp.Value}"));
@@ -88,9 +105,24 @@ namespace BE_Capstone_Project.Application.Payment.Controller
             catch (Exception ex)
             {
                 _logger.LogError($"Error processing payment callback: {ex.Message}");
-                var redirectUrl = $"https://localhost:5137/Payment/Result?success=false&error={WebUtility.UrlEncode(ex.Message)}";
+
+                // Redirect with default/fallback values even on exception
+                var queryParams = new Dictionary<string, string>
+    {
+        { "success", "false" },
+        { "orderDescription", "" },
+        { "amount", "0" },
+        { "transactionId", "0" },
+        { "paymentMethod", "" },
+        { "error", WebUtility.UrlEncode(ex.Message) }
+    };
+
+                var queryString = string.Join("&", queryParams.Select(kvp => $"{kvp.Key}={kvp.Value}"));
+                var redirectUrl = $"https://localhost:5137/Payment/Result?{queryString}";
+
                 return Redirect(redirectUrl);
             }
+
         }
     }
 }

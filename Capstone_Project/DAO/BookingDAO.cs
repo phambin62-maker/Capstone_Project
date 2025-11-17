@@ -182,5 +182,31 @@ namespace BE_Capstone_Project.DAO
 
             return false;
         }
+
+        public async Task DeleteExpiredPendingBookingsAsync()
+        {
+            var now = DateTime.Now;
+
+            var expiredBookings = await _context.Bookings
+                .Where(b => b.PaymentStatus == PaymentStatus.Pending
+                         && b.ExpirationTime <= now)
+                .ToListAsync();
+
+            if (!expiredBookings.Any())
+                return;
+
+            var expiredBookingIds = expiredBookings.Select(b => b.Id).ToList();
+            var expiredBookingCustomers = await _context.BookingCustomers
+                .Where(bc => expiredBookingIds.Contains(bc.BookingId))
+                .ToListAsync();
+
+            if (expiredBookingCustomers.Any())
+                _context.BookingCustomers.RemoveRange(expiredBookingCustomers);
+
+            _context.Bookings.RemoveRange(expiredBookings);
+
+            await _context.SaveChangesAsync();
+        }
+
     }
 }

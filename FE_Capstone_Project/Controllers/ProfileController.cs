@@ -5,6 +5,7 @@ using FE_Capstone_Project.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -84,13 +85,14 @@ namespace FE_Capstone_Project.Controllers
                 var username = HttpContext.Session.GetString("UserName");
                 var userId = GetCurrentUserId();
 
-                if (userId == 0)
+                if (username == null && username.IsNullOrEmpty())
                 {
                     TempData["ErrorMessage"] = "User session invalid. Please log in again.";
                     return RedirectToAction("TourDetails", "TourWeb", new { tourId });
                 }
 
                 var wishlistData = new { tourId, username };
+
                 // API BE (Wishlist) này SẼ TỰ TẠO THÔNG BÁO
                 var response = await _apiHelper.PostAsync<object, WishlistData>($"Wishlist", wishlistData);
 
@@ -124,7 +126,7 @@ namespace FE_Capstone_Project.Controllers
                 var username = HttpContext.Session.GetString("UserName");
                 var userId = GetCurrentUserId();
 
-                if (userId == 0)
+                if (username == null && username.IsNullOrEmpty())
                 {
                     TempData["ErrorMessage"] = "User session invalid. Please log in again.";
                     return RedirectToAction("TourDetails", "TourWeb", new { tourId });

@@ -83,6 +83,8 @@ builder.Services.AddScoped<WishlistDAO>();
 builder.Services.AddScoped<CompanyDAO>();
 builder.Services.AddScoped<FeatureDAO>();
 
+builder.Services.AddHostedService<BookingCleanupService>();
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {

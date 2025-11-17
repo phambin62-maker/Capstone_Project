@@ -128,5 +128,16 @@ namespace BE_Capstone_Project.DAO
                 })
                 .ToListAsync();
         }
+
+        public async Task<bool> DeleteBookingCustomerByBookingIdAsync(int bookingId)
+        {
+            var bks = await _context.BookingCustomers.Where(bc => bc.BookingId == bookingId).ToListAsync();
+            if(bks == null || bks.Count == 0)
+            {
+                return false;
+            }
+            _context.BookingCustomers.RemoveRange(bks);
+            return true;
+        }
     }
 }
