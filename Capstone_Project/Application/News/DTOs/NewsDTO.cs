@@ -13,5 +13,7 @@ namespace BE_Capstone_Project.Application.Newses.DTOs
         public string? AuthorName { get; set; }
         public string Content { get; set; }
         public int UserId { get; set; }
+        public DateTime? UpdatedDate { get; set; }
+        public string? UpdatedAuthor { get; set; }
     }
 }

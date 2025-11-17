@@ -28,10 +28,12 @@
     <link href="~/assets/vendor/aos/aos.css" rel="stylesheet">
     <link href="~/assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
     <link href="~/assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
+    <link href="~/assets/css/site.css" rel="stylesheet">
 
-    <!-- Main CSS File -->
+
     <link href="~/assets/css/main.css" rel="stylesheet">
-    
+
+    @await RenderSectionAsync("Styles", required: false)
     <!-- Chat Widget CSS (only for logged-in customers) -->
     @if (!string.IsNullOrEmpty(Context.Session.GetString("JwtToken")) && Context.Session.GetInt32("UserRoleId") != 1)
     {
@@ -195,5 +197,6 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
         <script src="~/js/chat-widget.js" asp-append-version="true"></script>
     }
+    @RenderSection("Scripts", required: false)
 </body>
 </html>
