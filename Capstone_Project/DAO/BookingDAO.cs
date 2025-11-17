@@ -182,5 +182,95 @@ namespace BE_Capstone_Project.DAO
 
             return false;
         }
+        public async Task<List<Booking>> GetBookingsWithFiltersAsync(
+            string? searchTerm = null,
+            BookingStatus? bookingStatus = null,
+            PaymentStatus? paymentStatus = null,
+            int page = 1,
+            int pageSize = 10)
+        {
+            try
+            {
+                var query = _context.Bookings
+                    .Include(b => b.User)
+                    .Include(b => b.TourSchedule)
+                        .ThenInclude(ts => ts.Tour)
+                    .Include(b => b.BookingCustomers)
+                    .AsQueryable();
+
+                if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    var searchTermLower = searchTerm.ToLower();
+                    query = query.Where(b =>
+                        b.User.Username.ToLower().Contains(searchTermLower) ||
+                        (b.FirstName + " " + b.LastName).ToLower().Contains(searchTermLower) ||
+                        b.Email.ToLower().Contains(searchTermLower) ||
+                        b.PhoneNumber.Contains(searchTerm) ||
+                        b.TourSchedule.Tour.Name.ToLower().Contains(searchTermLower)
+                    );
+                }
+
+                if (bookingStatus.HasValue)
+                {
+                    query = query.Where(b => b.BookingStatus == bookingStatus.Value);
+                }
+
+                if (paymentStatus.HasValue)
+                {
+                    query = query.Where(b => b.PaymentStatus == paymentStatus.Value);
+                }
+
+                return await query
+                    .OrderByDescending(b => b.BookingDate)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while retrieving filtered bookings: {ex.Message}");
+                return new List<Booking>();
+            }
+        }
+
+        public async Task<int> GetBookingsCountAsync(
+            string? searchTerm = null,
+            BookingStatus? bookingStatus = null,
+            PaymentStatus? paymentStatus = null)
+        {
+            try
+            {
+                var query = _context.Bookings.AsQueryable();
+
+                if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    var searchTermLower = searchTerm.ToLower();
+                    query = query.Where(b =>
+                        b.User.Username.ToLower().Contains(searchTermLower) ||
+                        (b.FirstName + " " + b.LastName).ToLower().Contains(searchTermLower) ||
+                        b.Email.ToLower().Contains(searchTermLower) ||
+                        b.PhoneNumber.Contains(searchTerm) ||
+                        b.TourSchedule.Tour.Name.ToLower().Contains(searchTermLower)
+                    );
+                }
+
+                if (bookingStatus.HasValue)
+                {
+                    query = query.Where(b => b.BookingStatus == bookingStatus.Value);
+                }
+
+                if (paymentStatus.HasValue)
+                {
+                    query = query.Where(b => b.PaymentStatus == paymentStatus.Value);
+                }
+
+                return await query.CountAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while counting bookings: {ex.Message}");
+                return 0;
+            }
+        }
     }
 }

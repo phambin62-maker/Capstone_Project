@@ -1,22 +1,23 @@
 ﻿using BE_Capstone_Project.Domain.Models;
+using FE_Capstone_Project.Filters;
 using FE_Capstone_Project.Models;
 using FE_Capstone_Project.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
-using System.Globalization;
 using System.Text.Json.Serialization;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Http;
-using System.Net.Http.Headers;
-using FE_Capstone_Project.Filters;
-using System.Net;
+using System.Threading.Tasks;
 
 namespace FE_Capstone_Project.Controllers
 {
@@ -441,7 +442,6 @@ namespace FE_Capstone_Project.Controllers
             }
         }
 
-        // === THÊM MỚI: Method để lấy ảnh cho Edit và Create views ===
         [HttpGet]
         public async Task<IActionResult> GetTourEditImage(int tourId, int? imageIndex = null)
         {
@@ -491,7 +491,6 @@ namespace FE_Capstone_Project.Controllers
             }
         }
 
-        // === THÊM MỚI: Method để xóa ảnh ===
         [HttpPost]
         public async Task<IActionResult> DeleteTourImage(int imageId)
         {
@@ -525,7 +524,6 @@ namespace FE_Capstone_Project.Controllers
             }
         }
 
-        // === THÊM MỚI: Method để lấy ảnh mặc định ===
         [HttpGet]
         public async Task<IActionResult> GetDefaultImage()
         {
@@ -630,7 +628,11 @@ namespace FE_Capstone_Project.Controllers
         public async Task<IActionResult> Edit(TourEditModel model)
         {
             _logger.LogInformation($"Updating tour ID: {model.Id}");
-
+            if ((model.Images == null || model.Images.Count == 0) &&
+                (!model.ExistingImages?.Any() ?? true))
+            {
+                ModelState.AddModelError("Images", "Tour phải có ít nhất 1 hình ảnh");
+            }
             if (!ModelState.IsValid)
             {
                 foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
@@ -647,7 +649,6 @@ namespace FE_Capstone_Project.Controllers
             {
                 var formData = CreateTourFormData(model);
 
-                // === ADD TOKEN TO REQUEST ===
                 var token = GetToken();
                 if (string.IsNullOrEmpty(token))
                 {
@@ -656,7 +657,6 @@ namespace FE_Capstone_Project.Controllers
                     return View(model);
                 }
 
-                // Create HttpRequestMessage to add headers
                 var request = new HttpRequestMessage(HttpMethod.Post, "Tour/UpdateTour");
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
                 request.Content = formData; 
@@ -736,7 +736,10 @@ namespace FE_Capstone_Project.Controllers
         public async Task<IActionResult> Create(TourCreateModel model)
         {
             _logger.LogInformation("Creating new tour");
-
+            if (model.Images == null || model.Images.Count == 0)
+            {
+                ModelState.AddModelError("Images", "Phải có ít nhất 1 hình ảnh");
+            }
             if (!ModelState.IsValid)
             {
                 _logger.LogWarning("Model validation failed for tour creation");
@@ -748,7 +751,6 @@ namespace FE_Capstone_Project.Controllers
             {
                 var formData = CreateTourFormData(model);
 
-                // === ADD TOKEN TO REQUEST ===
                 var token = GetToken();
                 if (string.IsNullOrEmpty(token))
                 {
@@ -757,7 +759,6 @@ namespace FE_Capstone_Project.Controllers
                     return View(model);
                 }
 
-                // Create HttpRequestMessage to add headers
                 var request = new HttpRequestMessage(HttpMethod.Post, "Tour/AddTour");
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
                 request.Content = formData;
@@ -1408,5 +1409,47 @@ namespace FE_Capstone_Project.Controllers
 
             return $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(imagePath)}";
         }
+        
+        //public class ValidateImageFilesAttribute : ValidationAttribute
+        //{
+        //    protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
+        //    {
+        //        var files = value as List<IFormFile>;
+
+        //        if (files == null || files.Count == 0)
+        //        {
+        //            return new ValidationResult("Phải có ít nhất 1 hình ảnh");
+        //        }
+
+        //        foreach (var file in files)
+        //        {
+        //            if (file == null || file.Length == 0)
+        //            {
+        //                return new ValidationResult("File hình ảnh không được trống");
+        //            }
+
+        //            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png"};
+        //            var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+        //            if (string.IsNullOrEmpty(fileExtension) || !allowedExtensions.Contains(fileExtension))
+        //            {
+        //                return new ValidationResult($"Định dạng file {file.FileName} không hợp lệ. Chỉ chấp nhận: {string.Join(", ", allowedExtensions)}");
+        //            }
+
+        //            if (file.Length > 5 * 1024 * 1024)
+        //            {
+        //                return new ValidationResult($"Kích thước file {file.FileName} không được vượt quá 5MB");
+        //            }
+
+        //            var allowedContentTypes = new[] { "image/jpeg", "image/png"};
+        //            if (!allowedContentTypes.Contains(file.ContentType.ToLowerInvariant()))
+        //            {
+        //                return new ValidationResult($"Loại file {file.FileName} không hợp lệ");
+        //            }
+        //        }
+
+        //        return ValidationResult.Success;
+        //    }
+        //}
     }
 }

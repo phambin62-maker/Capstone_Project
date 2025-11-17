@@ -57,9 +57,9 @@ namespace FE_Capstone_Project.Controllers
         }
 
         private async Task<(bool Success, T Data, string Error)> CallApiAsync<T>(
-    string endpoint,
-    HttpMethod method = null,
-    HttpContent content = null)
+            string endpoint,
+            HttpMethod method = null,
+            HttpContent content = null)
         {
             try
             {

@@ -124,6 +124,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
             }
         }
 
+
                 [HttpPut("{id}")]
                 [Authorize] // Cần đăng nhập để cập nhật booking
                 public async Task<IActionResult> Update(int id, [FromBody] CreateBookingDTO dto)
@@ -157,6 +158,98 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
             if(result == null) return NotFound();
             return Ok(result);
         }
+        [HttpGet("staff/bookings")]
+        //[Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> GetBookingsForStaff([FromQuery] BookingSearchRequest request)
+        {
+            try
+            {
+                var result = await _bookingService.GetBookingsForStaffAsync(request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+        }
+
+        [HttpGet("staff/bookings/{id}")]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> GetBookingDetailForStaff(int id)
+        {
+            try
+            {
+                var booking = await _bookingService.GetBookingDetailForStaffAsync(id);
+                if (booking == null) return NotFound();
+                return Ok(booking);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+        }
+
+        [HttpPut("staff/bookings/{id}/status")]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> UpdateBookingStatus(int id, [FromBody] UpdateBookingStatusRequest request)
+        {
+            try
+            {
+                var success = await _bookingService.UpdateBookingStatusAsync(id, request);
+                if (!success) return NotFound();
+                return Ok(new { message = "Booking status updated successfully", success = true });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+        }
+
+        [HttpPut("staff/bookings/{id}/payment-status")]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> UpdatePaymentStatusByStaff(int id, [FromBody] UpdatePaymentStatusRequest request)
+        {
+            try
+            {
+                var success = await _bookingService.UpdatePaymentStatusByStaffAsync(id, request);
+                if (!success) return NotFound();
+                return Ok(new { message = "Payment status updated successfully", success = true });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+        }
+
+        [HttpGet("staff/booking-statuses")]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> GetAvailableBookingStatuses()
+        {
+            try
+            {
+                var statuses = await _bookingService.GetAvailableBookingStatusesAsync();
+                return Ok(statuses);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+        }
+
+        [HttpGet("staff/payment-statuses")]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> GetAvailablePaymentStatuses()
+        {
+            try
+            {
+                var statuses = await _bookingService.GetAvailablePaymentStatusesAsync();
+                return Ok(statuses);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+        }
 
         private decimal CalculateTotalPrice(BookingRequest request, Tour tour)
         {
@@ -182,3 +275,4 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
                 }
             }
         }
+

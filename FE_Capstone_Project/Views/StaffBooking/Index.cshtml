@@ -1,0 +1,238 @@
+﻿@{
+    ViewData["Title"] = "Booking Management";
+}
+
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">@ViewData["Title"]</h1>
+        <a href="@Url.Action("Bookings")" class="btn btn-primary">
+            <i class="bi bi-list me-1"></i> View All Bookings
+        </a>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row" id="bookingStatistics">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card booking-stat-card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Bookings
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalBookings">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-journal-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card booking-stat-card confirmed border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Confirmed
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="confirmedBookings">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card booking-stat-card pending border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Pending
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="pendingBookings">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card booking-stat-card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Revenue
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalRevenue">0 VND</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-currency-dollar fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="@Url.Action("Bookings")" class="btn btn-primary btn-block py-3">
+                                <i class="bi bi-list fa-2x mb-2"></i><br>
+                                All Bookings
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="@Url.Action("Bookings", new { bookingStatus = "Pending" })" class="btn btn-warning btn-block py-3">
+                                <i class="bi bi-clock fa-2x mb-2"></i><br>
+                                Pending Bookings
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="@Url.Action("Bookings", new { paymentStatus = "Pending" })" class="btn btn-info btn-block py-3">
+                                <i class="bi bi-credit-card fa-2x mb-2"></i><br>
+                                Pending Payments
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="@Url.Action("Bookings", new { bookingStatus = "Cancelled" })" class="btn btn-danger btn-block py-3">
+                                <i class="bi bi-x-circle fa-2x mb-2"></i><br>
+                                Cancelled Bookings
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Bookings -->
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Bookings</h6>
+                    <a href="@Url.Action("Bookings")" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive" id="recentBookings">
+                        <table class="table table-bordered booking-table" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Customer</th>
+                                    <th>Tour</th>
+                                    <th>Booking Date</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="7" class="text-center">Loading recent bookings...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            loadBookingStatistics();
+            loadRecentBookings();
+        });
+
+        function loadBookingStatistics() {
+            $.ajax({
+                url: '@Url.Action("GetBookingStatistics", "StaffBooking")',
+                type: 'GET',
+                success: function (response) {
+                    if (response.success) {
+                        $('#totalBookings').text(response.data.totalBookings);
+                        $('#confirmedBookings').text(response.data.confirmedBookings);
+                        $('#pendingBookings').text(response.data.pendingBookings);
+                        $('#totalRevenue').text(formatCurrency(response.data.totalRevenue));
+                    } else {
+                        console.error('Error loading statistics:', response.error);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error loading statistics:', error);
+                    $('#bookingStatistics').html('<div class="col-12"><div class="alert alert-danger">Error loading statistics</div></div>');
+                }
+            });
+        }
+
+        function loadRecentBookings() {
+            $.ajax({
+                url: '@Url.Action("Bookings", "StaffBooking")',
+                type: 'GET',
+                data: { page: 1, pageSize: 5 },
+                success: function (data) {
+                    // This would typically be an API call, but for now we'll simulate
+                    setTimeout(() => {
+                        $('#recentBookings tbody').html(`
+                            <tr>
+                                <td colspan="7" class="text-center">
+                                    <a href="@Url.Action("Bookings")" class="btn btn-primary">
+                                        View All Bookings
+                                    </a>
+                                </td>
+                            </tr>
+                        `);
+                    }, 1000);
+                },
+                error: function (xhr, status, error) {
+                    $('#recentBookings tbody').html(`
+                        <tr>
+                            <td colspan="7" class="text-center text-danger">
+                                Error loading recent bookings
+                            </td>
+                        </tr>
+                    `);
+                }
+            });
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(amount);
+        }
+
+        function getStatusBadge(status) {
+            const statusMap = {
+                'Pending': 'badge-warning',
+                'Confirmed': 'badge-success',
+                'Cancelled': 'badge-danger',
+                'Completed': 'badge-info'
+            };
+            return statusMap[status] || 'badge-secondary';
+        }
+    </script>
+}

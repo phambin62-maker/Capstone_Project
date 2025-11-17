@@ -1,0 +1,279 @@
+﻿@using BE_Capstone_Project.Domain.Enums
+@model StaffBookingDTO
+@{
+    ViewData["Title"] = "Chi tiết Booking";
+    Layout = "~/Views/Shared/_StaffLayout.cshtml";
+    var bookingStatuses = ViewBag.BookingStatuses as List<BookingStatus> ?? new List<BookingStatus>();
+    var paymentStatuses = ViewBag.PaymentStatuses as List<PaymentStatus> ?? new List<PaymentStatus>();
+}
+
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Chi tiết Booking #@Model.Id</h1>
+        <a href="@Url.Action("Bookings")" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Booking Information -->
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Thông tin Booking</h6>
+                </div>
+                <div class="card-body">
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @TempData["SuccessMessage"]
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    }
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @TempData["ErrorMessage"]
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    }
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="font-weight-bold">Thông tin Khách hàng</h6>
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <td><strong>Username:</strong></td>
+                                    <td>@Model.UserName</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Họ tên:</strong></td>
+                                    <td>@Model.FullName</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Email:</strong></td>
+                                    <td>@Model.Email</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Điện thoại:</strong></td>
+                                    <td>@Model.PhoneNumber</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="font-weight-bold">Thông tin Tour</h6>
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <td><strong>Tour:</strong></td>
+                                    <td>@Model.TourName</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Ngày đi:</strong></td>
+                                    <td>@Model.DepartureDate?.ToString("dd/MM/yyyy")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Ngày về:</strong></td>
+                                    <td>@Model.ArrivalDate?.ToString("dd/MM/yyyy")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Số khách:</strong></td>
+                                    <td>
+                                        Người lớn: @Model.AdultCount,
+                                        Trẻ em: @Model.ChildCount,
+                                        Em bé: @Model.InfantCount
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h6 class="font-weight-bold">Thông tin Thanh toán</h6>
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <td><strong>Tổng tiền:</strong></td>
+                                    <td class="font-weight-bold text-primary">@Model.TotalPrice?.ToString("N0") VND</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Ngày booking:</strong></td>
+                                    <td>@Model.BookingDate?.ToString("dd/MM/yyyy HH:mm")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Hết hạn:</strong></td>
+                                    <td class="@(Model.ExpirationTime < DateTime.Now ? "text-danger" : "")">
+                                        @Model.ExpirationTime?.ToString("dd/MM/yyyy HH:mm")
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="font-weight-bold">Trạng thái</h6>
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <td><strong>Booking:</strong></td>
+                                    <td>
+                                        <span class="badge @GetBookingStatusBadge(Model.BookingStatus)">
+                                            @GetBookingStatusText(Model.BookingStatus)
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Thanh toán:</strong></td>
+                                    <td>
+                                        <span class="badge @GetPaymentStatusBadge(Model.PaymentStatus)">
+                                            @GetPaymentStatusText(Model.PaymentStatus)
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Panel -->
+        <div class="col-lg-4">
+            <!-- Update Booking Status -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Cập nhật Trạng thái Booking</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="@Url.Action("UpdateBookingStatus", new { id = Model.Id })">
+                        @Html.AntiForgeryToken()
+                        <div class="form-group">
+                            <label for="bookingStatus">Trạng thái mới</label>
+                            <select class="form-control" id="bookingStatus" name="BookingStatus" required>
+                                @foreach (var status in bookingStatuses)
+                                {
+                                    <option value="@status" selected="@(Model.BookingStatus?.Equals(status) == true)">
+                                        @GetBookingStatusText(status)
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="bookingNote">Ghi chú (tùy chọn)</label>
+                            <textarea class="form-control" id="bookingNote" name="Note" rows="3"
+                                      placeholder="Nhập ghi chú về thay đổi trạng thái..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-sync-alt"></i> Cập nhật Booking
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Update Payment Status -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Cập nhật Trạng thái Thanh toán</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="@Url.Action("UpdatePaymentStatus", new { id = Model.Id })">
+                        @Html.AntiForgeryToken()
+                        <div class="form-group">
+                            <label for="paymentStatus">Trạng thái mới</label>
+                            <select class="form-control" id="paymentStatus" name="PaymentStatus" required>
+                                @foreach (var status in paymentStatuses)
+                                {
+                                    <option value="@status" selected="@(Model.PaymentStatus?.Equals(status) == true)">
+                                        @GetPaymentStatusText(status)
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="paymentNote">Ghi chú (tùy chọn)</label>
+                            <textarea class="form-control" id="paymentNote" name="Note" rows="3"
+                                      placeholder="Nhập ghi chú về thay đổi thanh toán..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success btn-block">
+                            <i class="fas fa-money-bill-wave"></i> Cập nhật Thanh toán
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Quick Cancel -->
+            @if (Model.BookingStatus != BookingStatus.Cancelled)
+            {
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-danger">Hủy Booking</h6>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="@Url.Action("CancelBooking", new { id = Model.Id })"
+                              onsubmit="return confirm('Bạn có chắc chắn muốn hủy booking này?');">
+                            @Html.AntiForgeryToken()
+                            <div class="form-group">
+                                <label for="cancelNote">Lý do hủy (tùy chọn)</label>
+                                <textarea class="form-control" id="cancelNote" name="note" rows="2"
+                                      placeholder="Nhập lý do hủy booking..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-danger btn-block">
+                                <i class="fas fa-times"></i> Hủy Booking
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@functions {
+    private string GetBookingStatusText(BookingStatus? status)
+    {
+        return status switch
+        {
+            BookingStatus.Pending => "Chờ xác nhận",
+            BookingStatus.Confirmed => "Đã xác nhận",
+            BookingStatus.Cancelled => "Đã hủy",
+            BookingStatus.Completed => "Hoàn thành",
+            _ => "Không xác định"
+        };
+    }
+
+    private string GetPaymentStatusText(PaymentStatus? status)
+    {
+        return status switch
+        {
+            PaymentStatus.Pending => "Chờ thanh toán",
+            PaymentStatus.Completed => "Đã thanh toán",
+            PaymentStatus.Failed => "Thất bại",
+            PaymentStatus.Refunded => "Đã hoàn tiền",
+            _ => "Không xác định"
+        };
+    }
+
+    private string GetBookingStatusBadge(BookingStatus? status)
+    {
+        return status switch
+        {
+            BookingStatus.Pending => "badge-warning",
+            BookingStatus.Confirmed => "badge-primary",
+            BookingStatus.Cancelled => "badge-danger",
+            BookingStatus.Completed => "badge-success",
+            _ => "badge-secondary"
+        };
+    }
+
+    private string GetPaymentStatusBadge(PaymentStatus? status)
+    {
+        return status switch
+        {
+            PaymentStatus.Pending => "badge-warning",
+            PaymentStatus.Completed => "badge-success",
+            PaymentStatus.Failed => "badge-danger",
+            PaymentStatus.Refunded => "badge-info",
+            _ => "badge-secondary"
+        };
+    }
+}

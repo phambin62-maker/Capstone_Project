@@ -1,4 +1,5 @@
-﻿using BE_Capstone_Project.Domain.Enums;
+﻿using BE_Capstone_Project.Application.BookingManagement.DTOs;
+using BE_Capstone_Project.Domain.Enums;
 
 namespace FE_Capstone_Project.Models
 {
@@ -103,4 +104,66 @@ namespace FE_Capstone_Project.Models
         public decimal TotalPrice { get; set; }
         public BookingStatus Status { get; set; }
     }
+    public class BookingSearchRequest
+    {
+        public string? SearchTerm { get; set; }
+        public BookingStatus? BookingStatus { get; set; }
+        public PaymentStatus? PaymentStatus { get; set; }
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 10;
+    }
+
+    public class BookingListResponse
+    {
+        public List<BookingDTO> Bookings { get; set; } = new();
+        public int TotalCount { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int TotalPages { get; set; }
+    }
+    public class StaffBookingDTO
+    {
+        public int Id { get; set; }
+        public string UserName { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string PhoneNumber { get; set; } = string.Empty;
+        public string TourName { get; set; } = string.Empty;
+        public DateTime? DepartureDate { get; set; }
+        public DateTime? ArrivalDate { get; set; }
+        public PaymentStatus? PaymentStatus { get; set; }
+        public BookingStatus? BookingStatus { get; set; }
+        public decimal? TotalPrice { get; set; }
+        public DateTime? BookingDate { get; set; }
+        public DateTime? ExpirationTime { get; set; }
+        public int AdultCount { get; set; }
+        public int ChildCount { get; set; }
+        public int InfantCount { get; set; }
+    }
+
+    public class UpdateBookingStatusRequest
+    {
+        public BookingStatus BookingStatus { get; set; }
+        public string? Note { get; set; }
+    }
+
+    public class UpdatePaymentStatusRequest
+    {
+        public PaymentStatus PaymentStatus { get; set; }
+        public string? Note { get; set; }
+    }
+    public class BookingStatistics
+    {
+        public int TotalBookings { get; set; }
+        public int PendingBookings { get; set; }
+        public int ConfirmedBookings { get; set; }
+        public int CancelledBookings { get; set; }
+        public int CompletedBookings { get; set; }
+        public decimal TotalRevenue { get; set; }
+        public int PendingPayments { get; set; }
+        public int CompletedPayments { get; set; }
+    }
+
+
+    
 }
