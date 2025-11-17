@@ -21,4 +21,6 @@ public partial class News
     public NewsStatus? NewsStatus { get; set; }
 
     public virtual User User { get; set; } = null!;
+    public DateTime? UpdatedDate { get; set; }
+    public string? UpdatedAuthor { get; set; }
 }

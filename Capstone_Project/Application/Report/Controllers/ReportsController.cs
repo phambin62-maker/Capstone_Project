@@ -55,8 +55,20 @@ namespace BE_Capstone_Project.Application.Report.Controllers
         {
             if (from > to) return BadRequest("Invalid date range");
 
-            // Bạn sẽ cần thêm 'GetCustomerAnalysisAsync' vào IReportService
             var result = await _reportService.GetCustomerAnalysisAsync(from, to.AddDays(1));
+            return Ok(result);
+        }
+
+        [HttpGet("bookings-by-month")]
+        public async Task<IActionResult> GetBookingsByMonth([FromQuery] int year, [FromQuery] int month)
+        {
+            if (year <= 0 || month <= 0 || month > 12)
+            {
+                return BadRequest("Năm hoặc tháng không hợp lệ.");
+            }
+
+            var result = await _reportService.GetBookingsByMonthAsync(year, month);
+
             return Ok(result);
         }
     }

@@ -161,7 +161,8 @@ namespace FE_Capstone_Project.Controllers
                     HttpContext.Session.SetString("UserName", username ?? name ?? "");
                     HttpContext.Session.SetString("UserEmail", email);
                     HttpContext.Session.SetInt32("UserRoleId", roleId);
-                    
+                    HttpContext.Session.SetInt32("UserId", userId);
+
 
                     _logger.LogInformation($"Lưu token vào session thành công cho {email}, username: {username}");
                 }
