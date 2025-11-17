@@ -27,8 +27,8 @@
     {
         <header id="header" class="header d-flex align-items-center fixed-top">
             <div class="header-container container-fluid container-xl d-flex align-items-center justify-content-between">
-                <a href="/" class="logo d-flex align-items-center me-auto me-xl-0">
-                    <h1 class="sitename">COME BACK HOME</h1>
+                <a  class="logo d-flex align-items-center me-auto me-xl-0">
+                    <h1 class="sitename">ADMIN PANEL</h1>
                 </a>
                 @if (!string.IsNullOrEmpty(firstname))
                 {
@@ -45,6 +45,11 @@
                                         <li><a asp-action="Profile" asp-controller="AuthWeb">Profile</a></li>
                                         <li><a asp-action="Wishlist" asp-controller="Profile">Wishlist</a></li>
                                         <li><a asp-action="Logout" asp-controller="AuthWeb">Logout</a></li>
+                                        <li>
+                                            <a href="/" >
+                                                Home
+                                            </a>
+                                        </li>
                                     </ul>
                                 </li>
                             }
