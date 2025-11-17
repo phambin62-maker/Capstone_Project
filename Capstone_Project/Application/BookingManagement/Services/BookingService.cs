@@ -7,11 +7,13 @@ using DocumentFormat.OpenXml.Office2010.Excel;
 using BE_Capstone_Project.Application.Notifications.Services;
 using BE_Capstone_Project.Application.Notifications.DTOs;
 // using BE_Capstone_Project.Domain.Enums; // (Dòng này bị lặp, đã xóa)
-using System; // <-- Thêm Using này
-using System.Linq; // <-- Thêm Using này
-using System.Collections.Generic; // <-- Thêm Using này
+using System; 
+using System.Linq; 
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http.HttpResults; // <-- Thêm Using này
+using Microsoft.AspNetCore.Http.HttpResults;
+using BE_Capstone_Project.Infrastructure;
+using Microsoft.EntityFrameworkCore; 
 
 namespace BE_Capstone_Project.Application.BookingManagement.Services
 {
@@ -19,6 +21,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
     {
         private readonly BookingDAO _bookingDAO;
         private readonly BookingCustomerDAO _bookingCustomerDAO;
+        private readonly OtmsdbContext _context;
 
         // === 1. DỊCH VỤ THÔNG BÁO ===
         private readonly NotificationService _notificationService;
@@ -26,11 +29,13 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
         // === 2. SỬA LỖI CONSTRUCTOR (THÊM NotificationService VÀO) ===
         public BookingService(BookingDAO bookingDAO,
                               BookingCustomerDAO bookingCustomerDAO,
-                              NotificationService notificationService) // Thêm vào đây
+                              NotificationService notificationService,
+                              OtmsdbContext otmsdbContext) 
         {
             _bookingDAO = bookingDAO;
             _bookingCustomerDAO = bookingCustomerDAO;
-            _notificationService = notificationService; // Thêm dòng gán này
+            _notificationService = notificationService;
+            _context = otmsdbContext;
         }
         // === KẾT THÚC SỬA LỖI ===
 
@@ -272,6 +277,215 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
         public async Task<List<ScheduleBookedSeatsDTO>> GetBookedSeatsByTour(int tourId)
         {
             return await _bookingCustomerDAO.GetBookedSeatsByTourAsync(tourId);
+        }
+        public async Task<BookingListResponse> GetBookingsForStaffAsync(BookingSearchRequest request)
+        {
+            var query = _context.Bookings
+                .Include(b => b.User)
+                .Include(b => b.TourSchedule)
+                    .ThenInclude(ts => ts.Tour)
+                .Include(b => b.BookingCustomers)
+                .AsQueryable();
+
+            // Search by username, full name, email, phone, or tour name
+            if (!string.IsNullOrEmpty(request.SearchTerm))
+            {
+                var searchTerm = request.SearchTerm.ToLower();
+                query = query.Where(b =>
+                    b.User.Username.ToLower().Contains(searchTerm) ||
+                    (b.FirstName + " " + b.LastName).ToLower().Contains(searchTerm) ||
+                    b.Email.ToLower().Contains(searchTerm) ||
+                    b.PhoneNumber.Contains(searchTerm) ||
+                    b.TourSchedule.Tour.Name.ToLower().Contains(searchTerm)
+                );
+            }
+
+            // Filter by booking status
+            if (request.BookingStatus.HasValue)
+            {
+                query = query.Where(b => b.BookingStatus == request.BookingStatus.Value);
+            }
+
+            // Filter by payment status
+            if (request.PaymentStatus.HasValue)
+            {
+                query = query.Where(b => b.PaymentStatus == request.PaymentStatus.Value);
+            }
+
+            // Get total count for pagination
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination
+            var bookings = await query
+                .OrderByDescending(b => b.BookingDate)
+                .Skip((request.Page - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .ToListAsync();
+
+            var bookingDTOs = bookings.Select(b => new StaffBookingDTO
+            {
+                Id = b.Id,
+                UserName = b.User.Username,
+                FullName = $"{b.FirstName} {b.LastName}",
+                Email = b.Email,
+                PhoneNumber = b.PhoneNumber,
+                TourName = b.TourSchedule.Tour.Name,
+                DepartureDate = b.TourSchedule.DepartureDate,
+                ArrivalDate = b.TourSchedule.ArrivalDate,
+                PaymentStatus = b.PaymentStatus,
+                BookingStatus = b.BookingStatus,
+                TotalPrice = b.TotalPrice,
+                BookingDate = b.BookingDate,
+                ExpirationTime = b.ExpirationTime,
+                AdultCount = b.BookingCustomers.Count(bc => bc.CustomerType == CustomerType.Adult),
+                ChildCount = b.BookingCustomers.Count(bc => bc.CustomerType == CustomerType.Child),
+                InfantCount = b.BookingCustomers.Count(bc => bc.CustomerType == CustomerType.Infant)
+            }).ToList();
+
+            return new BookingListResponse
+            {
+                Bookings = bookingDTOs.Select(b => new BookingDTO
+                {
+                    Id = b.Id,
+                    UserId = bookings.First(x => x.Id == b.Id).UserId,
+                    TourScheduleId = bookings.First(x => x.Id == b.Id).TourScheduleId,
+                    PaymentStatus = b.PaymentStatus,
+                    BookingStatus = b.BookingStatus,
+                    TotalPrice = b.TotalPrice,
+                    BookingDate = b.BookingDate,
+                    FullName = b.FullName,
+                    PhoneNumber = b.PhoneNumber,
+                    Email = b.Email,
+                    Username = b.UserName,
+                    TourName = b.TourName
+                }).ToList(),
+                TotalCount = totalCount,
+                Page = request.Page,
+                PageSize = request.PageSize,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize)
+            };
+        }
+
+        public async Task<StaffBookingDTO?> GetBookingDetailForStaffAsync(int id)
+        {
+            var booking = await _context.Bookings
+                .Include(b => b.User)
+                .Include(b => b.TourSchedule)
+                    .ThenInclude(ts => ts.Tour)
+                .Include(b => b.BookingCustomers)
+                .FirstOrDefaultAsync(b => b.Id == id);
+
+            if (booking == null) return null;
+
+            return new StaffBookingDTO
+            {
+                Id = booking.Id,
+                UserName = booking.User.Username,
+                FullName = $"{booking.FirstName} {booking.LastName}",
+                Email = booking.Email,
+                PhoneNumber = booking.PhoneNumber,
+                TourName = booking.TourSchedule.Tour.Name,
+                DepartureDate = booking.TourSchedule.DepartureDate,
+                ArrivalDate = booking.TourSchedule.ArrivalDate,
+                PaymentStatus = booking.PaymentStatus,
+                BookingStatus = booking.BookingStatus,
+                TotalPrice = booking.TotalPrice,
+                BookingDate = booking.BookingDate,
+                ExpirationTime = booking.ExpirationTime,
+                AdultCount = booking.BookingCustomers.Count(bc => bc.CustomerType == CustomerType.Adult),
+                ChildCount = booking.BookingCustomers.Count(bc => bc.CustomerType == CustomerType.Child),
+                InfantCount = booking.BookingCustomers.Count(bc => bc.CustomerType == CustomerType.Infant)
+            };
+        }
+
+        public async Task<bool> UpdateBookingStatusAsync(int bookingId, UpdateBookingStatusRequest request)
+        {
+            var booking = await _bookingDAO.GetBookingByIdAsync(bookingId);
+            if (booking == null) return false;
+
+            var oldStatus = booking.BookingStatus;
+            booking.BookingStatus = request.BookingStatus;
+
+            var updateSuccess = await _bookingDAO.UpdateBookingAsync(booking);
+
+            if (updateSuccess)
+            {
+                // Send notification to user about status change
+                try
+                {
+                    var tourName = booking.TourSchedule?.Tour?.Name ?? "Your Tour";
+                    var notificationDto = new CreateNotificationDTO
+                    {
+                        UserId = booking.UserId,
+                        Title = "Booking Status Updated",
+                        Message = $"Your booking for '{tourName}' has been updated from {oldStatus} to {request.BookingStatus}. {request.Note}",
+                        NotificationType = NotificationType.System
+                    };
+
+                    _ = _notificationService.CreateAsync(notificationDto);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to send status update notification: {ex.Message}");
+                }
+            }
+
+            return updateSuccess;
+        }
+
+        public async Task<bool> UpdatePaymentStatusByStaffAsync(int bookingId, UpdatePaymentStatusRequest request)
+        {
+            var booking = await _bookingDAO.GetBookingByIdAsync(bookingId);
+            if (booking == null) return false;
+
+            var oldStatus = booking.PaymentStatus;
+            booking.PaymentStatus = request.PaymentStatus;
+
+            // If payment is completed, update booking status to confirmed
+            if (request.PaymentStatus == PaymentStatus.Completed && booking.BookingStatus == BookingStatus.Pending)
+            {
+                booking.BookingStatus = BookingStatus.Confirmed;
+            }
+
+            var updateSuccess = await _bookingDAO.UpdateBookingAsync(booking);
+
+            if (updateSuccess)
+            {
+                // Send notification to user about payment status change
+                try
+                {
+                    var tourName = booking.TourSchedule?.Tour?.Name ?? "Your Tour";
+                    var notificationDto = new CreateNotificationDTO
+                    {
+                        UserId = booking.UserId,
+                        Title = "Payment Status Updated",
+                        Message = $"Payment status for your booking '{tourName}' has been updated from {oldStatus} to {request.PaymentStatus}. {request.Note}",
+                        NotificationType = NotificationType.System
+                    };
+
+                    _ = _notificationService.CreateAsync(notificationDto);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to send payment status notification: {ex.Message}");
+                }
+            }
+
+            return updateSuccess;
+        }
+
+        public async Task<List<BookingStatus>> GetAvailableBookingStatusesAsync()
+        {
+            return await Task.FromResult(Enum.GetValues(typeof(BookingStatus))
+                .Cast<BookingStatus>()
+                .ToList());
+        }
+
+        public async Task<List<PaymentStatus>> GetAvailablePaymentStatusesAsync()
+        {
+            return await Task.FromResult(Enum.GetValues(typeof(PaymentStatus))
+                .Cast<PaymentStatus>()
+                .ToList());
         }
     }
 }

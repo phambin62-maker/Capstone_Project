@@ -69,36 +69,6 @@ namespace FE_Capstone_Project.Models
         public Location EndLocation { get; set; } = new Location();
     }
 
-    //public class LocationViewModel
-    //{
-    //    [JsonPropertyName("id")]
-    //    public int Id { get; set; }
-
-    //    [JsonPropertyName("locationName")]
-    //    public string LocationName { get; set; } = string.Empty;
-
-    //    [JsonPropertyName("description")]
-    //    public string Description { get; set; } = string.Empty;
-    //}
-
-    //public class ReviewViewModel
-    //{
-    //    [JsonPropertyName("id")]
-    //    public int Id { get; set; }
-
-    //    [JsonPropertyName("stars")]
-    //    public byte Stars { get; set; }
-
-    //    [JsonPropertyName("comment")]
-    //    public string Comment { get; set; } = string.Empty;
-
-    //    [JsonPropertyName("createdDate")]
-    //    public DateTime? CreatedDate { get; set; }
-
-    //    [JsonPropertyName("user")]
-    //    public UserViewModel User { get; set; } = new UserViewModel();
-    //}
-
     // User model cho View
     public class UserViewModel
     {
@@ -163,7 +133,6 @@ namespace FE_Capstone_Project.Models
         public bool NewStatus { get; set; }
     }
 
-    // Form Models
     public class TourDetailModel : TourViewModel
     {
         public string StartLocationName { get; set; } = string.Empty;
@@ -220,11 +189,20 @@ namespace FE_Capstone_Project.Models
         [Range(1, 100, ErrorMessage = "Số chỗ tối đa phải từ 1-100")]
         public short MaxSeats { get; set; } = 30;
 
-        public List<IFormFile>? Images { get; set; }
+        [Required(ErrorMessage = "Hình ảnh tour là bắt buộc")]
+        [MinLength(1, ErrorMessage = "Phải có ít nhất 1 hình ảnh")]
+        [MaxLength(10, ErrorMessage = "Không được upload quá 10 hình ảnh")]
+        public List<IFormFile> Images { get; set; } = new List<IFormFile>();
     }
 
     public class TourEditModel : TourCreateModel
     {
         public int Id { get; set; }
+
+        new public List<IFormFile>? Images { get; set; }
+
+        public List<string> ExistingImages { get; set; } = new List<string>();
     }
+
+    
 }
