@@ -34,23 +34,6 @@ namespace BE_Capstone_Project.DAO
             return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
         }
 
-        public async Task<User?> GetBotUserAsync()
-        {
-            try
-            {
-                return await _context.Users
-                    .FirstOrDefaultAsync(u => 
-                        (u.Email != null && u.Email.ToLower() == "bot@otms.com") || 
-                        (u.Username != null && u.Username.ToLower() == "bot") ||
-                        (u.FirstName != null && u.FirstName.ToLower() == "ai" && 
-                         u.LastName != null && u.LastName.ToLower() == "assistant"));
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"❌ [UserDAO] Error in GetBotUserAsync: {ex.Message}");
-                return null;
-            }
-        }
 
         public async Task CreateAsync(User user)
         {

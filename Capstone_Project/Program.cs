@@ -60,9 +60,6 @@ builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<ICompanyService, CompanyService>();
 builder.Services.AddScoped<IFeatureService, FeatureService>();
 builder.Services.AddScoped<IChatService, ChatService>();
-builder.Services.AddScoped<IBotChatService, BotChatService>();
-builder.Services.AddScoped<IBotService, BotService>();
-builder.Services.AddHttpClient(); // Cần cho BotService sử dụng HttpClient
 //DAO
 builder.Services.AddScoped<BookingCustomerDAO>();
 builder.Services.AddScoped<BookingDAO>();
