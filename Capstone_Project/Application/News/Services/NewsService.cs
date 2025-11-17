@@ -7,6 +7,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using System;
+using System.Security.Claims;
+using BE_Capstone_Project.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 
 namespace BE_Capstone_Project.Application.Newses.Services
 {
@@ -14,11 +17,13 @@ namespace BE_Capstone_Project.Application.Newses.Services
     {
         private readonly NewsDAO _newsDAO;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly OtmsdbContext _context;
 
-        public NewsService(NewsDAO newsDAO, IHttpContextAccessor httpContextAccessor)
+        public NewsService(NewsDAO newsDAO, IHttpContextAccessor httpContextAccessor, OtmsdbContext context)
         {
             _newsDAO = newsDAO;
             _httpContextAccessor = httpContextAccessor;
+            _context = context;
         }
 
         private string? GetFullImageUrl(string? relativePath)
@@ -33,6 +38,39 @@ namespace BE_Capstone_Project.Application.Newses.Services
             return $"{baseUrl}{relativePath.Replace("~/", "/")}";
         }
 
+        // Helper: Chuyển đổi string sang Enum (An toàn)
+        private NewsStatus ParseNewsStatus(string? statusString)
+        {
+            if (string.IsNullOrEmpty(statusString))
+            {
+                return NewsStatus.Draft; // Mặc định
+            }
+
+            if (Enum.TryParse<NewsStatus>(statusString, true, out var statusEnum))
+            {
+                return statusEnum;
+            }
+
+            return NewsStatus.Draft; // Mặc định nếu không parse được
+        }
+
+        private int GetCurrentUserId()
+        {
+            var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            int.TryParse(userIdClaim, out int userId);
+            return userId;
+        }
+
+        private async Task<string> GetUserNameById(int userId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user != null)
+            {
+                return $"{user.FirstName} {user.LastName}";
+            }
+            return "Unknown";
+        }
+
         private NewsDTO MapToDto(News n)
         {
             return new NewsDTO
@@ -44,7 +82,9 @@ namespace BE_Capstone_Project.Application.Newses.Services
                 NewsStatus = n.NewsStatus,
                 AuthorName = (n.User != null) ? $"{n.User.FirstName} {n.User.LastName}" : null,
                 Content = n.Content,
-                UserId = n.UserId
+                UserId = n.UserId,
+                UpdatedDate = n.UpdatedDate,
+                UpdatedAuthor = n.UpdatedAuthor
             };
         }
 
@@ -61,9 +101,10 @@ namespace BE_Capstone_Project.Application.Newses.Services
             return MapToDto(n);
         }
 
-        public async Task<IEnumerable<NewsDTO>> GetByStatusAsync(NewsStatus status)
+        public async Task<IEnumerable<NewsDTO>> GetByStatusAsync(string statusString)
         {
-            var newsList = await _newsDAO.GetNewsByStatusAsync(status);
+            var statusEnum = ParseNewsStatus(statusString); // Chuyển đổi
+            var newsList = await _newsDAO.GetNewsByStatusAsync(statusEnum);
             return newsList.Select(MapToDto);
         }
 
@@ -87,9 +128,25 @@ namespace BE_Capstone_Project.Application.Newses.Services
                 Content = dto.Content,
                 Image = dto.Image,
                 CreatedDate = DateTime.UtcNow,
-                NewsStatus = dto.NewsStatus ?? NewsStatus.Draft
+                NewsStatus = ParseNewsStatus(dto.NewsStatus) // Sửa: Chuyển đổi string
             };
             return await _newsDAO.AddNewsAsync(news);
+        }
+
+        // SỬA: UpdateAsync(News) để khớp với Controller
+        public async Task<bool> UpdateAsync(News newsEntity)
+        {
+            try
+            {
+                // Logic cập nhật Author/Date đã được chuyển vào Controller
+                await _newsDAO.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating news (Service): {ex.Message}");
+                return false;
+            }
         }
 
         public async Task<bool> DeleteAsync(News newsEntity)
@@ -99,20 +156,6 @@ namespace BE_Capstone_Project.Application.Newses.Services
         public async Task<News?> GetNewsEntityByIdAsync(int id)
         {
             return await _newsDAO.GetNewsEntityByIdAsync(id);
-        }
-
-        public async Task<bool> UpdateAsync(News newsEntity)
-        {
-            try
-            {
-                await _newsDAO.SaveChangesAsync();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error updating news (Service): {ex.Message}");
-                return false;
-            }
         }
     }
 }

@@ -212,6 +212,8 @@ public partial class OtmsdbContext : DbContext
             entity.Property(e => e.Image).HasMaxLength(255);
             entity.Property(e => e.Title).HasMaxLength(100);
             entity.Property(e => e.UserId).HasColumnName("UserID");
+            entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAuthor).HasMaxLength(100);
 
             entity.HasOne(d => d.User).WithMany(p => p.News)
                 .HasForeignKey(d => d.UserId)

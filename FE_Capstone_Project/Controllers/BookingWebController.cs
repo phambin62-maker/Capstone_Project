@@ -48,23 +48,38 @@ namespace FE_Capstone_Project.Controllers
 
             var username = HttpContext.Session.GetString("UserName");
 
-            var bookingResponse = await _apiHelper.PostAsync<BookingRequest, BookingResponse>($"Booking?username={username}", request);
-            
+            var bookingResponse = await _apiHelper.PostAsync<BookingRequest, BookingResponse>(
+                $"Booking?username={username}", request);
+
             if (bookingResponse == null || !bookingResponse.Success)
                 return BadRequest("Booking failed.");
 
-            var paymentRequest = new PaymentRequest()
+            // 🔥 Check the payment method from the form
+            if (request.PaymentMethod == "vnpay")
             {
-                OrderType = "Tour",
-                Amount = bookingResponse.TotalPrice,
-                OrderDescription = $"Booking #{bookingResponse.BookingId} - {bookingResponse.TourName}",
-                Name = $"{bookingResponse.FirstName} {bookingResponse.LastName}",
-            };
+                var paymentRequest = new PaymentRequest()
+                {
+                    OrderType = "Tour",
+                    Amount = bookingResponse.TotalPrice,
+                    OrderDescription = $"Booking #{bookingResponse.BookingId} - {bookingResponse.TourName}",
+                    Name = $"{bookingResponse.FirstName} {bookingResponse.LastName}",
+                };
 
-            var paymentResponse = await _apiHelper.PostAsync<PaymentRequest, PaymentResponse>($"Payment/create-payment", paymentRequest);
+                var paymentResponse = await _apiHelper.PostAsync<PaymentRequest, PaymentResponse>(
+                    $"Payment/create-payment", paymentRequest);
 
-            if (paymentResponse == null || string.IsNullOrEmpty(paymentResponse.PaymentUrl))
-                return BadRequest("Failed to create payment URL.");
+                if (paymentResponse == null || string.IsNullOrEmpty(paymentResponse.PaymentUrl))
+                    return BadRequest("Failed to create payment URL.");
+
+                return Redirect(paymentResponse.PaymentUrl);
+            }
+            else if (request.PaymentMethod == "cash")
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            return BadRequest("Invalid payment method.");
+        }
 
             return Redirect(paymentResponse.PaymentUrl);
         }

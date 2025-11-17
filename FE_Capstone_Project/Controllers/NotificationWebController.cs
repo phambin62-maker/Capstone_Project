@@ -21,10 +21,10 @@ public class NotificationWebController : Controller
 
     private int GetCurrentUserId()
     {
-        var userIdString = HttpContext.Session.GetString("UserId");
-        if (int.TryParse(userIdString, out int userId))
+        var userId = HttpContext.Session.GetInt32("UserId");
+        if (userId.HasValue && userId.Value > 0)
         {
-            return userId;
+            return userId.Value;
         }
         return 0;
     }
@@ -62,7 +62,6 @@ public class NotificationWebController : Controller
         }
     }
 
-    // === THÊM MỚI 1: ACTION "DELETE ALL" ===
     [HttpPost]
     public async Task<IActionResult> DeleteAll()
     {
@@ -70,10 +69,7 @@ public class NotificationWebController : Controller
         {
             int userId = GetCurrentUserId();
             if (userId == 0) return RedirectToAction("Index");
-
-            // Gọi API (BE) [HttpDelete] .../api/Notification/user/{userId}
             await _apiHelper.DeleteAsync($"{_apiBaseUrl}/user/{userId}");
-
             return RedirectToAction("Index");
         }
         catch (Exception)
@@ -82,7 +78,6 @@ public class NotificationWebController : Controller
         }
     }
 
-    // === THÊM MỚI 2: ACTION "DELETE SINGLE" ===
     [HttpPost]
     public async Task<IActionResult> DeleteSingle(int notificationId)
     {
@@ -90,10 +85,7 @@ public class NotificationWebController : Controller
         {
             int userId = GetCurrentUserId();
             if (userId == 0) return RedirectToAction("Index");
-
-            // Gọi API (BE) [HttpDelete] .../api/Notification/{id}
             await _apiHelper.DeleteAsync($"{_apiBaseUrl}/{notificationId}");
-
             return RedirectToAction("Index");
         }
         catch (Exception)

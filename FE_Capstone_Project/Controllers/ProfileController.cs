@@ -20,7 +20,6 @@ namespace FE_Capstone_Project.Controllers
         private static readonly List<WishlistData> _toursCache = new();
         private static readonly int pageSize = 9;
 
-        // Đã sửa lỗi "api/api/"
         private const string NOTIFICATION_API_ENDPOINT = "Notification";
 
         public ProfileController(ApiHelper apiHelper)
@@ -28,22 +27,32 @@ namespace FE_Capstone_Project.Controllers
             _apiHelper = apiHelper;
         }
 
+        // === BẮT ĐẦU SỬA LỖI (ĐỌC INT THAY VÌ STRING) ===
         private int GetCurrentUserId()
         {
-            var userIdString = HttpContext.Session.GetString("UserId");
-            if (int.TryParse(userIdString, out int userId))
+            // Sửa: Đọc Int32 (số) để khớp với AuthWebController
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId.HasValue && userId.Value > 0)
             {
-                return userId;
+                return userId.Value;
             }
             return 0;
         }
+        // === KẾT THÚC SỬA LỖI ===
 
-        // (Hàm Wishlist đã sửa)
+        // === SỬA LỖI LOGIC (DÙNG UserName) ===
         public async Task<IActionResult> Wishlist(int page = 1)
         {
             try
             {
+                // Sửa: Dùng "UserName" (là tên) thay vì "UserEmail"
                 var username = HttpContext.Session.GetString("UserName");
+                if (string.IsNullOrEmpty(username))
+                {
+                    TempData["ErrorMessage"] = "User session invalid. Please log in again.";
+                    return View(new List<WishlistData>());
+                }
+
                 var wishlistResponse = await _apiHelper.GetAsync<WishlistResponseModel>($"Wishlist?username={username}");
 
                 if (wishlistResponse == null || wishlistResponse.Wishlist == null || !wishlistResponse.Wishlist.Any())
@@ -76,21 +85,24 @@ namespace FE_Capstone_Project.Controllers
             }
         }
 
-        // === SỬA: HÀM ADD (GIỮ COMMENT ĐỂ TRÁNH TRÙNG) ===
+        // === SỬA LỖI LOGIC (DÙNG UserName) ===
         public async Task<IActionResult> AddToWishlist(int tourId)
         {
             try
             {
+                // Sửa: Dùng "UserName" (là tên)
                 var username = HttpContext.Session.GetString("UserName");
-                var userId = GetCurrentUserId();
+                var userId = GetCurrentUserId(); // Hàm này giờ đã đọc Int32 (đúng)
 
-                if (userId == 0)
+                if (userId == 0 || string.IsNullOrEmpty(username))
                 {
                     TempData["ErrorMessage"] = "User session invalid. Please log in again.";
                     return RedirectToAction("TourDetails", "TourWeb", new { tourId });
                 }
 
-                var wishlistData = new { tourId, username };
+                // Gửi "TourId" và "Username" (chữ hoa) để khớp với BE
+                var wishlistData = new { TourId = tourId, Username = username };
+
                 // API BE (Wishlist) này SẼ TỰ TẠO THÔNG BÁO
                 var response = await _apiHelper.PostAsync<object, WishlistData>($"Wishlist", wishlistData);
 
@@ -98,14 +110,6 @@ namespace FE_Capstone_Project.Controllers
                 {
                     TempData["ErrorMessage"] = "Could not add to wishlist. (API Error)";
                 }
-
-                // (KHỐI NÀY VẪN BỊ COMMENT ĐỂ TRÁNH TRÙNG)
-                /*
-                if (response != null && response.TourId > 0)
-                {
-                    try { ... } catch (Exception ex) { ... }
-                }
-                */
 
                 return RedirectToAction("TourDetails", "TourWeb", new { tourId });
             }
@@ -116,15 +120,16 @@ namespace FE_Capstone_Project.Controllers
             }
         }
 
-        // === SỬA: HÀM REMOVE (PHỤC HỒI CODE ĐỂ TẠO THÔNG BÁO) ===
+        // === SỬA LỖI LOGIC (DÙNG UserName) ===
         public async Task<IActionResult> RemoveFromWishlist(int tourId, string tourName)
         {
             try
             {
+                // Sửa: Dùng "UserName" (là tên)
                 var username = HttpContext.Session.GetString("UserName");
-                var userId = GetCurrentUserId();
+                var userId = GetCurrentUserId(); // Hàm này giờ đã đọc Int32 (đúng)
 
-                if (userId == 0)
+                if (userId == 0 || string.IsNullOrEmpty(username))
                 {
                     TempData["ErrorMessage"] = "User session invalid. Please log in again.";
                     return RedirectToAction("TourDetails", "TourWeb", new { tourId });
@@ -143,7 +148,6 @@ namespace FE_Capstone_Project.Controllers
                         Message = $"Tour '{tourName ?? "N/A"}' has been removed from your wishlist.",
                         NotificationType = "System"
                     };
-                    // Dòng này (FE) sẽ tạo thông báo
                     _ = _apiHelper.PostAsync<object, object>(NOTIFICATION_API_ENDPOINT, notificationDto);
                 }
                 catch (Exception ex)
@@ -160,11 +164,13 @@ namespace FE_Capstone_Project.Controllers
             }
         }
 
+        // === SỬA LỖI LOGIC (DÙNG UserName) ===
         public async Task<IActionResult> MyBookings()
         {
+            // Sửa: Dùng "UserName" (là tên)
             var username = HttpContext.Session.GetString("UserName");
             if (string.IsNullOrEmpty(username))
-                return RedirectToAction("Login", "Account");
+                return RedirectToAction("Login", "AuthWeb");
 
             var bookingsResponse = await _apiHelper.GetAsync<List<UserBookingResponse>>($"Booking/user/{username}");
 

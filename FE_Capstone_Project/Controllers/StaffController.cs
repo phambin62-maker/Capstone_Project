@@ -53,11 +53,15 @@ namespace FE_Capstone_Project.Controllers
 
         private int GetCurrentUserId()
         {
-            var userIdString = HttpContext.Session.GetString("UserId");
-            if (int.TryParse(userIdString, out int userId))
+            // Dùng GetInt32 để đọc giá trị
+            var userId = HttpContext.Session.GetInt32("UserId");
+
+            // Kiểm tra xem nó có tồn tại (HasValue) và khác 0 không
+            if (userId.HasValue && userId.Value != 0)
             {
-                return userId;
+                return userId.Value;
             }
+
             _logger.LogWarning("Could not find 'UserId' in Session.");
             return 0;
         }
@@ -1020,7 +1024,7 @@ namespace FE_Capstone_Project.Controllers
 
             try
             {
-                // === SỬA: Thêm Token Xác Thực ===
+                //  Thêm Token Xác Thực ===
                 var token = HttpContext.Session.GetString("JwtToken");
                 if (string.IsNullOrEmpty(token))
                 {
@@ -1028,15 +1032,12 @@ namespace FE_Capstone_Project.Controllers
                     return View(new NewsListViewModel { NewsList = new List<NewsViewModel>() });
                 }
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                // === KẾT THÚC SỬA ===
 
-
-                // === THÊM MỚI: GỌI API STATS ===
                 var statsResponse = await _httpClient.GetAsync("News/stats");
                 if (statsResponse.IsSuccessStatusCode)
                 {
                     var statsContent = await statsResponse.Content.ReadAsStringAsync();
-                    // Dùng _jsonOptions (đã có trong file của bạn)
+
                     ViewBag.NewsStats = JsonSerializer.Deserialize<NewsStatsDTO>(statsContent, _jsonOptions);
                 }
                 else
@@ -1048,7 +1049,7 @@ namespace FE_Capstone_Project.Controllers
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    // Lỗi 401 (Unauthorized) sẽ bị bắt ở đây
+                    // Lỗi 401 
                     TempData["ErrorMessage"] = "Không thể tải danh sách tin tức. (Lỗi: " + response.StatusCode + ")";
                     return View(new NewsListViewModel { NewsList = new List<NewsViewModel>() });
                 }
@@ -1059,7 +1060,6 @@ namespace FE_Capstone_Project.Controllers
                     PropertyNameCaseInsensitive = true
                 }) ?? new List<NewsViewModel>();
 
-                // ... (Code filter của bạn giữ nguyên) ...
                 IEnumerable<NewsViewModel> filteredNews = newsList;
                 if (!string.IsNullOrWhiteSpace(search))
                 {
@@ -1081,7 +1081,10 @@ namespace FE_Capstone_Project.Controllers
                     string lowerStatus = status.ToLowerInvariant();
                     filteredNews = filteredNews.Where(n => n.NewsStatus != null && n.NewsStatus.ToLowerInvariant() == lowerStatus);
                 }
-                var sortedNews = filteredNews.OrderByDescending(n => n.CreatedDate);
+
+                var sortedNews = filteredNews
+             .OrderByDescending(n => n.UpdatedDate ?? n.CreatedDate);
+
                 var finalNewsList = sortedNews.ToList();
                 int totalItems = finalNewsList.Count;
                 int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
@@ -1096,7 +1099,6 @@ namespace FE_Capstone_Project.Controllers
                     ToDate = toDate,
                     Status = status
                 };
-                // === KẾT THÚC CODE FILTER ===
 
                 return View(viewModel);
             }
@@ -1112,7 +1114,7 @@ namespace FE_Capstone_Project.Controllers
         {
             ViewData["Title"] = "Tạo Tin tức Mới";
 
-            int userId = GetCurrentUserId(); // Gọi hàm (đã được thêm ở dưới)
+            int userId = GetCurrentUserId(); 
 
             if (userId == 0)
             {
@@ -1147,27 +1149,21 @@ namespace FE_Capstone_Project.Controllers
                     return View(model);
                 }
 
-                // === SỬA: XÂY DỰNG FORMDATA THAY VÌ JSON ===
                 var formData = new MultipartFormDataContent();
 
-                // Thêm các trường dữ liệu (phải khớp với CreateNewsFormDTO của BE)
                 formData.Add(new StringContent(staffUserId.ToString()), "UserId");
                 formData.Add(new StringContent(model.Title ?? ""), "Title");
                 formData.Add(new StringContent(model.Content ?? ""), "Content");
                 formData.Add(new StringContent(model.NewsStatus.ToString() ?? "Draft"), "NewsStatus");
 
-                // Thêm file (nếu có)
                 if (imageFile != null && imageFile.Length > 0)
                 {
                     var imageContent = new StreamContent(imageFile.OpenReadStream());
                     imageContent.Headers.ContentType = new MediaTypeHeaderValue(imageFile.ContentType);
-                    // "ImageFile" phải khớp với DTO của BE
+                    // "ImageFile" 
                     formData.Add(imageContent, "ImageFile", imageFile.FileName);
                 }
-                // === KẾT THÚC SỬA FORMDATA ===
 
-
-                // === SỬA: GỬI TOKEN VÀ FORMDATA ===
                 var token = HttpContext.Session.GetString("JwtToken");
                 if (string.IsNullOrEmpty(token))
                 {
@@ -1176,10 +1172,9 @@ namespace FE_Capstone_Project.Controllers
                 }
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-                // Gửi formData thay vì jsonContent
-                var response = await _httpClient.PostAsync("News", formData); // "News" khớp với route [HttpPost]
+
+                var response = await _httpClient.PostAsync("News", formData); 
                 var responseContent = await response.Content.ReadAsStringAsync();
-                // === KẾT THÚC SỬA GỬI ===
 
                 if (response.IsSuccessStatusCode)
                 {

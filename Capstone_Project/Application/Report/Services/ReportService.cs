@@ -244,44 +244,35 @@ namespace BE_Capstone_Project.Application.Report.Services
             );
         }
 
-        //PHÂN TÍCH KHÁCH HÀNG ===
         public async Task<CustomerAnalysisDto> GetCustomerAnalysisAsync(DateOnly from, DateOnly to)
         {
             var fromDateTime = from.ToDateTime(TimeOnly.MinValue);
             var toDateTime = to.ToDateTime(TimeOnly.MinValue);
-
-            // 1. Lấy Role "Customer"
             var customerRole = await _context.Roles.AsNoTracking()
                                          .FirstOrDefaultAsync(r => r.RoleName == "Customer");
 
             if (customerRole == null)
             {
-                // Nếu không có role Customer, trả về DTO rỗng
                 return new CustomerAnalysisDto();
             }
-
-            // 2. Tạo truy vấn cơ sở cho tất cả khách hàng (tính all-time)
             var allCustomersQuery = _context.Users
                                           .AsNoTracking()
                                           .Where(u => u.RoleId == customerRole.Id);
 
-            // 3. Tính "Tổng khách hàng" (all-time)
             var totalCustomers = await allCustomersQuery.CountAsync();
 
             if (totalCustomers == 0)
             {
-                // Tránh lỗi chia cho 0
+
                 return new CustomerAnalysisDto { TotalCustomers = 0, LoyalCustomers = 0, NewCustomersInRange = 0, ReturnRate = 0 };
             }
 
-            //  Tính "Khách mới tháng này" (Khách hàng được tạo TRONG KHOẢNG NGÀY)
             var newCustomersInRange = await allCustomersQuery
-                .Where(u => u.CreatedDate != null && // <-- THÊM KIỂM TRA NULL
-                u.CreatedDate.Value >= fromDateTime && // <-- DÙNG .Value
-                u.CreatedDate.Value < toDateTime) // <-- DÙNG .Value
+                .Where(u => u.CreatedDate != null && 
+                u.CreatedDate.Value >= fromDateTime && 
+                u.CreatedDate.Value < toDateTime) 
                 .CountAsync();
 
-            //  Tính "Khách hàng thân thiết" (có > 1 booking đã thanh toán, tính all-time)
             var loyalCustomers = await _context.Bookings
                 .Where(b => b.PaymentStatus == PaymentStatus.Completed)
                 .Join(allCustomersQuery,
@@ -289,8 +280,8 @@ namespace BE_Capstone_Project.Application.Report.Services
                       u => u.Id,
                       (b, u) => u.Id) 
                 .GroupBy(userId => userId)
-                .Where(g => g.Count() > 1) // Lọc những user có > 1 booking
-                .CountAsync(); // Đếm số lượng user đó
+                .Where(g => g.Count() > 1) 
+                .CountAsync(); 
 
             //  Tính "Tỷ lệ quay lại"
             var returnRate = (decimal)loyalCustomers / totalCustomers;
@@ -302,6 +293,39 @@ namespace BE_Capstone_Project.Application.Report.Services
                 NewCustomersInRange = newCustomersInRange,
                 ReturnRate = returnRate
             };
+        }
+
+        public async Task<List<BookingDetailDto>> GetBookingsByMonthAsync(int year, int month)
+        {
+            // Lọc các booking đã thanh toán trong tháng/năm
+            var bookingsInMonth = _context.Bookings
+                .Where(b => b.PaymentStatus == PaymentStatus.Completed &&
+                            b.PaymentDate != null &&
+                            b.PaymentDate.Value.Year == year &&
+                            b.PaymentDate.Value.Month == month);
+
+            var query = from b in bookingsInMonth
+
+                        join ts in _context.TourSchedules on b.TourScheduleId equals ts.Id
+                        join t in _context.Tours on ts.TourId equals t.Id
+                        join u in _context.Users on b.UserId equals u.Id into userGroup
+                        from booker in userGroup.DefaultIfEmpty() 
+
+                            // Sắp xếp theo ngày thanh toán, mới nhất lên đầu
+                        orderby b.PaymentDate descending
+                        select new BookingDetailDto
+                        {
+                            BookingId = b.Id,
+                            TourName = t.Name,
+                            CustomerName = (booker != null)
+                                           ? (booker.FirstName + " " + booker.LastName)
+                                           : (b.FirstName + " " + b.LastName), 
+                            BookingDate = b.BookingDate, 
+                            TotalPrice = b.TotalPrice,
+                            Status = b.BookingStatus.HasValue ? b.BookingStatus.Value.ToString() : "N/A" 
+                        };
+
+            return await query.ToListAsync();
         }
     }
 }
