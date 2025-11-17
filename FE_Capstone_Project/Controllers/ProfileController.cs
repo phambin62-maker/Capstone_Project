@@ -167,7 +167,6 @@ namespace FE_Capstone_Project.Controllers
         // === SỬA LỖI LOGIC (DÙNG UserName) ===
         public async Task<IActionResult> MyBookings()
         {
-            // Sửa: Dùng "UserName" (là tên)
             var username = HttpContext.Session.GetString("UserName");
             if (string.IsNullOrEmpty(username))
                 return RedirectToAction("Login", "AuthWeb");
@@ -175,6 +174,88 @@ namespace FE_Capstone_Project.Controllers
             var bookingsResponse = await _apiHelper.GetAsync<List<UserBookingResponse>>($"Booking/user/{username}");
 
             return View(bookingsResponse);
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelBooking(int bookingId)
+        {
+            try
+            {
+                Console.WriteLine($"=== FE CANCEL REQUEST ===");
+                Console.WriteLine($"Booking ID: {bookingId}");
+
+                var username = HttpContext.Session.GetString("UserName");
+                if (string.IsNullOrEmpty(username))
+                {
+                    Console.WriteLine("No username in session");
+                    TempData["ErrorMessage"] = "User session invalid. Please log in again.";
+                    return RedirectToAction("MyBookings");
+                }
+
+                Console.WriteLine($"Username from session: {username}");
+
+                // Tạo request data
+                var cancelRequest = new
+                {
+                    Username = username
+                };
+
+                Console.WriteLine($"Calling API: Booking/user/{bookingId}/cancel");
+
+                // Gọi API để hủy booking
+                var response = await _apiHelper.PutAsync<object, ApiResponse<object>>(
+                    $"Booking/user/{bookingId}/cancel",
+                    cancelRequest
+                );
+
+                Console.WriteLine($"API Response: {response != null}");
+                Console.WriteLine($"API Success: {response?.Success}");
+                Console.WriteLine($"API Message: {response?.Message}");
+
+                if (response != null && response.Success)
+                {
+                    Console.WriteLine("Cancellation successful in FE");
+                    TempData["SuccessMessage"] = "Booking cancelled successfully!";
+
+                    // Tạo thông báo
+                    try
+                    {
+                        var userId = GetCurrentUserId();
+                        var notificationDto = new
+                        {
+                            UserId = userId,
+                            Title = "Booking Cancelled",
+                            Message = $"Your booking #{bookingId} has been cancelled successfully.",
+                            NotificationType = "System"
+                        };
+                        await _apiHelper.PostAsync<object, object>(NOTIFICATION_API_ENDPOINT, notificationDto);
+                        Console.WriteLine("Notification sent");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Failed to send cancellation notification: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"Cancellation failed: {response?.Message}");
+                    TempData["ErrorMessage"] = response?.Message ?? "Failed to cancel booking. Please try again.";
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception in FE: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                TempData["ErrorMessage"] = $"Error cancelling booking: {ex.Message}";
+            }
+
+            return RedirectToAction("MyBookings");
+        }
+        public class ApiResponse<T>
+        {
+            public bool Success { get; set; }
+            public string Message { get; set; } = string.Empty;
+            public T Data { get; set; }
         }
     }
 }

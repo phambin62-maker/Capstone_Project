@@ -1,131 +1,161 @@
 ﻿@using BE_Capstone_Project.Domain.Enums
 @model StaffBookingDTO
 @{
-    ViewData["Title"] = "Chi tiết Booking";
+    ViewData["Title"] = $"Chi tiết Booking #{Model.Id}";
     Layout = "~/Views/Shared/_StaffLayout.cshtml";
-    var bookingStatuses = ViewBag.BookingStatuses as List<BookingStatus> ?? new List<BookingStatus>();
-    var paymentStatuses = ViewBag.PaymentStatuses as List<PaymentStatus> ?? new List<PaymentStatus>();
+
+    // Kiểm tra xem booking có thể chỉnh sửa không
+    bool isEditable = IsBookingEditable(Model.BookingStatus, Model.PaymentStatus);
+    string editableClass = isEditable ? "" : "opacity-50";
+    string editableTooltip = isEditable ? "" : "Booking không thể chỉnh sửa do đã ở trạng thái cuối cùng";
 }
 
 <div class="container-fluid">
+    <!-- Header -->
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Chi tiết Booking #@Model.Id</h1>
-        <a href="@Url.Action("Bookings")" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Quay lại
-        </a>
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-calendar-check me-2"></i>Chi tiết Booking #@Model.Id
+        </h1>
+        <div class="d-flex gap-2">
+            <a href="@Url.Action("Bookings")" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Quay lại danh sách
+            </a>
+        </div>
     </div>
 
+
+    <!-- Thông báo booking đã khóa -->
+    @if (!isEditable)
+    {
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Booking đã kết thúc:</strong> Không thể thay đổi trạng thái khi booking đã hoàn thành, hủy hoặc đã hoàn tiền.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
     <div class="row">
-        <!-- Booking Information -->
+        <!-- Thông tin chính -->
         <div class="col-lg-8">
-            <div class="card shadow mb-4">
+            <!-- Thông tin booking -->
+            <div class="card shadow mb-4 @editableClass">
                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 font-weight-bold text-primary">Thông tin Booking</h6>
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-info-circle me-2"></i>Thông tin Booking
+                    </h6>
+                    <span class="badge @GetBookingStatusBadge(Model.BookingStatus) fs-6">
+                        @GetBookingStatusText(Model.BookingStatus)
+                    </span>
                 </div>
                 <div class="card-body">
-                    @if (TempData["SuccessMessage"] != null)
-                    {
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            @TempData["SuccessMessage"]
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                    }
-                    @if (TempData["ErrorMessage"] != null)
-                    {
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            @TempData["ErrorMessage"]
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                    }
-
                     <div class="row">
                         <div class="col-md-6">
-                            <h6 class="font-weight-bold">Thông tin Khách hàng</h6>
-                            <table class="table table-sm table-borderless">
+                            <table class="table table-borderless">
                                 <tr>
-                                    <td><strong>Username:</strong></td>
-                                    <td>@Model.UserName</td>
+                                    <td class="fw-bold text-muted" width="40%">Mã booking:</td>
+                                    <td class="fw-bold text-dark">#@Model.Id</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Họ tên:</strong></td>
-                                    <td>@Model.FullName</td>
+                                    <td class="fw-bold text-muted">Tour:</td>
+                                    <td>@Model.TourName</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Email:</strong></td>
-                                    <td>@Model.Email</td>
+                                    <td class="fw-bold text-muted">Ngày khởi hành:</td>
+                                    <td>
+                                        <i class="fas fa-plane-departure text-primary me-2"></i>
+                                        @Model.DepartureDate?.ToString("dd/MM/yyyy HH:mm")
+                                    </td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Điện thoại:</strong></td>
-                                    <td>@Model.PhoneNumber</td>
+                                    <td class="fw-bold text-muted">Ngày kết thúc:</td>
+                                    <td>
+                                        <i class="fas fa-plane-arrival text-success me-2"></i>
+                                        @Model.ArrivalDate?.ToString("dd/MM/yyyy HH:mm")
+                                    </td>
                                 </tr>
                             </table>
                         </div>
                         <div class="col-md-6">
-                            <h6 class="font-weight-bold">Thông tin Tour</h6>
-                            <table class="table table-sm table-borderless">
+                            <table class="table table-borderless">
                                 <tr>
-                                    <td><strong>Tour:</strong></td>
-                                    <td>@Model.TourName</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Ngày đi:</strong></td>
-                                    <td>@Model.DepartureDate?.ToString("dd/MM/yyyy")</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Ngày về:</strong></td>
-                                    <td>@Model.ArrivalDate?.ToString("dd/MM/yyyy")</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Số khách:</strong></td>
+                                    <td class="fw-bold text-muted" width="40%">Ngày booking:</td>
                                     <td>
-                                        Người lớn: @Model.AdultCount,
-                                        Trẻ em: @Model.ChildCount,
-                                        Em bé: @Model.InfantCount
+                                        <i class="fas fa-calendar text-info me-2"></i>
+                                        @Model.BookingDate?.ToString("dd/MM/yyyy HH:mm")
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold text-muted">Số lượng:</td>
+                                    <td>
+                                        <div class="d-flex gap-3">
+                                            <span class="badge bg-primary">
+                                                <i class="fas fa-user me-1"></i>@Model.AdultCount Người lớn
+                                            </span>
+                                            <span class="badge bg-info">
+                                                <i class="fas fa-child me-1"></i>@Model.ChildCount Trẻ em
+                                            </span>
+                                            <span class="badge bg-secondary">
+                                                <i class="fas fa-baby me-1"></i>@Model.InfantCount Em bé
+                                            </span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold text-muted">Tổng tiền:</td>
+                                    <td class="h5 text-success fw-bold">
+                                        @Model.TotalPrice?.ToString("N0") ₫
                                     </td>
                                 </tr>
                             </table>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <div class="row mt-3">
+            <!-- Thông tin khách hàng -->
+            <div class="card shadow mb-4 @editableClass">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-user me-2"></i>Thông tin Khách hàng
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
                         <div class="col-md-6">
-                            <h6 class="font-weight-bold">Thông tin Thanh toán</h6>
-                            <table class="table table-sm table-borderless">
+                            <table class="table table-borderless">
                                 <tr>
-                                    <td><strong>Tổng tiền:</strong></td>
-                                    <td class="font-weight-bold text-primary">@Model.TotalPrice?.ToString("N0") VND</td>
+                                    <td class="fw-bold text-muted" width="40%">Họ tên:</td>
+                                    <td class="fw-bold text-dark">@Model.FullName</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Ngày booking:</strong></td>
-                                    <td>@Model.BookingDate?.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td class="fw-bold text-muted">Username:</td>
+                                    <td>
+                                        <i class="fas fa-user-circle text-secondary me-2"></i>
+                                        @Model.UserName
+                                    </td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Hết hạn:</strong></td>
-                                    <td class="@(Model.ExpirationTime < DateTime.Now ? "text-danger" : "")">
-                                        @Model.ExpirationTime?.ToString("dd/MM/yyyy HH:mm")
+                                    <td class="fw-bold text-muted">Email:</td>
+                                    <td>
+                                        <i class="fas fa-envelope text-primary me-2"></i>
+                                        <a href="mailto:@Model.Email" class="text-decoration-none">@Model.Email</a>
                                     </td>
                                 </tr>
                             </table>
                         </div>
                         <div class="col-md-6">
-                            <h6 class="font-weight-bold">Trạng thái</h6>
-                            <table class="table table-sm table-borderless">
+                            <table class="table table-borderless">
                                 <tr>
-                                    <td><strong>Booking:</strong></td>
+                                    <td class="fw-bold text-muted" width="40%">Số điện thoại:</td>
                                     <td>
-                                        <span class="badge @GetBookingStatusBadge(Model.BookingStatus)">
-                                            @GetBookingStatusText(Model.BookingStatus)
-                                        </span>
+                                        <i class="fas fa-phone text-success me-2"></i>
+                                        <a href="tel:@Model.PhoneNumber" class="text-decoration-none">@Model.PhoneNumber</a>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Thanh toán:</strong></td>
+                                    <td class="fw-bold text-muted">Trạng thái thanh toán:</td>
                                     <td>
-                                        <span class="badge @GetPaymentStatusBadge(Model.PaymentStatus)">
+                                        <span class="badge @GetPaymentStatusBadge(Model.PaymentStatus) fs-6">
                                             @GetPaymentStatusText(Model.PaymentStatus)
                                         </span>
                                     </td>
@@ -137,96 +167,214 @@
             </div>
         </div>
 
-        <!-- Action Panel -->
+        <!-- Sidebar - Status & Actions -->
         <div class="col-lg-4">
-            <!-- Update Booking Status -->
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Cập nhật Trạng thái Booking</h6>
+            <!-- Cập nhật trạng thái -->
+            <div class="card shadow mb-4 @editableClass"
+                 @if (!isEditable)
+                {
+                     <text>data-bs-toggle="tooltip" title="@editableTooltip"</text>
+                 }
+>
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-edit me-2"></i>Cập nhật trạng thái
+                    </h6>
+                    @if (!isEditable)
+                    {
+                            <span class="badge bg-secondary">
+                                <i class="fas fa-lock me-1"></i>Đã khóa
+                            </span>
+                    }
                 </div>
                 <div class="card-body">
-                    <form method="post" action="@Url.Action("UpdateBookingStatus", new { id = Model.Id })">
+                    <!-- Update Booking Status -->
+                    <form method="post" action="@Url.Action("UpdateBookingStatus", new { id = Model.Id })"
+                          class="ajax-form" data-success-message="Cập nhật trạng thái booking thành công!">
                         @Html.AntiForgeryToken()
-                        <div class="form-group">
-                            <label for="bookingStatus">Trạng thái mới</label>
-                            <select class="form-control" id="bookingStatus" name="BookingStatus" required>
-                                @foreach (var status in bookingStatuses)
+                        <div class="mb-3">
+                            <label for="BookingStatus" class="form-label fw-bold">
+                                <i class="fas fa-calendar-check me-1"></i>Trạng thái Booking
+                            </label>
+                            <select class="form-control" id="BookingStatus" name="BookingStatus" required
+                                    @if (!isEditable)
+                                    {
+                                        <text>disabled</text>
+                                    }
+>
+                                @foreach (var status in ViewBag.BookingStatuses)
                                 {
-                                    <option value="@status" selected="@(Model.BookingStatus?.Equals(status) == true)">
-                                        @GetBookingStatusText(status)
-                                    </option>
+                                        <option value="@status" selected="@(status == Model.BookingStatus)">
+                                            @GetBookingStatusText(status)
+                                        </option>
                                 }
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label for="bookingNote">Ghi chú (tùy chọn)</label>
-                            <textarea class="form-control" id="bookingNote" name="Note" rows="3"
-                                      placeholder="Nhập ghi chú về thay đổi trạng thái..."></textarea>
+                        <div class="mb-3">
+                            <label for="BookingNote" class="form-label fw-bold">
+                                <i class="fas fa-sticky-note me-1"></i>Ghi chú (tùy chọn)
+                            </label>
+                            <textarea class="form-control" id="BookingNote" name="Note" rows="2"
+                                      placeholder="Nhập ghi chú về thay đổi trạng thái..."
+                                      @if (!isEditable) {
+                                      <text>disabled</text>
+                                      }
+></textarea>
                         </div>
-                        <button type="submit" class="btn btn-primary btn-block">
-                            <i class="fas fa-sync-alt"></i> Cập nhật Booking
+                        <button type="submit" class="btn btn-primary w-100"
+                                @if (!isEditable)
+                                {
+                                    <text>disabled</text>
+                                }
+>
+                            <i class="fas fa-save me-1"></i>
+                            @if (isEditable)
+                            {
+                                    <text>Cập nhật Booking</text>
+                            }
+                            else
+                            {
+                                    <text>Đã khóa</text>
+                            }
                         </button>
                     </form>
-                </div>
-            </div>
 
-            <!-- Update Payment Status -->
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Cập nhật Trạng thái Thanh toán</h6>
-                </div>
-                <div class="card-body">
-                    <form method="post" action="@Url.Action("UpdatePaymentStatus", new { id = Model.Id })">
+                    <hr class="my-4">
+
+                    <!-- Update Payment Status -->
+                    <form method="post" action="@Url.Action("UpdatePaymentStatus", new { id = Model.Id })"
+                          class="ajax-form" data-success-message="Cập nhật trạng thái thanh toán thành công!">
                         @Html.AntiForgeryToken()
-                        <div class="form-group">
-                            <label for="paymentStatus">Trạng thái mới</label>
-                            <select class="form-control" id="paymentStatus" name="PaymentStatus" required>
-                                @foreach (var status in paymentStatuses)
+                        <div class="mb-3">
+                            <label for="PaymentStatus" class="form-label fw-bold">
+                                <i class="fas fa-money-bill-wave me-1"></i>Trạng thái Thanh toán
+                            </label>
+                            <select class="form-control" id="PaymentStatus" name="PaymentStatus" required
+                                    @if (!isEditable)
+                                    {
+                                        <text>disabled</text>
+                                    }
+>
+                                @foreach (var status in ViewBag.PaymentStatuses)
                                 {
-                                    <option value="@status" selected="@(Model.PaymentStatus?.Equals(status) == true)">
-                                        @GetPaymentStatusText(status)
-                                    </option>
+                                        <option value="@status" selected="@(status == Model.PaymentStatus)">
+                                            @GetPaymentStatusText(status)
+                                        </option>
                                 }
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label for="paymentNote">Ghi chú (tùy chọn)</label>
-                            <textarea class="form-control" id="paymentNote" name="Note" rows="3"
-                                      placeholder="Nhập ghi chú về thay đổi thanh toán..."></textarea>
+                        <div class="mb-3">
+                            <label for="PaymentNote" class="form-label fw-bold">
+                                <i class="fas fa-sticky-note me-1"></i>Ghi chú (tùy chọn)
+                            </label>
+                            <textarea class="form-control" id="PaymentNote" name="Note" rows="2"
+                                      placeholder="Nhập ghi chú về thanh toán..."
+                                      @if (!isEditable) {
+                                      <text>disabled</text>
+                                      }
+></textarea>
                         </div>
-                        <button type="submit" class="btn btn-success btn-block">
-                            <i class="fas fa-money-bill-wave"></i> Cập nhật Thanh toán
+                        <button type="submit" class="btn btn-success w-100"
+                                @if (!isEditable)
+                                {
+                                    <text>disabled</text>
+                                }
+>
+                            <i class="fas fa-money-bill-wave me-1"></i>
+                            @if (isEditable)
+                            {
+                                    <text>Cập nhật Thanh toán</text>
+                            }
+                            else
+                            {
+                                    <text>Đã khóa</text>
+                            }
                         </button>
                     </form>
                 </div>
-            </div>
-
-            <!-- Quick Cancel -->
-            @if (Model.BookingStatus != BookingStatus.Cancelled)
-            {
-                <div class="card shadow mb-4">
-                    <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-danger">Hủy Booking</h6>
-                    </div>
-                    <div class="card-body">
-                        <form method="post" action="@Url.Action("CancelBooking", new { id = Model.Id })"
-                              onsubmit="return confirm('Bạn có chắc chắn muốn hủy booking này?');">
-                            @Html.AntiForgeryToken()
-                            <div class="form-group">
-                                <label for="cancelNote">Lý do hủy (tùy chọn)</label>
-                                <textarea class="form-control" id="cancelNote" name="note" rows="2"
-                                      placeholder="Nhập lý do hủy booking..."></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-danger btn-block">
-                                <i class="fas fa-times"></i> Hủy Booking
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            }
+            </div>            
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Khởi tạo tooltip
+            $('[data-bs-toggle="tooltip"]').tooltip();
+
+            // Auto-hide alerts after 5 seconds
+            setTimeout(function() {
+                $('.alert').alert('close');
+            }, 5000);
+
+            // AJAX form submission - chỉ submit nếu form enabled
+            $('.ajax-form').submit(function(e) {
+                e.preventDefault();
+
+                const form = $(this);
+                const submitBtn = form.find('button[type="submit"]');
+
+                // Kiểm tra nếu form bị disabled thì không submit
+                if (submitBtn.prop('disabled')) {
+                    return false;
+                }
+
+                const originalText = submitBtn.html();
+                const successMessage = form.data('success-message');
+
+                // Disable button and show loading
+                submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Đang xử lý...');
+
+                $.ajax({
+                    url: form.attr('action'),
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: function(response) {
+                        showAlert('success', successMessage);
+                        // Reload page after 1.5 seconds to reflect changes
+                        setTimeout(() => location.reload(), 1500);
+                    },
+                    error: function(xhr) {
+                        let errorMessage = 'Có lỗi xảy ra khi cập nhật';
+                        if (xhr.responseJSON && xhr.responseJSON.error) {
+                            errorMessage = xhr.responseJSON.error;
+                        }
+                        showAlert('danger', errorMessage);
+                    },
+                    complete: function() {
+                        submitBtn.prop('disabled', false).html(originalText);
+                    }
+                });
+            });
+        });
+
+        function showAlert(type, message) {
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+
+            const alertHtml = `
+                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                    <i class="fas ${icon} me-2"></i>${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+
+            // Remove existing alerts
+            $('.alert').alert('close');
+            // Prepend new alert
+            $('.container-fluid').prepend(alertHtml);
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                showAlert('success', 'Đã sao chép mã booking vào clipboard!');
+            }, function() {
+                showAlert('danger', 'Không thể sao chép mã booking');
+            });
+        }
+    </script>
+}
 
 @functions {
     private string GetBookingStatusText(BookingStatus? status)
@@ -235,8 +383,8 @@
         {
             BookingStatus.Pending => "Chờ xác nhận",
             BookingStatus.Confirmed => "Đã xác nhận",
-            BookingStatus.Cancelled => "Đã hủy",
             BookingStatus.Completed => "Hoàn thành",
+            BookingStatus.Cancelled => "Đã hủy",
             _ => "Không xác định"
         };
     }
@@ -247,7 +395,6 @@
         {
             PaymentStatus.Pending => "Chờ thanh toán",
             PaymentStatus.Completed => "Đã thanh toán",
-            PaymentStatus.Failed => "Thất bại",
             PaymentStatus.Refunded => "Đã hoàn tiền",
             _ => "Không xác định"
         };
@@ -257,11 +404,11 @@
     {
         return status switch
         {
-            BookingStatus.Pending => "badge-warning",
-            BookingStatus.Confirmed => "badge-primary",
-            BookingStatus.Cancelled => "badge-danger",
-            BookingStatus.Completed => "badge-success",
-            _ => "badge-secondary"
+            BookingStatus.Pending => "bg-warning",
+            BookingStatus.Confirmed => "bg-info",
+            BookingStatus.Completed => "bg-success",
+            BookingStatus.Cancelled => "bg-danger",
+            _ => "bg-secondary"
         };
     }
 
@@ -269,11 +416,19 @@
     {
         return status switch
         {
-            PaymentStatus.Pending => "badge-warning",
-            PaymentStatus.Completed => "badge-success",
-            PaymentStatus.Failed => "badge-danger",
-            PaymentStatus.Refunded => "badge-info",
-            _ => "badge-secondary"
+            PaymentStatus.Pending => "bg-warning",
+            PaymentStatus.Completed => "bg-success",
+            PaymentStatus.Refunded => "bg-secondary",
+            _ => "bg-secondary"
         };
+    }
+
+    private bool IsBookingEditable(BookingStatus? bookingStatus, PaymentStatus? paymentStatus)
+    {
+        // Booking có thể chỉnh sửa khi:
+        // - BookingStatus KHÔNG phải Completed hoặc Cancelled
+        // - PaymentStatus KHÔNG phải Refunded
+        return bookingStatus != BookingStatus.Completed &&
+               paymentStatus != PaymentStatus.Refunded;
     }
 }

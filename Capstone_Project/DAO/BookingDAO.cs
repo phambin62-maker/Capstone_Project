@@ -86,6 +86,7 @@ namespace BE_Capstone_Project.DAO
                 return await _context.Bookings
                     .Include(b => b.User)
                     .Include(b => b.TourSchedule)
+                    .Include(b => b.BookingCustomers)
                     .FirstOrDefaultAsync(b => b.Id == bookingId);
             }
             catch (Exception ex)
@@ -272,5 +273,6 @@ namespace BE_Capstone_Project.DAO
                 return 0;
             }
         }
+
     }
 }

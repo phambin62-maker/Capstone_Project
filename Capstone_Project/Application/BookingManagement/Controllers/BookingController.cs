@@ -2,7 +2,8 @@
         using BE_Capstone_Project.Application.BookingManagement.Services.Interfaces;
         using BE_Capstone_Project.Application.Services;
         using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
-        using BE_Capstone_Project.Domain.Models;
+using BE_Capstone_Project.Domain.Enums;
+using BE_Capstone_Project.Domain.Models;
         using Microsoft.AspNetCore.Authorization;
         using Microsoft.AspNetCore.Mvc;
 
@@ -164,8 +165,47 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
             if(result == null) return NotFound();
             return Ok(result);
         }
+        [HttpPut("user/{bookingId}/cancel")]
+        [Authorize]
+        public async Task<IActionResult> CancelBookingByUser(int bookingId, [FromBody] CancelBookingRequest request)
+        {
+            try
+            {
+                var user = await _userService.GetUserByUsername(request.Username);
+                if (user == null)
+                    return Unauthorized(new { message = "User not found", success = false });
+
+                // Kiểm tra booking tồn tại và thuộc về user
+                var booking = await _bookingService.GetByIdAsync(bookingId);
+                if (booking == null || booking.UserId != user.Id)
+                    return Unauthorized(new { message = "Booking not found or not authorized", success = false });
+
+                // Sử dụng method có sẵn
+                var cancelRequest = new UpdateBookingStatusRequest
+                {
+                    BookingStatus = BookingStatus.Cancelled
+                };
+
+                var success = await _bookingService.UpdateBookingStatusAsync(bookingId, cancelRequest);
+
+                if (!success)
+                    return BadRequest(new
+                    {
+                        message = "Cannot cancel booking",
+                        success = false
+                    });
+
+                return Ok(new { message = "Booking cancelled successfully", success = true });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+        }
+
+
         [HttpGet("staff/bookings")]
-        //[Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> GetBookingsForStaff([FromQuery] BookingSearchRequest request)
         {
             try

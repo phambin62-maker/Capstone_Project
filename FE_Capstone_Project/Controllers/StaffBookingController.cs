@@ -1,5 +1,4 @@
-﻿using BE_Capstone_Project.Application.BookingManagement.DTOs;
-using BE_Capstone_Project.Domain.Enums;
+﻿using BE_Capstone_Project.Domain.Enums;
 using FE_Capstone_Project.Filters;
 using FE_Capstone_Project.Models;
 using FE_Capstone_Project.Services;
@@ -135,19 +134,7 @@ namespace FE_Capstone_Project.Controllers
             }
         }
 
-        public IActionResult Index()
-        {
-            ViewData["Title"] = "Quản lý Booking";
-            return View();
-        }
 
-        [Route("StaffBooking")]
-        public IActionResult StaffBooking()
-        {
-            return RedirectToAction("Index");
-        }
-
-        // Sửa lại action Bookings để call API chính xác
         public async Task<IActionResult> Bookings(
             string searchTerm = null,
             BookingStatus? bookingStatus = null,
@@ -179,7 +166,7 @@ namespace FE_Capstone_Project.Controllers
 
                 if (success && result != null)
                 {
-                    var bookings = result.Bookings ?? new List<BookingDTO>();
+                    var bookings = result.Bookings ?? new List<BookingDto>();
                     var totalCount = result.TotalCount;
 
                     // Lấy danh sách trạng thái cho dropdown
@@ -203,7 +190,7 @@ namespace FE_Capstone_Project.Controllers
                     _logger.LogWarning($"Failed to load bookings: {error}");
                     ViewBag.ErrorMessage = $"Không thể tải danh sách booking: {error}";
                     await LoadStatusDropdowns();
-                    return View(new List<BookingDTO>());
+                    return View(new List<BookingDto>());
                 }
             }
             catch (Exception ex)
@@ -211,7 +198,7 @@ namespace FE_Capstone_Project.Controllers
                 _logger.LogError(ex, "Error loading bookings");
                 ViewBag.ErrorMessage = $"Lỗi kết nối đến server: {ex.Message}";
                 await LoadStatusDropdowns();
-                return View(new List<BookingDTO>());
+                return View(new List<BookingDto>());
             }
         }
 
@@ -372,40 +359,40 @@ namespace FE_Capstone_Project.Controllers
             return RedirectToAction("Details", new { id });
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CancelBooking(int id, string note = null)
-        {
-            try
-            {
-                var model = new UpdateBookingStatusRequest
-                {
-                    BookingStatus = BookingStatus.Cancelled,
-                    Note = note
-                };
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> CancelBooking(int id, string note = null)
+        //{
+        //    try
+        //    {
+        //        var model = new UpdateBookingStatusRequest
+        //        {
+        //            BookingStatus = BookingStatus.Cancelled,
+        //            Note = note
+        //        };
 
-                var json = JsonSerializer.Serialize(model);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
+        //        var json = JsonSerializer.Serialize(model);
+        //        var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var (success, result, error) = await CallApiAsync<object>($"Booking/staff/bookings/{id}/status", HttpMethod.Put, content);
+        //        var (success, result, error) = await CallApiAsync<object>($"Booking/staff/bookings/{id}/status", HttpMethod.Put, content);
 
-                if (success)
-                {
-                    TempData["SuccessMessage"] = "Hủy booking thành công!";
-                }
-                else
-                {
-                    TempData["ErrorMessage"] = error ?? "Hủy booking thất bại!";
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error cancelling booking ID: {BookingId}", id);
-                TempData["ErrorMessage"] = $"Lỗi hệ thống: {ex.Message}";
-            }
+        //        if (success)
+        //        {
+        //            TempData["SuccessMessage"] = "Hủy booking thành công!";
+        //        }
+        //        else
+        //        {
+        //            TempData["ErrorMessage"] = error ?? "Hủy booking thất bại!";
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Error cancelling booking ID: {BookingId}", id);
+        //        TempData["ErrorMessage"] = $"Lỗi hệ thống: {ex.Message}";
+        //    }
 
-            return RedirectToAction("Bookings");
-        }
+        //    return RedirectToAction("Bookings");
+        //}
 
         private async Task LoadStatusDropdowns()
         {
@@ -441,30 +428,7 @@ namespace FE_Capstone_Project.Controllers
             }
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetBookingStatistics()
-        {
-            try
-            {
-                var (success, result, error) = await CallApiAsync<BookingStatistics>("Booking/staff/statistics");
-
-                if (success && result != null)
-                {
-                    return Json(new
-                    {
-                        success = true,
-                        data = result
-                    });
-                }
-
-                return Json(new { success = false, error = error ?? "Không thể lấy thống kê" });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting booking statistics");
-                return Json(new { success = false, error = ex.Message });
-            }
-        }
+        
     }
 
     // Thêm class ApiResponse để deserialize response từ API

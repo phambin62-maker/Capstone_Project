@@ -117,7 +117,7 @@ namespace FE_Capstone_Project.Models
 
     public class BookingListResponse
     {
-        public List<BookingDTO> Bookings { get; set; } = new();
+        public List<BookingDto> Bookings { get; set; } = new();
         public int TotalCount { get; set; }
         public int Page { get; set; }
         public int PageSize { get; set; }
@@ -154,17 +154,7 @@ namespace FE_Capstone_Project.Models
         public PaymentStatus PaymentStatus { get; set; }
         public string? Note { get; set; }
     }
-    public class BookingStatistics
-    {
-        public int TotalBookings { get; set; }
-        public int PendingBookings { get; set; }
-        public int ConfirmedBookings { get; set; }
-        public int CancelledBookings { get; set; }
-        public int CompletedBookings { get; set; }
-        public decimal TotalRevenue { get; set; }
-        public int PendingPayments { get; set; }
-        public int CompletedPayments { get; set; }
-    }
+    
 
 
     
