@@ -87,14 +87,14 @@ namespace BE_Capstone_Project.Application.Payment.Controller
 
                 // Build query string
                 var queryParams = new Dictionary<string, string>
-    {
-        { "success", response.Success.ToString() },
-        { "orderDescription", WebUtility.UrlEncode(response.OrderDescription ?? "") },
-        { "amount", amountStr },
-        { "transactionId", transactionId },
-        { "paymentMethod", response.PaymentMethod ?? "" },
-        { "error", response.Success ? "" : "Invalid transaction or other error" }
-    };
+                {
+                    { "success", response.Success.ToString() },
+                    { "orderDescription", WebUtility.UrlEncode(response.OrderDescription ?? "") },
+                    { "amount", amountStr },
+                    { "transactionId", transactionId },
+                    { "paymentMethod", response.PaymentMethod ?? "" },
+                    { "error", response.Success ? "" : "Invalid transaction or other error" }
+                };
 
                 // Build URL with query string
                 var queryString = string.Join("&", queryParams.Select(kvp => $"{kvp.Key}={kvp.Value}"));
@@ -108,14 +108,14 @@ namespace BE_Capstone_Project.Application.Payment.Controller
 
                 // Redirect with default/fallback values even on exception
                 var queryParams = new Dictionary<string, string>
-    {
-        { "success", "false" },
-        { "orderDescription", "" },
-        { "amount", "0" },
-        { "transactionId", "0" },
-        { "paymentMethod", "" },
-        { "error", WebUtility.UrlEncode(ex.Message) }
-    };
+                {
+                    { "success", "false" },
+                    { "orderDescription", "" },
+                    { "amount", "0" },
+                    { "transactionId", "0" },
+                    { "paymentMethod", "" },
+                    { "error", WebUtility.UrlEncode(ex.Message) }
+                };
 
                 var queryString = string.Join("&", queryParams.Select(kvp => $"{kvp.Key}={kvp.Value}"));
                 var redirectUrl = $"https://localhost:5137/Payment/Result?{queryString}";

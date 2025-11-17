@@ -1,4 +1,7 @@
 @model List<WishlistModels.WishlistData>
+@{
+    var BASE_API_URL = "https://localhost:7160/api/";
+}
 <body class="tours-page">
     <main class="main">
         <!-- Page Title -->
@@ -32,8 +35,11 @@
                                     <div class="col-lg-4 col-md-6 mb-4">
                                         <div class="tour-card">
                                             <div class="tour-image">
-                                                <img src="@(tour.TourImage != null ? tour.TourImage : "/images/default-tour.jpg")"
-                                                    class="img-fluid w-100" />
+                                                @{
+                                                    var img = tour.TourImage;
+                                                    var mainImageUrl = $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(img)}";
+                                                }
+                                                <img src="@mainImageUrl" class="img-fluid w-100" />
                                                 <div class="tour-price">@string.Format("{0:N0} VND", tour.TourPrice)</div>
                                             </div>
                                             <div class="tour-content">
