@@ -36,28 +36,25 @@ namespace FE_Capstone_Project.Services
             }
         }
 
-        // ✅ Lấy tất cả Locations
         public async Task<List<Location>> GetAllLocationsAsync()
         {
             var (success, data, _) = await CallApiAsync<List<Location>>("Locations");
             return success ? data ?? new List<Location>() : new List<Location>();
         }
 
-        // ✅ Lấy tất cả Categories
+
         public async Task<List<TourCategory>> GetAllCategoriesAsync()
         {
             var (success, data, _) = await CallApiAsync<List<TourCategory>>("TourCategories");
             return success ? data ?? new List<TourCategory>() : new List<TourCategory>();
         }
 
-        // ✅ Lấy tất cả CancelConditions
         public async Task<List<CancelCondition>> GetAllCancelConditionsAsync()
         {
             var (success, data, _) = await CallApiAsync<List<CancelCondition>>("CancelCondition");
             return success ? data ?? new List<CancelCondition>() : new List<CancelCondition>();
         }
 
-        // ✅ Lấy tên theo ID
         public async Task<string> GetNameByIdAsync(string endpoint)
         {
             var (success, response, _) = await CallApiAsync<JsonElement>(endpoint);

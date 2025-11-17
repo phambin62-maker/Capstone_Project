@@ -2,7 +2,7 @@
 @{
     ViewData["Title"] = "Tour Details";
     Layout = "~/Views/Shared/_StaffLayout.cshtml";
-    var BASE_API_URL = "https://localhost:7160/api/";
+
 }
 
 <div class="container-fluid">
@@ -45,8 +45,7 @@
                         <div class="row mb-4">
                             <div class="col-12">
                                 @{
-                                    var mainImage = Model.TourImages.First();
-                                    var mainImageUrl = $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(mainImage.Image)}";
+                                    var mainImageUrl = Url.Action("GetTourDetailImage", "Staff", new { tourId = Model.Id, imageIndex = 0 });
                                 }
                                 <div class="main-image-container position-relative rounded border" style="height: 400px; overflow: hidden;">
                                     <img id="mainImage" src="@mainImageUrl"
@@ -56,7 +55,7 @@
                                          data-bs-toggle="modal"
                                          data-bs-target="#imageModal"
                                          data-bs-slide-to="0"
-                                         onerror="this.src='@($"{BASE_API_URL}Tour/GetImage?path=images/default-tour.jpg")'">
+                                         onerror="this.src='@Url.Action("GetDefaultImage", "Staff")'">
                                     <div class="position-absolute top-0 end-0 m-3">
                                         <span class="badge bg-dark bg-opacity-75 text-white">
                                             <i class="bi bi-star-fill me-1"></i>Featured
@@ -70,8 +69,7 @@
                         <div class="row g-2">
                             @for (int i = 0; i < Model.TourImages.Count; i++)
                             {
-                                var image = Model.TourImages[i];
-                                var imageUrl = $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(image.Image)}";
+                                var imageUrl = Url.Action("GetTourDetailImage", "Staff", new { tourId = Model.Id, imageIndex = i });
 
                                 <div class="col-md-3 col-sm-4 col-6">
                                     <div class="thumbnail-container position-relative rounded border"
@@ -84,7 +82,7 @@
                                              data-bs-toggle="modal"
                                              data-bs-target="#imageModal"
                                              data-bs-slide-to="@i"
-                                             onerror="this.src='@($"{BASE_API_URL}Tour/GetImage?path=images/default-tour.jpg")'">
+                                             onerror="this.src='@Url.Action("GetDefaultImage", "Staff")'">
                                         @if (i == 0)
                                         {
                                             <div class="position-absolute top-0 start-0 m-1">
@@ -428,13 +426,13 @@
                         {
                             @for (int i = 0; i < Model.TourImages.Count; i++)
                             {
-                                var imageUrl = $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(Model.TourImages[i].Image)}";
+                                var imageUrl = Url.Action("GetTourDetailImage", "Staff", new { tourId = Model.Id, imageIndex = i });
                                 <div class="carousel-item @(i == 0 ? "active" : "")">
                                     <img src="@imageUrl"
                                          class="d-block w-100 rounded"
                                          style="max-height: 70vh; object-fit: contain;"
                                          alt="Tour image @(i + 1)"
-                                         onerror="this.src='@($"{BASE_API_URL}Tour/GetImage?path=images/default-tour.jpg")'">
+                                         onerror="this.src='@Url.Action("GetDefaultImage", "Staff")'">
                                 </div>
                             }
                         }

@@ -1,10 +1,11 @@
-﻿using BE_Capstone_Project.Application.BookingManagement.DTOs;
-using BE_Capstone_Project.Application.BookingManagement.Services.Interfaces;
-using BE_Capstone_Project.Application.Services;
-using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
+﻿        using BE_Capstone_Project.Application.BookingManagement.DTOs;
+        using BE_Capstone_Project.Application.BookingManagement.Services.Interfaces;
+        using BE_Capstone_Project.Application.Services;
+        using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
+using BE_Capstone_Project.Domain.Enums;
 using BE_Capstone_Project.Domain.Models;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+        using Microsoft.AspNetCore.Authorization;
+        using Microsoft.AspNetCore.Mvc;
 
 namespace BE_Capstone_Project.Application.BookingManagement.Controllers
 {
@@ -29,22 +30,22 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
             _tourScheduleService = tourScheduleService;
         }
 
-        [HttpGet]
-        [Authorize(Roles = "Admin,Staff")] // Chỉ Admin và Staff mới được xem tất cả booking
-        public async Task<IActionResult> GetAll()
-        {
-            var list = await _bookingService.GetAllAsync();
-            return Ok(list);
-        }
+                [HttpGet]
+                [Authorize(Roles = "Admin,Staff")] // Chỉ Admin và Staff mới được xem tất cả booking
+                public async Task<IActionResult> GetAll()
+                {
+                    var list = await _bookingService.GetAllAsync();
+                    return Ok(list);
+                }
 
-        [HttpGet("{id}")]
-        [Authorize] // Cần đăng nhập để xem booking
-        public async Task<IActionResult> GetById(int id)
-        {
-            var booking = await _bookingService.GetByIdAsync(id);
-            if (booking == null) return NotFound();
-            return Ok(booking);
-        }
+                [HttpGet("{id}")]
+                [Authorize] // Cần đăng nhập để xem booking
+                public async Task<IActionResult> GetById(int id)
+                {
+                    var booking = await _bookingService.GetByIdAsync(id);
+                    if (booking == null) return NotFound();
+                    return Ok(booking);
+                }
 
         //[HttpGet("user/{userId}")]
         //[Authorize] // Cần đăng nhập để xem booking của user
@@ -85,8 +86,8 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
                     Email = request.Email,
                     CertificateId = request.Certificate_Id,
 
-                    PaymentStatus = Domain.Enums.PaymentStatus.Pending,
-                    BookingStatus = Domain.Enums.BookingStatus.Pending,
+                            PaymentStatus = Domain.Enums.PaymentStatus.Pending,
+                            BookingStatus = Domain.Enums.BookingStatus.Pending,
 
                     RefundAmount = null,
                     RefundDate = null,
@@ -124,23 +125,24 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
             }
         }
 
-        [HttpPut("{id}")]
-        [Authorize] // Cần đăng nhập để cập nhật booking
-        public async Task<IActionResult> Update(int id, [FromBody] CreateBookingDTO dto)
-        {
-            var success = await _bookingService.UpdateAsync(id, dto);
-            if (!success) return NotFound();
-            return NoContent();
-        }
 
-        [HttpDelete("{id}")]
-        [Authorize] // Cần đăng nhập để xóa booking
-        public async Task<IActionResult> Delete(int id)
-        {
-            var success = await _bookingService.DeleteAsync(id);
-            if (!success) return NotFound();
-            return NoContent();
-        }
+                [HttpPut("{id}")]
+                [Authorize] // Cần đăng nhập để cập nhật booking
+                public async Task<IActionResult> Update(int id, [FromBody] CreateBookingDTO dto)
+                {
+                    var success = await _bookingService.UpdateAsync(id, dto);
+                    if (!success) return NotFound();
+                    return NoContent();
+                }
+
+                [HttpDelete("{id}")]
+                [Authorize] // Cần đăng nhập để xóa booking
+                public async Task<IActionResult> Delete(int id)
+                {
+                    var success = await _bookingService.DeleteAsync(id);
+                    if (!success) return NotFound();
+                    return NoContent();
+                }
 
         [HttpPost("payment-update")]
         public async Task<IActionResult> UpdatePaymentStatus(PaymentDTO payment)
@@ -157,28 +159,160 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
             if(result == null) return NotFound();
             return Ok(result);
         }
+        [HttpPut("user/{bookingId}/cancel")]
+        [Authorize]
+        public async Task<IActionResult> CancelBookingByUser(int bookingId, [FromBody] CancelBookingRequest request)
+        {
+            try
+            {
+                var user = await _userService.GetUserByUsername(request.Username);
+                if (user == null)
+                    return Unauthorized(new { message = "User not found", success = false });
+
+                // Kiểm tra booking tồn tại và thuộc về user
+                var booking = await _bookingService.GetByIdAsync(bookingId);
+                if (booking == null || booking.UserId != user.Id)
+                    return Unauthorized(new { message = "Booking not found or not authorized", success = false });
+
+                // Sử dụng method có sẵn
+                var cancelRequest = new UpdateBookingStatusRequest
+                {
+                    BookingStatus = BookingStatus.Cancelled
+                };
+
+                var success = await _bookingService.UpdateBookingStatusAsync(bookingId, cancelRequest);
+
+                if (!success)
+                    return BadRequest(new
+                    {
+                        message = "Cannot cancel booking",
+                        success = false
+                    });
+
+                return Ok(new { message = "Booking cancelled successfully", success = true });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+        }
+
+
+        [HttpGet("staff/bookings")]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> GetBookingsForStaff([FromQuery] BookingSearchRequest request)
+        {
+            try
+            {
+                var result = await _bookingService.GetBookingsForStaffAsync(request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+        }
+
+        [HttpGet("staff/bookings/{id}")]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> GetBookingDetailForStaff(int id)
+        {
+            try
+            {
+                var booking = await _bookingService.GetBookingDetailForStaffAsync(id);
+                if (booking == null) return NotFound();
+                return Ok(booking);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+        }
+
+        [HttpPut("staff/bookings/{id}/status")]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> UpdateBookingStatus(int id, [FromBody] UpdateBookingStatusRequest request)
+        {
+            try
+            {
+                var success = await _bookingService.UpdateBookingStatusAsync(id, request);
+                if (!success) return NotFound();
+                return Ok(new { message = "Booking status updated successfully", success = true });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+        }
+
+        [HttpPut("staff/bookings/{id}/payment-status")]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> UpdatePaymentStatusByStaff(int id, [FromBody] UpdatePaymentStatusRequest request)
+        {
+            try
+            {
+                var success = await _bookingService.UpdatePaymentStatusByStaffAsync(id, request);
+                if (!success) return NotFound();
+                return Ok(new { message = "Payment status updated successfully", success = true });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+        }
+
+        [HttpGet("staff/booking-statuses")]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> GetAvailableBookingStatuses()
+        {
+            try
+            {
+                var statuses = await _bookingService.GetAvailableBookingStatusesAsync();
+                return Ok(statuses);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+        }
+
+        [HttpGet("staff/payment-statuses")]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> GetAvailablePaymentStatuses()
+        {
+            try
+            {
+                var statuses = await _bookingService.GetAvailablePaymentStatusesAsync();
+                return Ok(statuses);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+        }
 
         private decimal CalculateTotalPrice(BookingRequest request, Tour tour)
         {
             if (tour.Price == null)
                 throw new Exception("Tour price is not set.");
 
-            int totalPeople = request.Adults + request.Children + request.Infants;
+                    int totalPeople = request.Adults + request.Children + request.Infants;
 
-            decimal basePrice = tour.Price.Value;
-            decimal childPrice = basePrice * (1 - (tour.ChildDiscount ?? 0) / 100);
+                    decimal basePrice = tour.Price.Value;
+                    decimal childPrice = basePrice * (1 - (tour.ChildDiscount ?? 0) / 100);
 
-            decimal groupDiscount = 0;
-            if (totalPeople >= 6 && tour.GroupDiscount.HasValue)
-            {
-                groupDiscount = tour.GroupDiscount.Value / 100;
-            }
+                    decimal groupDiscount = 0;
+                    if (totalPeople >= 6 && tour.GroupDiscount.HasValue)
+                    {
+                        groupDiscount = tour.GroupDiscount.Value / 100;
+                    }
 
             decimal totalPrice = (request.Adults * basePrice) + (request.Children * childPrice);
 
-            totalPrice *= (1 - groupDiscount);
+                    totalPrice *= (1 - groupDiscount);
 
-            return totalPrice;
+                    return totalPrice;
+                }
+            }
         }
-    }
-}
+

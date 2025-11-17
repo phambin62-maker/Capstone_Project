@@ -167,6 +167,53 @@ namespace FE_Capstone_Project.Helpers
                 throw new Exception($"ApiHelper DELETE Error: {ex.Message}", ex);
             }
         }
+        public async Task<TResponse?> PutAsync<TRequest, TResponse>(string endpoint, TRequest data)
+        {
+            try
+            {
+                var json = JsonSerializer.Serialize(data);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var request = CreateRequest(HttpMethod.Put, endpoint, content);
+
+                var response = await _httpClient.SendAsync(request);
+
+                if (response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    ClearSession();
+                    throw new UnauthorizedAccessException("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+                }
+
+                if (response.StatusCode == HttpStatusCode.Forbidden)
+                {
+                    throw new UnauthorizedAccessException("Bạn không có quyền thực hiện thao tác này.");
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"PUT request failed. Status: {response.StatusCode}, Content: {errorContent}");
+                    throw new HttpRequestException($"API request failed at PUT {endpoint}. Status: {response.StatusCode}.");
+                }
+
+                var responseJson = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"PUT response: {responseJson}");
+
+                return JsonSerializer.Deserialize<TResponse>(responseJson, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    Converters = { new JsonStringEnumConverter() }
+                });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error occurred while making PUT request: {ex.Message}");
+                throw new Exception($"ApiHelper PUT Error: {ex.Message}", ex);
+            }
+        }
 
         private void ClearSession()
         {

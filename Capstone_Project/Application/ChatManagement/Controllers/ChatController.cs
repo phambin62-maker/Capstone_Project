@@ -18,29 +18,20 @@ namespace BE_Capstone_Project.Application.ChatManagement.Controllers
     public class ChatController : ControllerBase
     {
         private readonly IChatService _chatService;
-        private readonly IBotChatService _botChatService;
         private readonly IHubContext<ChatHub> _hubContext;
         private readonly UserDAO _userDAO;
         private readonly ILogger<ChatController> _logger;
-        private readonly IBotService _botService;
-        private const int BOT_STAFF_ID = -1; // ID đặc biệt cho bot (số âm để phân biệt với user thật)
 
         public ChatController(
             IChatService chatService,
-            IBotChatService botChatService,
             IHubContext<ChatHub> hubContext,
             UserDAO userDAO,
-            ILogger<ChatController> logger,
-            IBotService botService)
+            ILogger<ChatController> logger)
         {
             _chatService = chatService;
-            _botChatService = botChatService;
             _hubContext = hubContext;
             _userDAO = userDAO;
             _logger = logger;
-            _botService = botService;
-
-
         }
 
         /// <summary>
@@ -98,11 +89,11 @@ namespace BE_Capstone_Project.Application.ChatManagement.Controllers
                 }
 
                 // Kiểm tra các giá trị bắt buộc
-                // StaffId có thể là -1 (bot) hoặc > 0 (staff thật)
-                if (createChatDto.StaffId == 0)
+                // StaffId phải là staff thật (> 0)
+                if (createChatDto.StaffId <= 0)
                 {
                     _logger.LogWarning("StaffId is invalid: {StaffId}", createChatDto.StaffId);
-                    return BadRequest(new { message = "StaffId is required and must be valid" });
+                    return BadRequest(new { message = "StaffId is required and must be a valid staff ID (greater than 0)" });
                 }
 
                 if (createChatDto.CustomerId <= 0)
@@ -144,18 +135,8 @@ namespace BE_Capstone_Project.Application.ChatManagement.Controllers
                     createChatDto.ChatType = (int)Domain.Enums.ChatType.Staff;
                 }
 
-                // Tạo chat trong database - tách logic bot và staff
-                ChatDTO? chatDto;
-                if (_botChatService.IsBot(createChatDto.StaffId))
-                {
-                    // Xử lý chat với bot
-                    chatDto = await _botChatService.CreateBotChatAsync(createChatDto);
-                }
-                else
-                {
-                    // Xử lý chat với staff thật
-                    chatDto = await _chatService.CreateChatAsync(createChatDto);
-                }
+                // Tạo chat trong database - chỉ xử lý chat với staff thật
+                ChatDTO? chatDto = await _chatService.CreateChatAsync(createChatDto);
 
                 if (chatDto == null)
                 {
@@ -164,20 +145,16 @@ namespace BE_Capstone_Project.Application.ChatManagement.Controllers
                     
                     // Kiểm tra và trả về thông báo lỗi chi tiết hơn
                     var customer = await _userDAO.GetUserById(createChatDto.CustomerId);
-                    var staff = createChatDto.StaffId == BOT_STAFF_ID ? null : await _userDAO.GetUserById(createChatDto.StaffId);
+                    var staff = await _userDAO.GetUserById(createChatDto.StaffId);
                     
                     string errorMessage = "Failed to create chat message.";
                     if (customer == null)
                     {
                         errorMessage += " Customer ID is invalid or not found.";
                     }
-                    if (createChatDto.StaffId != BOT_STAFF_ID && staff == null)
+                    if (staff == null)
                     {
                         errorMessage += " Staff ID is invalid or not found.";
-                    }
-                    if (createChatDto.StaffId == BOT_STAFF_ID)
-                    {
-                        errorMessage += " Bot user not found in database. Please contact administrator.";
                     }
                     
                     return BadRequest(new { message = errorMessage });
@@ -217,24 +194,16 @@ namespace BE_Capstone_Project.Application.ChatManagement.Controllers
                             senderId = createChatDto.SenderId
                         });
 
-                    // Notification cho staff (chỉ nếu không phải bot)
-                    if (createChatDto.StaffId != BOT_STAFF_ID)
-                    {
-                        await _hubContext.Clients.Group($"User_{createChatDto.StaffId}")
-                            .SendAsync("NewMessageNotification", new
-                            {
-                                senderName = customer?.Name ?? "Customer",
-                                preview = chatDto.Message?.Length > 50 
-                                    ? chatDto.Message.Substring(0, 50) + "..." 
-                                    : chatDto.Message,
-                                timestamp = DateTime.UtcNow
-                            });
-                    }
-                    else
-                    {
-                        // Nếu là bot, gọi bot để tự động trả lời
-                        _ = Task.Run(async () => await ProcessBotResponseAsync(createChatDto.CustomerId, createChatDto.StaffId, chatDto.Message));
-                    }
+                    // Notification cho staff
+                    await _hubContext.Clients.Group($"User_{createChatDto.StaffId}")
+                        .SendAsync("NewMessageNotification", new
+                        {
+                            senderName = customer?.Name ?? "Customer",
+                            preview = chatDto.Message?.Length > 50 
+                                ? chatDto.Message.Substring(0, 50) + "..." 
+                                : chatDto.Message,
+                            timestamp = DateTime.UtcNow
+                        });
                 }
                 else if (currentRoleId == 2) // Staff gửi đến Customer
                 {
@@ -302,34 +271,28 @@ namespace BE_Capstone_Project.Application.ChatManagement.Controllers
                 if (currentRoleId == 3 && customerId != currentUserId)
                     return Forbid("You can only view your own conversations");
 
-                ChatConversationDTO? conversation;
-                
-                // Tách logic bot và staff
-                if (_botChatService.IsBot(staffId))
+                // StaffId phải là staff thật
+                if (staffId <= 0)
                 {
-                    // Xử lý conversation với bot
-                    conversation = await _botChatService.GetBotConversationAsync(customerId);
+                    return BadRequest(new { message = "Invalid staff ID" });
                 }
-                else
+
+                var conversation = await _chatService.GetConversationAsync(customerId, staffId);
+                if (conversation == null)
                 {
-                    // Xử lý conversation với staff thật
-                    conversation = await _chatService.GetConversationAsync(customerId, staffId);
-                    if (conversation == null)
+                    // Tạo conversation mới nếu chưa có
+                    var customer = await _userDAO.GetUserById(customerId);
+                    var staff = await _userDAO.GetUserById(staffId);
+                    
+                    conversation = new ChatConversationDTO
                     {
-                        // Tạo conversation mới nếu chưa có
-                        var customer = await _userDAO.GetUserById(customerId);
-                        var staff = await _userDAO.GetUserById(staffId);
-                        
-                        conversation = new ChatConversationDTO
-                        {
-                            CustomerId = customerId,
-                            CustomerName = $"{customer?.FirstName} {customer?.LastName}",
-                            CustomerEmail = customer?.Email,
-                            StaffId = staffId,
-                            StaffName = $"{staff?.FirstName} {staff?.LastName}",
-                            Messages = new List<ChatDTO>()
-                        };
-                    }
+                        CustomerId = customerId,
+                        CustomerName = $"{customer?.FirstName} {customer?.LastName}",
+                        CustomerEmail = customer?.Email,
+                        StaffId = staffId,
+                        StaffName = $"{staff?.FirstName} {staff?.LastName}",
+                        Messages = new List<ChatDTO>()
+                    };
                 }
 
                 return Ok(conversation);
@@ -446,25 +409,7 @@ namespace BE_Capstone_Project.Application.ChatManagement.Controllers
         }
 
         /// <summary>
-        /// Lấy thông tin bot
-        /// </summary>
-        [HttpGet("bot-info")]
-        [AllowAnonymous]
-        public IActionResult GetBotInfo()
-        {
-            return Ok(new
-            {
-                id = BOT_STAFF_ID,
-                firstName = "AI",
-                lastName = "Assistant",
-                email = "bot@otms.com",
-                fullName = "AI Assistant",
-                isBot = true
-            });
-        }
-
-        /// <summary>
-        /// Lấy danh sách staff để customer chọn chat (loại trừ bot)
+        /// Lấy danh sách staff để customer chọn chat
         /// </summary>
         [HttpGet("staff-list")]
         [AllowAnonymous]
@@ -519,61 +464,6 @@ namespace BE_Capstone_Project.Application.ChatManagement.Controllers
             }
         }
 
-        /// <summary>
-        /// Xử lý phản hồi tự động từ bot
-        /// </summary>
-        private async Task ProcessBotResponseAsync(int customerId, int staffId, string customerMessage)
-        {
-            try
-            {
-                // Gọi bot service để lấy phản hồi
-                var botResponse = await _botService.ProcessCustomerMessageAsync(customerId, customerMessage, staffId);
-
-                // Nếu bot không trả lời (empty), không làm gì
-                if (string.IsNullOrWhiteSpace(botResponse))
-                {
-                    return;
-                }
-
-                // Tạo tin nhắn từ bot
-                var botChatDto = new CreateChatDTO
-                {
-                    CustomerId = customerId,
-                    StaffId = BOT_STAFF_ID, // Bot staff ID
-                    Message = botResponse,
-                    ChatType = (int)Domain.Enums.ChatType.Staff, // Bot là staff
-                    SenderId = BOT_STAFF_ID
-                };
-
-                // Lưu tin nhắn vào database sử dụng BotChatService
-                var savedBotMessage = await _botChatService.CreateBotChatAsync(botChatDto);
-                if (savedBotMessage == null)
-                {
-                    _logger.LogWarning("Failed to save bot message to database");
-                    return;
-                }
-
-                // Gửi tin nhắn bot qua SignalR đến customer
-                await _hubContext.Clients.Group($"User_{customerId}")
-                    .SendAsync("ReceiveMessage", new
-                    {
-                        id = savedBotMessage.Id,
-                        staffId = BOT_STAFF_ID,
-                        customerId = customerId,
-                        message = botResponse,
-                        staffName = "AI Assistant",
-                        sentDate = savedBotMessage.SentDate,
-                        senderId = BOT_STAFF_ID,
-                        chatType = (int)Domain.Enums.ChatType.Staff
-                    });
-
-                _logger.LogInformation($"Bot responded to customer {customerId}: {botResponse.Substring(0, Math.Min(50, botResponse.Length))}...");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error processing bot response for customer {customerId}");
-            }
-        }
     }
 }
 

@@ -22,13 +22,13 @@
         </a>
     </div>
 
-    @if (TempData["ErrorMessage"] != null)
+    @* @if (TempData["ErrorMessage"] != null)
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-    }
+    } *@
 
     <!-- Main Form -->
     <div class="row">
@@ -106,9 +106,16 @@
                                             <label asp-for="StartLocationId" class="form-label required">Start Location</label>
                                             <select asp-for="StartLocationId" class="form-select">
                                                 <option value="">-- Select Start Location --</option>
-                                                @foreach (var location in ViewBag.Locations)
+                                                @if (ViewBag.Locations != null)
                                                 {
-                                                    <option value="@location.Id">@location.LocationName</option>
+                                                    @foreach (var location in ViewBag.Locations)
+                                                    {
+                                                        <option value="@location.Id">@location.LocationName</option>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <option value="">No locations available</option>
                                                 }
                                             </select>
                                             <span asp-validation-for="StartLocationId" class="text-danger small"></span>
@@ -118,9 +125,16 @@
                                             <label asp-for="EndLocationId" class="form-label required">End Location</label>
                                             <select asp-for="EndLocationId" class="form-select">
                                                 <option value="">-- Select End Location --</option>
-                                                @foreach (var location in ViewBag.Locations)
+                                                @if (ViewBag.Locations != null)
                                                 {
-                                                    <option value="@location.Id">@location.LocationName</option>
+                                                    @foreach (var location in ViewBag.Locations)
+                                                    {
+                                                        <option value="@location.Id">@location.LocationName</option>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <option value="">No locations available</option>
                                                 }
                                             </select>
                                             <span asp-validation-for="EndLocationId" class="text-danger small"></span>
@@ -130,9 +144,16 @@
                                             <label asp-for="CategoryId" class="form-label required">Category</label>
                                             <select asp-for="CategoryId" class="form-select">
                                                 <option value="">-- Select Category --</option>
-                                                @foreach (var category in ViewBag.Categories)
+                                                @if (ViewBag.Categories != null)
                                                 {
-                                                    <option value="@category.Id">@category.CategoryName</option>
+                                                    @foreach (var category in ViewBag.Categories)
+                                                    {
+                                                        <option value="@category.Id">@category.CategoryName</option>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <option value="">No categories available</option>
                                                 }
                                             </select>
                                             <span asp-validation-for="CategoryId" class="text-danger small"></span>
@@ -142,9 +163,16 @@
                                             <label asp-for="CancelConditionId" class="form-label required">Cancellation Policy</label>
                                             <select asp-for="CancelConditionId" class="form-select">
                                                 <option value="">-- Select Cancellation Policy --</option>
-                                                @foreach (var condition in ViewBag.CancelConditions)
+                                                @if (ViewBag.CancelConditions != null)
                                                 {
-                                                    <option value="@condition.Id">@condition.Title</option>
+                                                    @foreach (var condition in ViewBag.CancelConditions)
+                                                    {
+                                                        <option value="@condition.Id">@condition.Title</option>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <option value="">No cancellation policies available</option>
                                                 }
                                             </select>
                                             <span asp-validation-for="CancelConditionId" class="text-danger small"></span>
@@ -223,12 +251,16 @@
                                 <div class="mb-4">
                                     <label class="form-label">Current Images</label>
                                     <div class="row g-2" id="currentImagesContainer">
-                                        @if (ViewBag.CurrentTourImages != null && ((List<TourImageViewModel>)ViewBag.CurrentTourImages).Count > 0)
+                                        @{
+                                            var currentImages = ViewBag.CurrentTourImages as List<TourImageViewModel> ?? new List<TourImageViewModel>();
+                                            var currentImageCount = currentImages.Count;
+                                        }
+                                        @if (currentImages != null && currentImageCount > 0)
                                         {
-                                            @for (int i = 0; i < ((List<TourImageViewModel>)ViewBag.CurrentTourImages).Count; i++)
+                                            @for (int i = 0; i < currentImageCount; i++)
                                             {
-                                                var image = ((List<TourImageViewModel>)ViewBag.CurrentTourImages)[i];
-                                                var imageUrl = $"{ViewBag.BaseApiUrl}Tour/GetImage?path={Uri.EscapeDataString(image.Image)}";
+                                                var image = currentImages[i];
+                                                var imageUrl = Url.Action("GetTourEditImage", "Staff", new { tourId = Model.Id, imageIndex = i });
 
                                                 <div class="col-md-3 col-sm-4 col-6">
                                                     <div class="current-image-container position-relative">
@@ -239,7 +271,7 @@
                                                              data-image-src="@imageUrl"
                                                              data-image-index="@i"
                                                              data-image-name="Image @(i + 1)"
-                                                             onerror="this.src='@($"{ViewBag.BaseApiUrl}Tour/GetImage?path=images/default-tour.jpg")'">
+                                                             onerror="this.src='@Url.Action("GetDefaultImage", "Staff")'">
                                                         <div class="position-absolute top-0 end-0 m-1">
                                                             <span class="badge bg-dark bg-opacity-75" style="font-size: 0.6rem;">
                                                                 @(i == 0 ? "Main" : (i + 1).ToString())
@@ -267,7 +299,6 @@
                                         }
                                     </div>
                                 </div>
-
                                 <!-- Update Images -->
                                 <div class="mb-3">
                                     <label asp-for="Images" class="form-label">Add More Images</label>
@@ -278,7 +309,7 @@
                                         Hold Ctrl/Cmd to select multiple files.
                                         <br>
                                         <small class="text-muted" id="imageCountInfo">
-                                            Current: <span id="currentImageCount">@(((List<TourImageViewModel>)ViewBag.CurrentTourImages).Count)</span> images
+                                            Current: <span id="currentImageCount">@(ViewBag.CurrentTourImagesCount ?? 0)</span> images
                                         </small>
                                     </div>
                                     <div class="drop-message text-center mt-2 p-2 border rounded bg-light">
@@ -290,7 +321,6 @@
                                     <div id="imagePreview" class="row g-2 mt-3" style="display: none;">
                                     </div>
                                 </div>
-
                             </div>
                         </div>
 
@@ -346,7 +376,7 @@
     <partial name="_ValidationScriptsPartial" />
     <script>
         // Biến toàn cục để theo dõi số lượng ảnh
-        let currentImageCount = @(((List<TourImageViewModel>)ViewBag.CurrentTourImages).Count);
+        let currentImageCount = @(ViewBag.CurrentTourImagesCount ?? 0);
         const MAX_TOTAL_IMAGES = 10;
 
         // Biến cho chức năng preview ảnh
@@ -382,7 +412,7 @@
             $('input, select, textarea').on('blur', function () {
                 $(this).addClass('validated');
             });
-
+            updateSelectedFilesCount($('#imageInput')[0].files);
             // Cập nhật thông tin số lượng ảnh
             updateImageCountInfo();
 
@@ -565,80 +595,63 @@
             }
         }
 
-        // Xử lý xóa ảnh
-        $(document).on('click', '.delete-image-btn', function() {
+                $(document).on('click', '.delete-image-btn', function() {
             const imageId = $(this).data('image-id');
             const imageName = $(this).data('image-name');
             const button = $(this);
-            const imageContainer = button.closest('.col-md-3, .col-sm-4, .col-6');
+
+            console.log('=== DELETE IMAGE DEBUG ===');
+            console.log('Image ID:', imageId);
+            console.log('Image Name:', imageName);
 
             if (!confirm(`Are you sure you want to delete ${imageName}?`)) {
                 return;
             }
 
-            // Hiển thị loading state
             button.html('<span class="spinner-border spinner-border-sm"></span>').prop('disabled', true);
 
-            let baseUrl = '@ViewBag.BaseApiUrl';
-            if (baseUrl.endsWith('/')) {
-                baseUrl = baseUrl.slice(0, -1);
-            }
-            const apiUrl = `${baseUrl}/Tour/DeleteTourImage?imageId=${imageId}`;
+            $.ajax({
+                url: '@Url.Action("DeleteTourImage", "Staff")',
+                type: 'POST',
+                data: { imageId: imageId },
+                success: function(result) {
+                    console.log('=== SUCCESS RESPONSE ===');
+                    console.log('Full response:', result);
+                    console.log('Success:', result.success);
+                    console.log('Message:', result.message);
 
-            fetch(apiUrl, {
-                method: 'DELETE',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => {
-                const contentType = response.headers.get("content-type");
-                return response.text().then(text => {
-                    if (!contentType || !contentType.includes("application/json")) {
-                        throw new Error(`Response is not JSON. Content-Type: ${contentType}, Body: ${text.substring(0, 200)}`);
+                    if (result.success) {
+                        showSuccessMessage(result.message || 'Image deleted successfully!');
+                        currentImageCount--;
+                        updateImageCountInfo();
+
+                        button.closest('.col-md-3, .col-sm-4, .col-6').fadeOut(300, function() {
+                            $(this).remove();
+
+                            const remainingImages = $('.current-image-container').length;
+                            if (remainingImages === 0) {
+                                $('#currentImagesContainer').html(`
+                                    <div class="col-12 text-center py-4">
+                                        <i class="bi bi-image display-4 text-muted"></i>
+                                        <p class="text-muted mt-2">No images available for this tour</p>
+                                    </div>
+                                `);
+                            }
+                        });
+                    } else {
+                        console.error('Server returned success: false');
+                        throw new Error(result.message || 'Failed to delete image');
                     }
-                    try {
-                        const data = JSON.parse(text);
-                        return { status: response.status, ok: response.ok, data: data };
-                    } catch (e) {
-                        throw new Error(`Failed to parse JSON: ${text.substring(0, 200)}`);
-                    }
-                });
-            })
-            .then(result => {
-                if (result.ok && result.data.success) {
-                    showSuccessMessage(result.data.message || 'Image deleted successfully!');
+                },
+                error: function(xhr, status, error) {
+                    console.error('=== AJAX ERROR ===');
+                    console.error('Status:', status);
+                    console.error('Error:', error);
+                    console.error('Response Text:', xhr.responseText);
 
-                    currentImageCount--;
-                    updateImageCountInfo();
-
-                    // Cập nhật lại danh sách preview images
-                    const deletedImageSrc = $(imageContainer).find('.preview-image').data('image-src');
-                    previewImages = previewImages.filter(img => img.src !== deletedImageSrc);
-                    updateTotalImagesCount();
-
-                    imageContainer.fadeOut(300, function() {
-                        $(this).remove();
-
-                        const remainingImages = $('.current-image-container').length;
-                        if (remainingImages === 0) {
-                            $('#currentImagesContainer').html(`
-                                <div class="col-12 text-center py-4">
-                                    <i class="bi bi-image display-4 text-muted"></i>
-                                    <p class="text-muted mt-2">No images available for this tour</p>
-                                </div>
-                            `);
-                        }
-                    });
-                } else {
-                    throw new Error(result.data?.message || 'Failed to delete image');
+                    showErrorMessage('Failed to delete image: ' + error);
+                    button.html('<i class="bi bi-trash"></i>').prop('disabled', false);
                 }
-            })
-            .catch(error => {
-                console.error('Delete image error:', error);
-                showErrorMessage('Failed to delete image: ' + error.message);
-                button.html('<i class="bi bi-trash"></i>').prop('disabled', false);
             });
         });
 
@@ -649,6 +662,9 @@
             previewContainer.empty().hide();
             newPreviewImages = []; // Reset ảnh mới
 
+            // Cập nhật thông tin số file đã chọn
+            updateSelectedFilesCount(files);
+
             if (!files || files.length === 0) {
                 return;
             }
@@ -658,6 +674,7 @@
             if (totalAfterUpload > MAX_TOTAL_IMAGES) {
                 alert(`Cannot upload ${files.length} images. You currently have ${currentImageCount} images. Maximum total is ${MAX_TOTAL_IMAGES} images.`);
                 e.target.value = '';
+                updateSelectedFilesCount(null); // Reset count
                 return;
             }
 
@@ -686,12 +703,9 @@
             if (!validFiles) {
                 alert(errorMessage);
                 e.target.value = '';
+                updateSelectedFilesCount(null); // Reset count
                 return;
             }
-
-            // Show file count info
-            $('#selectedFilesCount').remove();
-            $('#imageInput').after(`<div id="selectedFilesCount" class="text-success small mt-1"><i class="bi bi-check-circle me-1"></i>Selected ${files.length} file(s)</div>`);
 
             // Show preview for all valid files
             for (let i = 0; i < files.length; i++) {
@@ -707,11 +721,13 @@
                         src: e.target.result,
                         index: previewImages.length + previewIndex,
                         name: file.name,
-                        type: 'new'
+                        type: 'new',
+                        fileIndex: i, // Lưu index gốc của file
+                        previewIndex: previewIndex // Thêm previewIndex
                     });
 
                     const previewHtml = `
-                        <div class="col-md-3 col-sm-4 col-6">
+                        <div class="col-md-3 col-sm-4 col-6" data-preview-index="${previewIndex}">
                             <div class="preview-image-container position-relative">
                                 <img src="${e.target.result}"
                                      class="img-fluid rounded border preview-image"
@@ -727,6 +743,7 @@
                                 </div>
                                 <div class="position-absolute top-0 start-0 m-1">
                                     <button type="button" class="btn btn-warning btn-sm remove-preview-btn"
+                                            data-preview-index="${previewIndex}"
                                             data-file-index="${i}"
                                             style="padding: 0.1rem 0.3rem; font-size: 0.6rem;">
                                         <i class="bi bi-x"></i>
@@ -745,36 +762,90 @@
             updateTotalImagesCount();
         }
 
-        // Cập nhật thông tin tổng số ảnh sau khi upload
-        function updateTotalAfterUpload(totalAfterUpload) {
-            $('#totalAfterUpload').remove();
-            $('#imageCountInfo').after(
-                `<small class="text-success" id="totalAfterUpload"><i class="bi bi-arrow-right me-1"></i>Will be <strong>${totalAfterUpload}</strong> after upload</small>`
-            );
+        // Cập nhật thông tin số file đã chọn
+        function updateSelectedFilesCount(files) {
+            $('#selectedFilesCount').remove();
+
+            if (files && files.length > 0) {
+                $('#imageInput').after(`<div id="selectedFilesCount" class="text-success small mt-1"><i class="bi bi-check-circle me-1"></i>Selected ${files.length} file(s)</div>`);
+            } else {
+                // Nếu không có file, thêm thông báo không có file nào được chọn
+                $('#imageInput').after(`<div id="selectedFilesCount" class="text-muted small mt-1"><i class="bi bi-info-circle me-1"></i>No files selected</div>`);
+            }
         }
 
-        // Xử lý xóa preview ảnh
-        $(document).on('click', '.remove-preview-btn', function() {
+        // Xử lý xóa preview ảnh mới
+        $(document).on('click', '.remove-preview-btn', function(e) {
+            e.stopPropagation();
+
+            const previewIndex = parseInt($(this).data('preview-index'));
             const fileIndex = parseInt($(this).data('file-index'));
             const input = $('#imageInput')[0];
-            const dt = new DataTransfer();
+
+            console.log('Removing preview:', { previewIndex, fileIndex, filesCount: input.files.length });
+
+            // Xóa khỏi danh sách ảnh mới
+            newPreviewImages = newPreviewImages.filter(img => img.previewIndex !== previewIndex);
 
             // Tạo new FileList không bao gồm file bị xóa
+            const dt = new DataTransfer();
             for (let i = 0; i < input.files.length; i++) {
                 if (i !== fileIndex) {
                     dt.items.add(input.files[i]);
                 }
             }
 
+            // Cập nhật file input
             input.files = dt.files;
 
-            // Xóa khỏi danh sách ảnh mới
-            newPreviewImages = newPreviewImages.filter((img, index) => index !== fileIndex);
+            // Xóa preview khỏi DOM
+            const previewElement = $(`[data-preview-index="${previewIndex}"]`);
+            if (previewElement.length) {
+                previewElement.remove();
+            }
+
+            // Cập nhật lại index cho các preview còn lại
+            const remainingPreviews = $('#imagePreview .col-md-3, #imagePreview .col-sm-4, #imagePreview .col-6');
+            remainingPreviews.each(function(index) {
+                const newPreviewIndex = index;
+                $(this).attr('data-preview-index', newPreviewIndex);
+                $(this).find('.remove-preview-btn').attr('data-preview-index', newPreviewIndex);
+                $(this).find('.badge').text(newPreviewIndex + 1);
+
+                // Cập nhật lại newPreviewImages với index mới
+                const imgIndex = newPreviewImages.findIndex(img =>
+                    $(this).find('.preview-image').attr('src') === img.src
+                );
+                if (imgIndex !== -1) {
+                    newPreviewImages[imgIndex].previewIndex = newPreviewIndex;
+                    newPreviewImages[imgIndex].fileIndex = parseInt($(this).find('.remove-preview-btn').data('file-index'));
+                }
+            });
+
+            // Cập nhật thông tin số file
+            updateSelectedFilesCount(input.files);
             updateTotalImagesCount();
 
-            // Reload preview
-            handleImageSelection({ target: input });
+            // Nếu không còn preview nào, ẩn container
+            if (newPreviewImages.length === 0) {
+                $('#imagePreview').hide();
+                $('#totalAfterUpload').remove();
+            } else {
+                // Cập nhật thông tin tổng số ảnh sau khi upload
+                const totalAfterUpload = currentImageCount + input.files.length;
+                updateTotalAfterUpload(totalAfterUpload);
+            }
         });
+
+        // Cập nhật thông tin tổng số ảnh sau khi upload
+        function updateTotalAfterUpload(totalAfterUpload) {
+            $('#totalAfterUpload').remove();
+            if (totalAfterUpload > currentImageCount) {
+                $('#imageCountInfo').after(
+                    `<small class="text-success" id="totalAfterUpload"><i class="bi bi-arrow-right me-1"></i>Will be <strong>${totalAfterUpload}</strong> after upload</small>`
+                );
+            }
+        }
 
         // Form validation before submit
         $('#tourForm').on('submit', function(e) {
@@ -795,6 +866,14 @@
                     alert(`File "${files[i].name}" is too large. Maximum size is 5MB.`);
                     return;
                 }
+            }
+
+            // Kiểm tra nếu không có file mới nào được chọn nhưng vẫn hiển thị preview (trường hợp lỗi)
+            if (files.length === 0 && newPreviewImages.length > 0) {
+                // Reset state
+                newPreviewImages = [];
+                $('#imagePreview').empty().hide();
+                $('#totalAfterUpload').remove();
             }
 
             // Show loading state

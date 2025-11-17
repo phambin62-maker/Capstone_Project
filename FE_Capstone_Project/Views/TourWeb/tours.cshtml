@@ -64,7 +64,7 @@
                                     <div class="swiper-slide">
                                         <div class="featured-tour-card">
                                             @{
-                                                var mainImage = featuredTour!.TourImages!.First();
+                                                var mainImage = featuredTour.TourImages.First();
                                                 var mainImageUrl = $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(mainImage!.Image!)}";
                                             }
                                             <div class="tour-image">

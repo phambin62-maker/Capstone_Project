@@ -32,4 +32,8 @@
                    $"  Travelers:\n  {travelerInfo}";
         }
     }
+    public class CancelBookingRequest
+    {
+        public string Username { get; set; } = string.Empty;
+    }
 }

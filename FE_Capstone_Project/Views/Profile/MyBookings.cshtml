@@ -3,6 +3,22 @@
 
 <h2>My Booked Tours</h2>
 
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
 @if (!Model.Any())
 {
     <p>You have no booked tours yet.</p>
@@ -13,6 +29,7 @@ else
         <table class="table table-bordered table-striped text-center align-middle">
             <thead>
                 <tr>
+                    <th>Booking ID</th>
                     <th>Tour</th>
                     <th>Departure Date</th>
                     <th>Adults</th>
@@ -26,6 +43,7 @@ else
                 @foreach (var booking in Model)
                 {
                     <tr>
+                        <td>#@booking.BookingId</td>
                         <td>@booking.TourName</td>
                         <td>@booking.DepartureDate.ToString("MMMM dd, yyyy")</td>
                         <td>@booking.Adults</td>
@@ -35,16 +53,16 @@ else
                             @switch (booking.Status)
                             {
                                 case BookingStatus.Cancelled:
-                                        <span class="badge bg-danger">Cancelled</span>
+                                    <span class="badge bg-danger">Cancelled</span>
                                     break;
                                 case BookingStatus.Completed:
-                                        <span class="badge bg-secondary">Completed</span>
+                                    <span class="badge bg-secondary">Completed</span>
                                     break;
                                 case BookingStatus.Pending:
-                                        <span class="badge bg-warning text-dark">Pending</span>
+                                    <span class="badge bg-warning text-dark">Pending</span>
                                     break;
                                 case BookingStatus.Confirmed:
-                                        <span class="badge bg-success">Confirmed</span>
+                                    <span class="badge bg-success">Confirmed</span>
                                     break;
                                 default:
                                     <span class="badge bg-light text-dark">Unknown</span>
@@ -52,9 +70,21 @@ else
                             }
                         </td>
                         <td>
-                            @if(booking.Status == BookingStatus.Confirmed)
+                            @if (booking.Status == BookingStatus.Confirmed || booking.Status == BookingStatus.Pending)
                             {
-                                <a asp-controller="Booking" asp-action="Cancel" class="btn btn-danger">Cancel booking</a>
+                                <button type="button" class="btn btn-danger btn-sm"
+                                        data-bs-toggle="modal" data-bs-target="#cancelModal"
+                                        data-booking-id="@booking.BookingId" data-booking-name="@booking.TourName">
+                                    Cancel Booking
+                                </button>
+                            }
+                            else if (booking.Status == BookingStatus.Cancelled)
+                            {
+                                <span class="text-muted">Cancelled</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">No actions</span>
                             }
                         </td>
                     </tr>
@@ -62,4 +92,44 @@ else
             </tbody>
         </table>
     </div>
+}
+
+<!-- Cancel Confirmation Modal -->
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cancelModalLabel">Confirm Cancellation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to cancel booking for <strong id="tourName"></strong>?</p>
+                <p class="text-danger"><small>This action cannot be undone.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Booking</button>
+                <form id="cancelForm" method="post" asp-action="CancelBooking">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="bookingId" id="bookingIdInput" />
+                    <button type="submit" class="btn btn-danger">Yes, Cancel Booking</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var cancelModal = document.getElementById('cancelModal');
+            cancelModal.addEventListener('show.bs.modal', function (event) {
+                var button = event.relatedTarget;
+                var bookingId = button.getAttribute('data-booking-id');
+                var tourName = button.getAttribute('data-booking-name');
+
+                document.getElementById('tourName').textContent = tourName;
+                document.getElementById('bookingIdInput').value = bookingId;
+            });
+        });
+    </script>
 }

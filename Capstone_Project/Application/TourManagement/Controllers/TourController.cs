@@ -34,7 +34,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpPost("AddTour")]
-        [Authorize(Roles = "AdminOrStaff")] // Chỉ Admin và Staff mới được thêm tour
+        [Authorize(Roles = "Admin,Staff")] 
         public async Task<IActionResult> AddTour([FromForm] TourDTO tour, [FromForm] List<IFormFile> images)
         {
             var tourToAdd = new Tour
@@ -58,7 +58,6 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
 
             if (result == -1) return BadRequest(new { message = "Failed to add tour" });
 
-            // Xử lý upload ảnh
             var imagePaths = new List<string>();
             if (images != null && images.Count > 0)
             {
@@ -99,7 +98,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpPost("UpdateTour")]
-        [Authorize(Roles = "AdminOrStaff")] // Chỉ Admin và Staff mới được cập nhật tour
+        [Authorize(Roles = "Admin,Staff")] 
         public async Task<IActionResult> UpdateTour([FromForm] TourDTO tour, [FromForm] List<IFormFile> images)
         {
             var tourToUpdate = await _tourService.GetTourById(tour.Id.Value);
@@ -125,7 +124,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
 
             var existingTourImages = await _tourImageService.GetTourImagesByTourId(tour.Id.Value);
 
-            // Xóa ảnh cũ nếu có ảnh mới
+            
             if (images != null && images.Count > 0 && existingTourImages != null && existingTourImages.Count > 0)
             {
                 await _tourImageService.DeleteTourImagesByTourId(tour.Id.Value);
@@ -144,7 +143,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
                 }
             }
 
-            // Thêm ảnh mới
+            
             if (images != null && images.Count > 0)
             {
                 foreach (var image in images)
@@ -183,7 +182,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpDelete("DeleteTour")]
-        [Authorize(Roles = "Admin,Staff")] // Chỉ Admin và Staff mới được xóa tour
+        [Authorize(Roles = "Admin,Staff")] 
         public async Task<IActionResult> DeleteTour(int tourId)
         {
             var imagesToDelete = await _tourImageService.GetTourImagesByTourId(tourId);
@@ -200,7 +199,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpGet("GetAllTours")]
-        [AllowAnonymous] // Tất cả đều có thể xem danh sách tour
+        [AllowAnonymous] 
         public async Task<IActionResult> GetAllTours()
         {
             var tours = await _tourService.GetAllTours();
@@ -212,7 +211,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpGet("GetTourById/{id}")]
-        [AllowAnonymous] // Tất cả đều có thể xem chi tiết tour
+        [AllowAnonymous] 
         public async Task<IActionResult> GetTourById(int id, [FromQuery] string? username)
         {
             var tour = await _tourService.GetTourById(id);
@@ -321,7 +320,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpPost("ToggleTourStatus")]
-        [AllowAnonymous]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> ToggleTourStatus(int tourId)
         {
             try
@@ -403,6 +402,41 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
             return Ok(new { message = $"Filtered tour count: {count}", tourCount = count });
         }
 
+        [HttpPost("DeleteTourImage")]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> DeleteTourImage(int imageId)
+        {
+            try
+            {
+                var imageToDelete = await _tourImageService.GetTourImageById(imageId);
+
+                if (imageToDelete == null)
+                    return NotFound(new { success = false, message = "Image not found" });
+
+                // Xóa từ database
+                var result = await _tourImageService.DeleteTourImage(imageId);
+
+                if (!result)
+                    return BadRequest(new { success = false, message = "Failed to delete image" });
+
+                // Xóa file vật lý (nếu có)
+                if (!string.IsNullOrEmpty(imageToDelete.Image))
+                {
+                    var imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", imageToDelete.Image.TrimStart('/'));
+                    if (System.IO.File.Exists(imagePath))
+                    {
+                        System.IO.File.Delete(imagePath);
+                    }
+                }
+
+                return Ok(new { success = true, message = "Image deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = "Error deleting image" });
+            }
+        }
+
         [HttpPost("UploadTourImages")]
         [Authorize(Roles = "Admin,Staff")] // Chỉ Admin và Staff mới được upload ảnh tour
         public async Task<IActionResult> UploadTourImages(int tourId, List<IFormFile> images)
@@ -419,7 +453,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
 
                         var imagesPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "tours");
 
-                        // Đảm bảo thư mục tồn tại
+
                         if (!Directory.Exists(imagesPath))
                         {
                             Directory.CreateDirectory(imagesPath);
@@ -427,13 +461,11 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
 
                         var fullPath = Path.Combine(imagesPath, fileName);
 
-                        // Lưu file
                         using (var stream = new FileStream(fullPath, FileMode.Create))
                         {
                             await image.CopyToAsync(stream);
                         }
 
-                        // Lưu đường dẫn tương đối để trả về frontend
                         var relativePath = $"/images/tours/{fileName}";
                         uploadedImages.Add(relativePath);
                     }
@@ -454,13 +486,17 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
                 if (string.IsNullOrEmpty(path))
                     return NotFound(new { message = "Image path is required" });
 
-                // Xử lý đường dẫn an toàn
                 var safePath = path.TrimStart('/');
                 var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", safePath);
+                var rootPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"));
+                var requestedPath = Path.GetFullPath(fullPath);
 
+                if (!requestedPath.StartsWith(rootPath))
+                {
+                    return BadRequest(new { message = "Invalid image path" });
+                }
                 if (!System.IO.File.Exists(fullPath))
                 {
-                    // Trả về ảnh mặc định nếu không tìm thấy
                     var defaultImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "default-tour.jpg");
                     if (System.IO.File.Exists(defaultImagePath))
                     {
@@ -490,6 +526,26 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
                 ".png" => "image/png",             
                 _ => "application/octet-stream"
             };
+        }
+
+        [HttpGet("GetActiveTours")]
+        public async Task<ActionResult<ApiResponse<List<Tour>>>> GetActiveTours([FromQuery] string? search = null)
+        {
+            try
+            {
+                var tours = await _tourService.GetActiveTours(search);
+
+                if (tours == null || !tours.Any())
+                {
+                    return Ok(new ApiResponse<List<Tour>>(true, "No active tours found", new List<Tour>()));
+                }
+
+                return Ok(new ApiResponse<List<Tour>>(true, "Active tours retrieved successfully", tours));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ApiResponse<List<Tour>>(false, $"Internal server error: {ex.Message}"));
+            }
         }
     }
 }
