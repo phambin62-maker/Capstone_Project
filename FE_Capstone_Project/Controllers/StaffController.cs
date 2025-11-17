@@ -53,10 +53,8 @@ namespace FE_Capstone_Project.Controllers
 
         private int GetCurrentUserId()
         {
-            // Dùng GetInt32 để đọc giá trị
             var userId = HttpContext.Session.GetInt32("UserId");
 
-            // Kiểm tra xem nó có tồn tại (HasValue) và khác 0 không
             if (userId.HasValue && userId.Value != 0)
             {
                 return userId.Value;
@@ -77,7 +75,6 @@ namespace FE_Capstone_Project.Controllers
                 if (content != null)
                     request.Content = content;
 
-                // === Add Token to Request ===
                 var token = GetToken();
                 if (string.IsNullOrEmpty(token))
                 {
@@ -93,13 +90,11 @@ namespace FE_Capstone_Project.Controllers
 
                 if (response.StatusCode == HttpStatusCode.Unauthorized)
                 {
-                    // 401 - Token invalid/expired
                     _logger.LogWarning($"Unauthorized access to {endpoint}");
                     return (false, default, "Login session has expired. Please log in again.");
                 }
                 else if (response.StatusCode == HttpStatusCode.Forbidden)
                 {
-                    // 403 - Valid token but insufficient permissions
                     _logger.LogWarning($"Forbidden access to {endpoint}. User lacks required permissions.");
                     return (false, default, "You don't have permission to perform this action. Please contact administrator.");
                 }
@@ -131,12 +126,12 @@ namespace FE_Capstone_Project.Controllers
             }
         }
 
-
         public IActionResult Index()
         {
             ViewData["Title"] = "Staff Dashboard";
             return View();
         }
+
         public async Task<List<TourViewModel>> LoadToursWithDetails(List<TourViewModel> tours)
         {
             var detailedTours = new List<TourViewModel>();
@@ -181,6 +176,7 @@ namespace FE_Capstone_Project.Controllers
 
             return tour;
         }
+
         public async Task<IActionResult> Tours(
             int page = 1,
             int pageSize = 5,
@@ -193,11 +189,10 @@ namespace FE_Capstone_Project.Controllers
             string sort = null,
             string search = null)
         {
-            ViewData["Title"] = "Quản lý Tour";
+            ViewData["Title"] = "Tour Management";
 
             try
             {
-                // Chuyển đổi string status sang bool?
                 bool? statusFilter = null;
                 if (!string.IsNullOrEmpty(status))
                 {
@@ -207,10 +202,8 @@ namespace FE_Capstone_Project.Controllers
                         statusFilter = false;
                 }
 
-                // Xây dựng URL API với các tham số filter
                 var apiUrl = $"Tour/GetFilteredTours?page={page}&pageSize={pageSize}";
 
-                // Thêm các tham số filter nếu có
                 if (statusFilter.HasValue)
                     apiUrl += $"&status={statusFilter.Value}";
                 if (startLocation.HasValue)
@@ -232,7 +225,7 @@ namespace FE_Capstone_Project.Controllers
 
                 if (!success)
                 {
-                    ViewBag.ErrorMessage = $"Không thể tải danh sách tour: {error}";
+                    ViewBag.ErrorMessage = $"Unable to load tour list: {error}";
                     return View(new List<TourViewModel>());
                 }
 
@@ -242,7 +235,6 @@ namespace FE_Capstone_Project.Controllers
                 var (locSuccess, locations, _) = await CallApiAsync<List<Location>>("Locations");
                 var (catSuccess, categories, _) = await CallApiAsync<List<TourCategory>>("TourCategories");
 
-                // Lấy tổng số count với filter
                 var countApiUrl = "Tour/GetFilteredTourCount";
                 if (statusFilter.HasValue)
                     countApiUrl += $"?status={statusFilter.Value}";
@@ -269,7 +261,6 @@ namespace FE_Capstone_Project.Controllers
                 ViewBag.TotalCount = totalCount;
                 ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
-                // Lưu các tham số filter hiện tại để hiển thị trong view
                 ViewBag.CurrentStatus = status;
                 ViewBag.CurrentStartLocation = startLocation;
                 ViewBag.CurrentEndLocation = endLocation;
@@ -279,7 +270,6 @@ namespace FE_Capstone_Project.Controllers
                 ViewBag.CurrentSort = sort;
                 ViewBag.CurrentSearch = search;
 
-                // === THÊM MỚI: Tính toán statistics và truyền qua ViewBag ===
                 var totalTours = totalCount;
                 var activeTours = tours.Count(t => t.TourStatus);
                 var inactiveTours = tours.Count(t => !t.TourStatus);
@@ -295,9 +285,8 @@ namespace FE_Capstone_Project.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error loading tours");
-                ViewBag.ErrorMessage = "Lỗi kết nối đến server. Vui lòng kiểm tra lại kết nối.";
+                ViewBag.ErrorMessage = "Server connection error. Please check your connection.";
 
-                // Set default values khi có lỗi
                 ViewBag.TotalTours = 0;
                 ViewBag.ActiveTours = 0;
                 ViewBag.InactiveTours = 0;
@@ -306,7 +295,7 @@ namespace FE_Capstone_Project.Controllers
                 return View(new List<TourViewModel>());
             }
         }
-        // === THÊM MỚI: Method để lấy image cho TourDetails ===
+
         [HttpGet]
         public async Task<IActionResult> GetTourDetailImage(int tourId, int? imageIndex = null)
         {
@@ -316,11 +305,9 @@ namespace FE_Capstone_Project.Controllers
 
                 if (!success || result?.Tour == null || result.Tour.TourImages == null || !result.Tour.TourImages.Any())
                 {
-                    // Return default image
                     return File(System.IO.File.ReadAllBytes("wwwroot/images/default-tour.jpg"), "image/jpeg");
                 }
 
-                // Get specific image or first image
                 TourImage image;
                 if (imageIndex.HasValue && imageIndex.Value < result.Tour.TourImages.Count)
                 {
@@ -333,14 +320,12 @@ namespace FE_Capstone_Project.Controllers
 
                 if (image.Image.StartsWith("data:image"))
                 {
-                    // Handle base64 images
                     var base64Data = image.Image.Split(',')[1];
                     var imageBytes = Convert.FromBase64String(base64Data);
                     return File(imageBytes, "image/jpeg");
                 }
                 else if (!string.IsNullOrEmpty(image.Image))
                 {
-                    // Proxy the image request through controller
                     var imageResponse = await _httpClient.GetAsync($"Tour/GetImage?path={Uri.EscapeDataString(image.Image)}");
                     if (imageResponse.IsSuccessStatusCode)
                     {
@@ -350,7 +335,6 @@ namespace FE_Capstone_Project.Controllers
                     }
                 }
 
-                // Fallback to default image
                 return File(System.IO.File.ReadAllBytes("wwwroot/images/default-tour.jpg"), "image/jpeg");
             }
             catch (Exception ex)
@@ -387,9 +371,7 @@ namespace FE_Capstone_Project.Controllers
                 return Json(new { success = false, images = new List<object>() });
             }
         }
-        
 
-        // FIXED: TourDetails method
         public async Task<IActionResult> TourDetails(int id)
         {
             try
@@ -400,11 +382,10 @@ namespace FE_Capstone_Project.Controllers
 
                 if (!success || result?.Tour == null)
                 {
-                    TempData["ErrorMessage"] = $"Không tìm thấy tour với ID {id}. Lỗi: {error}";
+                    TempData["ErrorMessage"] = $"Tour with ID {id} not found. Error: {error}";
                     return RedirectToAction("Tours");
                 }
 
-                // Tạo TourDetailModel từ Tour
                 var tourDetail = new TourDetailModel
                 {
                     Id = result.Tour.Id,
@@ -435,13 +416,13 @@ namespace FE_Capstone_Project.Controllers
                     _logger.LogWarning(ex, "Failed to load additional info for tour {TourId}", id);
                 }
 
-                ViewData["Title"] = $"Chi tiết Tour - {tourDetail.Name}";
+                ViewData["Title"] = $"Tour Details - {tourDetail.Name}";
                 return View(tourDetail);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error loading tour details for ID: {TourId}", id);
-                TempData["ErrorMessage"] = $"Lỗi kết nối đến server: {ex.Message}";
+                TempData["ErrorMessage"] = $"Server connection error: {ex.Message}";
                 return RedirectToAction("Tours");
             }
         }
@@ -458,7 +439,6 @@ namespace FE_Capstone_Project.Controllers
                     return await GetDefaultImage();
                 }
 
-                // Get specific image or first image
                 TourImage image;
                 if (imageIndex.HasValue && imageIndex.Value < result.Tour.TourImages.Count)
                 {
@@ -540,7 +520,6 @@ namespace FE_Capstone_Project.Controllers
                 }
                 else
                 {
-                    // Fallback: create a simple placeholder image
                     var placeholderSvg = "<svg width='400' height='300' xmlns='http://www.w3.org/2000/svg'><rect width='400' height='300' fill='#f8f9fa'/><text x='200' y='150' text-anchor='middle' font-family='Arial' font-size='16' fill='#6c757d'>No Image</text></svg>";
                     var bytes = Encoding.UTF8.GetBytes(placeholderSvg);
                     return File(bytes, "image/svg+xml");
@@ -552,21 +531,20 @@ namespace FE_Capstone_Project.Controllers
                 return NotFound();
             }
         }
+
         public async Task<IActionResult> Edit(int id)
         {
             try
             {
                 _logger.LogInformation($"Loading tour for edit ID: {id}");
 
-                // Lấy dữ liệu tour chi tiết
                 var (success, result, error) = await CallApiAsync<TourDetailResponse>($"Tour/GetTourById/{id}");
                 if (!success || result?.Tour == null)
                 {
-                    TempData["ErrorMessage"] = $"Không tìm thấy tour với ID {id}. Lỗi: {error}";
+                    TempData["ErrorMessage"] = $"Tour with ID {id} not found. Error: {error}";
                     return RedirectToAction("Tours");
                 }
 
-                // DEBUG: Log tour images information
                 _logger.LogInformation($"Tour {id} has {result.Tour.TourImages?.Count ?? 0} images");
                 if (result.Tour.TourImages != null)
                 {
@@ -585,22 +563,22 @@ namespace FE_Capstone_Project.Controllers
                 ViewBag.CancelConditions = cancelSuccess ? cancelConditions : new List<CancelCondition>();
 
                 var currentTourImages = result.Tour.TourImages?
-                    .Where(img => img != null) // Filter out any null images
+                    .Where(img => img != null)
                     .Select(img => new TourImageViewModel
                     {
                         Id = img.Id,
-                        Image = img.Image ?? string.Empty, // Ensure Image is never null
+                        Image = img.Image ?? string.Empty,
                         TourId = img.TourId
                     })
                     .ToList() ?? new List<TourImageViewModel>();
 
                 ViewBag.CurrentTourImages = currentTourImages;
-                ViewBag.CurrentTourImagesCount = currentTourImages.Count; // Add count for safety
+                ViewBag.CurrentTourImagesCount = currentTourImages.Count;
 
                 var editModel = new TourEditModel
                 {
                     Id = result.Tour.Id,
-                    Name = result.Tour.Name,    
+                    Name = result.Tour.Name,
                     Description = result.Tour.Description,
                     Price = result.Tour.Price,
                     Duration = result.Tour.Duration,
@@ -615,18 +593,16 @@ namespace FE_Capstone_Project.Controllers
                     MaxSeats = result.Tour.MaxSeats ?? 30
                 };
 
-                ViewData["Title"] = $"Chỉnh sửa Tour - {editModel.Name}";
+                ViewData["Title"] = $"Edit Tour - {editModel.Name}";
                 return View(editModel);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error loading tour for edit ID: {TourId}", id);
-                TempData["ErrorMessage"] = "Lỗi kết nối đến server.";
+                TempData["ErrorMessage"] = "Server connection error.";
                 return RedirectToAction("Tours");
             }
         }
-
-
 
         [HttpPost]
         public async Task<IActionResult> Edit(TourEditModel model)
@@ -635,7 +611,7 @@ namespace FE_Capstone_Project.Controllers
             if ((model.Images == null || model.Images.Count == 0) &&
                 (!model.ExistingImages?.Any() ?? true))
             {
-                ModelState.AddModelError("Images", "Tour phải có ít nhất 1 hình ảnh");
+                ModelState.AddModelError("Images", "Tour must have at least 1 image");
             }
             if (!ModelState.IsValid)
             {
@@ -644,7 +620,6 @@ namespace FE_Capstone_Project.Controllers
                     _logger.LogWarning($"Validation error: {error.ErrorMessage}");
                 }
 
-                // Reload ViewBag data when validation fails
                 await ReloadViewBagData();
                 return View(model);
             }
@@ -663,7 +638,7 @@ namespace FE_Capstone_Project.Controllers
 
                 var request = new HttpRequestMessage(HttpMethod.Post, "Tour/UpdateTour");
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                request.Content = formData; 
+                request.Content = formData;
                 var response = await _httpClient.SendAsync(request);
                 var responseContent = await response.Content.ReadAsStringAsync();
 
@@ -725,8 +700,6 @@ namespace FE_Capstone_Project.Controllers
                 ViewBag.Locations = locSuccess ? locations : new List<Location>();
                 ViewBag.Categories = catSuccess ? categories : new List<TourCategory>();
                 ViewBag.CancelConditions = cancelSuccess ? cancelConditions : new List<CancelCondition>();
-
-
             }
             catch (Exception ex)
             {
@@ -736,13 +709,14 @@ namespace FE_Capstone_Project.Controllers
                 ViewBag.CancelConditions = new List<CancelCondition>();
             }
         }
+
         [HttpPost]
         public async Task<IActionResult> Create(TourCreateModel model)
         {
             _logger.LogInformation("Creating new tour");
             if (model.Images == null || model.Images.Count == 0)
             {
-                ModelState.AddModelError("Images", "Phải có ít nhất 1 hình ảnh");
+                ModelState.AddModelError("Images", "Must have at least 1 image");
             }
             if (!ModelState.IsValid)
             {
@@ -789,7 +763,6 @@ namespace FE_Capstone_Project.Controllers
                     await ReloadViewBagData();
                     return View(model);
                 }
-
                 else
                 {
                     var errorMessage = $"Tour creation failed! Status: {response.StatusCode}";
@@ -838,7 +811,7 @@ namespace FE_Capstone_Project.Controllers
                 var (success, response, error) = await CallApiAsync<JsonElement>(endpoint);
                 if (!success || response.ValueKind == JsonValueKind.Null)
                 {
-                    setNameAction("Không tìm thấy");
+                    setNameAction("Not found");
                     return;
                 }
 
@@ -856,21 +829,19 @@ namespace FE_Capstone_Project.Controllers
                 else if (data.TryGetProperty("categoryName", out var catProp))
                     name = catProp.GetString();
 
-                setNameAction(name ?? "Không có tên");
+                setNameAction(name ?? "No name");
             }
             catch (Exception ex)
             {
-                setNameAction($"Lỗi: {ex.Message}");
+                setNameAction($"Error: {ex.Message}");
             }
         }
-
 
         [HttpPost]
         public async Task<IActionResult> DeleteTour(int id)
         {
             try
             {
-                // === ADD TOKEN TO REQUEST ===
                 var token = GetToken();
                 if (string.IsNullOrEmpty(token))
                 {
@@ -913,7 +884,6 @@ namespace FE_Capstone_Project.Controllers
         {
             try
             {
-                // === ADD TOKEN TO REQUEST ===
                 var token = GetToken();
                 if (string.IsNullOrEmpty(token))
                 {
@@ -964,7 +934,7 @@ namespace FE_Capstone_Project.Controllers
             formData.Add(new StringContent(model.EndLocationId.ToString()), "EndLocationId");
             formData.Add(new StringContent(model.CategoryId.ToString()), "CategoryId");
             formData.Add(new StringContent(model.CancelConditionId.ToString()), "CancelConditionId");
-            formData.Add(new StringContent(model.ChildDiscount.ToString()), "ChildDiscount");   
+            formData.Add(new StringContent(model.ChildDiscount.ToString()), "ChildDiscount");
             formData.Add(new StringContent(model.GroupDiscount.ToString()), "GroupDiscount");
             formData.Add(new StringContent(model.GroupNumber.ToString()), "GroupNumber");
             formData.Add(new StringContent(model.MinSeats.ToString()), "MinSeats");
@@ -987,15 +957,14 @@ namespace FE_Capstone_Project.Controllers
 
             return formData;
         }
+
         public async Task<IActionResult> Create()
         {
-            ViewData["Title"] = "Thêm Tour Mới";
+            ViewData["Title"] = "Add New Tour";
 
             var (locSuccess, locations, _) = await CallApiAsync<List<Location>>("Locations");
             var (catSuccess, categories, _) = await CallApiAsync<List<TourCategory>>("TourCategories");
             var (cancelSuccess, cancelConditions, _) = await CallApiAsync<List<CancelCondition>>("CancelCondition");
-
-
 
             ViewBag.Locations = locSuccess ? locations : new List<Location>();
             ViewBag.Categories = catSuccess ? categories : new List<TourCategory>();
@@ -1003,7 +972,6 @@ namespace FE_Capstone_Project.Controllers
 
             return View();
         }
-
 
         private string NormalizeString(string? text)
         {
@@ -1020,15 +988,14 @@ namespace FE_Capstone_Project.Controllers
 
         public async Task<IActionResult> News(int page = 1, int pageSize = 5, string? search = null, DateTime? fromDate = null, DateTime? toDate = null, string? status = null)
         {
-            ViewData["Title"] = "Quản lý Tin tức";
+            ViewData["Title"] = "News Management";
 
             try
             {
-                //  Thêm Token Xác Thực ===
                 var token = HttpContext.Session.GetString("JwtToken");
                 if (string.IsNullOrEmpty(token))
                 {
-                    TempData["ErrorMessage"] = "Không thể xác định người dùng. Vui lòng đăng nhập lại.";
+                    TempData["ErrorMessage"] = "Unable to identify user. Please log in again.";
                     return View(new NewsListViewModel { NewsList = new List<NewsViewModel>() });
                 }
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -1037,20 +1004,18 @@ namespace FE_Capstone_Project.Controllers
                 if (statsResponse.IsSuccessStatusCode)
                 {
                     var statsContent = await statsResponse.Content.ReadAsStringAsync();
-
                     ViewBag.NewsStats = JsonSerializer.Deserialize<NewsStatsDTO>(statsContent, _jsonOptions);
                 }
                 else
                 {
-                    ViewBag.NewsStats = new NewsStatsDTO(); 
+                    ViewBag.NewsStats = new NewsStatsDTO();
                 }
 
                 var response = await _httpClient.GetAsync($"News");
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    // Lỗi 401 
-                    TempData["ErrorMessage"] = "Không thể tải danh sách tin tức. (Lỗi: " + response.StatusCode + ")";
+                    TempData["ErrorMessage"] = "Unable to load news list. (Error: " + response.StatusCode + ")";
                     return View(new NewsListViewModel { NewsList = new List<NewsViewModel>() });
                 }
 
@@ -1104,7 +1069,7 @@ namespace FE_Capstone_Project.Controllers
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Lỗi kết nối đến server: " + ex.Message;
+                TempData["ErrorMessage"] = "Server connection error: " + ex.Message;
                 return View(new NewsListViewModel { NewsList = new List<NewsViewModel>() });
             }
         }
@@ -1112,13 +1077,13 @@ namespace FE_Capstone_Project.Controllers
         [HttpGet]
         public IActionResult CreateNews()
         {
-            ViewData["Title"] = "Tạo Tin tức Mới";
+            ViewData["Title"] = "Create New News";
 
-            int userId = GetCurrentUserId(); 
+            int userId = GetCurrentUserId();
 
             if (userId == 0)
             {
-                TempData["ErrorMessage"] = "Không thể xác định người dùng. Vui lòng đăng nhập lại.";
+                TempData["ErrorMessage"] = "Unable to identify user. Please log in again.";
                 return RedirectToAction("News");
             }
 
@@ -1130,14 +1095,13 @@ namespace FE_Capstone_Project.Controllers
             return View(model);
         }
 
-
         [HttpPost]
         public async Task<IActionResult> CreateNews(NewsCreateModel model, IFormFile? imageFile)
         {
             int staffUserId = GetCurrentUserId();
             if (staffUserId == 0)
             {
-                TempData["ErrorMessage"] = "Không thể xác định người dùng. Vui lòng đăng nhập lại.";
+                TempData["ErrorMessage"] = "Unable to identify user. Please log in again.";
                 return View(model);
             }
 
@@ -1145,7 +1109,7 @@ namespace FE_Capstone_Project.Controllers
             {
                 if (!ModelState.IsValid)
                 {
-                    TempData["ErrorMessage"] = "Vui lòng nhập đầy đủ thông tin.";
+                    TempData["ErrorMessage"] = "Please enter complete information.";
                     return View(model);
                 }
 
@@ -1160,58 +1124,53 @@ namespace FE_Capstone_Project.Controllers
                 {
                     var imageContent = new StreamContent(imageFile.OpenReadStream());
                     imageContent.Headers.ContentType = new MediaTypeHeaderValue(imageFile.ContentType);
-                    // "ImageFile" 
                     formData.Add(imageContent, "ImageFile", imageFile.FileName);
                 }
 
                 var token = HttpContext.Session.GetString("JwtToken");
                 if (string.IsNullOrEmpty(token))
                 {
-                    TempData["ErrorMessage"] = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+                    TempData["ErrorMessage"] = "Login session has expired. Please log in again.";
                     return View(model);
                 }
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-
-                var response = await _httpClient.PostAsync("News", formData); 
+                var response = await _httpClient.PostAsync("News", formData);
                 var responseContent = await response.Content.ReadAsStringAsync();
 
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["SuccessMessage"] = "Tạo tin tức thành công!";
+                    TempData["SuccessMessage"] = "News created successfully!";
                     return RedirectToAction("News");
                 }
 
-                TempData["ErrorMessage"] = $"Tạo tin thất bại: {responseContent}";
+                TempData["ErrorMessage"] = $"News creation failed: {responseContent}";
                 return View(model);
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Lỗi hệ thống: " + ex.Message;
+                TempData["ErrorMessage"] = "System error: " + ex.Message;
                 return View(model);
             }
         }
-
 
         [HttpGet]
         public async Task<IActionResult> ViewNews(int id)
         {
             try
             {
-                // === SỬA: Thêm Token Xác Thực ===
                 var token = HttpContext.Session.GetString("JwtToken");
                 if (string.IsNullOrEmpty(token))
                 {
-                    TempData["ErrorMessage"] = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+                    TempData["ErrorMessage"] = "Login session has expired. Please log in again.";
                     return RedirectToAction("News");
                 }
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                // === KẾT THÚC SỬA ===
 
                 var response = await _httpClient.GetAsync($"News/{id}");
                 if (!response.IsSuccessStatusCode)
                 {
-                    TempData["ErrorMessage"] = "Không tìm thấy tin tức.";
+                    TempData["ErrorMessage"] = "News not found.";
                     return RedirectToAction("News");
                 }
 
@@ -1221,12 +1180,12 @@ namespace FE_Capstone_Project.Controllers
                     PropertyNameCaseInsensitive = true
                 });
 
-                ViewData["Title"] = $"Xem chi tiết Tin - {newsItem?.Title}";
+                ViewData["Title"] = $"View News Details - {newsItem?.Title}";
                 return View("ViewNews", newsItem);
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Lỗi kết nối đến server: " + ex.Message;
+                TempData["ErrorMessage"] = "Server connection error: " + ex.Message;
                 return RedirectToAction("News");
             }
         }
@@ -1236,20 +1195,18 @@ namespace FE_Capstone_Project.Controllers
         {
             try
             {
-                // === SỬA: Thêm Token Xác Thực ===
                 var token = HttpContext.Session.GetString("JwtToken");
                 if (string.IsNullOrEmpty(token))
                 {
-                    TempData["ErrorMessage"] = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+                    TempData["ErrorMessage"] = "Login session has expired. Please log in again.";
                     return RedirectToAction("News");
                 }
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                // === KẾT THÚC SỬA ===
 
                 var response = await _httpClient.GetAsync($"News/{id}");
                 if (!response.IsSuccessStatusCode)
                 {
-                    TempData["ErrorMessage"] = "Không tìm thấy tin tức.";
+                    TempData["ErrorMessage"] = "News not found.";
                     return RedirectToAction("News");
                 }
 
@@ -1259,12 +1216,12 @@ namespace FE_Capstone_Project.Controllers
                     PropertyNameCaseInsensitive = true
                 });
 
-                ViewData["Title"] = $"Chỉnh sửa Tin - {newsItem?.Title}";
+                ViewData["Title"] = $"Edit News - {newsItem?.Title}";
                 return View(newsItem);
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Lỗi kết nối đến server: " + ex.Message;
+                TempData["ErrorMessage"] = "Server connection error: " + ex.Message;
                 return RedirectToAction("News");
             }
         }
@@ -1272,10 +1229,9 @@ namespace FE_Capstone_Project.Controllers
         [HttpPost]
         public async Task<IActionResult> EditNews(int id, EditNewsModel model, IFormFile? imageFile)
         {
-            // (Kiểm tra UserId từ Model, vì nó đã được gán ẩn trong form)
             if (model.UserId == 0)
             {
-                TempData["ErrorMessage"] = "Không thể xác định người dùng (UserId bị thiếu). Vui lòng thử lại.";
+                TempData["ErrorMessage"] = "Unable to identify user (UserId missing). Please try again.";
                 return View(model);
             }
 
@@ -1283,58 +1239,48 @@ namespace FE_Capstone_Project.Controllers
             {
                 if (!ModelState.IsValid)
                 {
-                    TempData["ErrorMessage"] = "Vui lòng nhập đầy đủ thông tin.";
+                    TempData["ErrorMessage"] = "Please enter complete information.";
                     return View(model);
                 }
 
-                // === SỬA: XÂY DỰNG FORMDATA THAY VÌ JSON ===
                 var formData = new MultipartFormDataContent();
 
-                // Thêm các trường dữ liệu (phải khớp với EditNewsFormDTO của BE)
                 formData.Add(new StringContent(model.Id.ToString()), "Id");
                 formData.Add(new StringContent(model.UserId.ToString()), "UserId");
                 formData.Add(new StringContent(model.Title ?? ""), "Title");
                 formData.Add(new StringContent(model.Content ?? ""), "Content");
                 formData.Add(new StringContent(model.NewsStatus.ToString() ?? "Draft"), "NewsStatus");
 
-                // Thêm file (nếu người dùng chọn file mới)
                 if (imageFile != null && imageFile.Length > 0)
                 {
                     var imageContent = new StreamContent(imageFile.OpenReadStream());
                     imageContent.Headers.ContentType = new MediaTypeHeaderValue(imageFile.ContentType);
-                    // "ImageFile" phải khớp với DTO của BE
                     formData.Add(imageContent, "ImageFile", imageFile.FileName);
                 }
-                // (Nếu imageFile là null, BE sẽ tự hiểu là "giữ nguyên ảnh cũ")
-                // === KẾT THÚC SỬA FORMDATA ===
 
-
-                // === SỬA: GỬI TOKEN VÀ FORMDATA (DÙNG PUT) ===
                 var token = HttpContext.Session.GetString("JwtToken");
                 if (string.IsNullOrEmpty(token))
                 {
-                    TempData["ErrorMessage"] = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+                    TempData["ErrorMessage"] = "Login session has expired. Please log in again.";
                     return View(model);
                 }
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-                // Gửi formData bằng PUT
                 var response = await _httpClient.PutAsync($"News/{id}", formData);
                 var responseContent = await response.Content.ReadAsStringAsync();
-                // === KẾT THÚC SỬA GỬI ===
 
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["SuccessMessage"] = "Cập nhật tin tức thành công!";
+                    TempData["SuccessMessage"] = "News updated successfully!";
                     return RedirectToAction("News");
                 }
 
-                TempData["ErrorMessage"] = $"Cập nhật thất bại: {responseContent}";
+                TempData["ErrorMessage"] = $"Update failed: {responseContent}";
                 return View(model);
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Lỗi hệ thống: " + ex.Message;
+                TempData["ErrorMessage"] = "System error: " + ex.Message;
                 return View(model);
             }
         }
@@ -1344,29 +1290,27 @@ namespace FE_Capstone_Project.Controllers
         {
             try
             {
-                // === SỬA: Thêm Token Xác Thực ===
                 var token = HttpContext.Session.GetString("JwtToken");
                 if (string.IsNullOrEmpty(token))
                 {
-                    TempData["ErrorMessage"] = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+                    TempData["ErrorMessage"] = "Login session has expired. Please log in again.";
                     return RedirectToAction("News");
                 }
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                // === KẾT THÚC SỬA ===
 
                 var response = await _httpClient.DeleteAsync($"News/{id}");
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["SuccessMessage"] = "Xóa tin tức thành công!";
+                    TempData["SuccessMessage"] = "News deleted successfully!";
                 }
                 else
                 {
-                    TempData["ErrorMessage"] = "Xóa tin thất bại!";
+                    TempData["ErrorMessage"] = "News deletion failed!";
                 }
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Lỗi hệ thống: " + ex.Message;
+                TempData["ErrorMessage"] = "System error: " + ex.Message;
             }
 
             return RedirectToAction("News");
@@ -1404,47 +1348,5 @@ namespace FE_Capstone_Project.Controllers
 
             return $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(imagePath)}";
         }
-        
-        //public class ValidateImageFilesAttribute : ValidationAttribute
-        //{
-        //    protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
-        //    {
-        //        var files = value as List<IFormFile>;
-
-        //        if (files == null || files.Count == 0)
-        //        {
-        //            return new ValidationResult("Phải có ít nhất 1 hình ảnh");
-        //        }
-
-        //        foreach (var file in files)
-        //        {
-        //            if (file == null || file.Length == 0)
-        //            {
-        //                return new ValidationResult("File hình ảnh không được trống");
-        //            }
-
-        //            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png"};
-        //            var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
-
-        //            if (string.IsNullOrEmpty(fileExtension) || !allowedExtensions.Contains(fileExtension))
-        //            {
-        //                return new ValidationResult($"Định dạng file {file.FileName} không hợp lệ. Chỉ chấp nhận: {string.Join(", ", allowedExtensions)}");
-        //            }
-
-        //            if (file.Length > 5 * 1024 * 1024)
-        //            {
-        //                return new ValidationResult($"Kích thước file {file.FileName} không được vượt quá 5MB");
-        //            }
-
-        //            var allowedContentTypes = new[] { "image/jpeg", "image/png"};
-        //            if (!allowedContentTypes.Contains(file.ContentType.ToLowerInvariant()))
-        //            {
-        //                return new ValidationResult($"Loại file {file.FileName} không hợp lệ");
-        //            }
-        //        }
-
-        //        return ValidationResult.Success;
-        //    }
-        //}
     }
 }
