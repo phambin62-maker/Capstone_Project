@@ -174,6 +174,29 @@ namespace FE_Capstone_Project.Controllers
 
             var bookingsResponse = await _apiHelper.GetAsync<List<UserBookingResponse>>($"Booking/user/{username}");
 
+            if (bookingsResponse != null)
+            {
+                foreach (var booking in bookingsResponse)
+                {
+                    try
+                    {
+                        var cancelValidation = await _apiHelper.GetAsync<CancelValidationResult>($"Booking/{booking.BookingId}/cancel-validation");
+                        if (cancelValidation != null)
+                        {
+                            booking.CancelCondition = cancelValidation;
+                            booking.CanCancel = cancelValidation.CanCancel;
+                            booking.CancelMessage = cancelValidation.Message;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error checking cancel condition for booking {booking.BookingId}: {ex.Message}");
+                        booking.CanCancel = false;
+                        booking.CancelMessage = "Unable to check cancellation conditions";
+                    }
+                }
+            }
+
             return View(bookingsResponse);
         }
         [HttpPost]
@@ -194,6 +217,14 @@ namespace FE_Capstone_Project.Controllers
                 }
 
                 Console.WriteLine($"Username from session: {username}");
+
+                // Kiểm tra cancel condition trước khi hủy
+                var cancelValidation = await _apiHelper.GetAsync<CancelValidationResult>($"Booking/{bookingId}/cancel-validation");
+                if (cancelValidation == null || !cancelValidation.CanCancel)
+                {
+                    TempData["ErrorMessage"] = cancelValidation?.Message ?? "Cannot cancel this booking.";
+                    return RedirectToAction("MyBookings");
+                }
 
                 // Tạo request data
                 var cancelRequest = new
@@ -216,7 +247,16 @@ namespace FE_Capstone_Project.Controllers
                 if (response != null && response.Success)
                 {
                     Console.WriteLine("Cancellation successful in FE");
-                    TempData["SuccessMessage"] = "Booking cancelled successfully!";
+
+                    // Hiển thị thông tin hoàn tiền nếu có
+                    if (cancelValidation.RefundAmount.HasValue && cancelValidation.RefundAmount.Value > 0)
+                    {
+                        TempData["SuccessMessage"] = $"Booking cancelled successfully! Refund amount: {cancelValidation.RefundAmount.Value.ToString("N0")} VND ({cancelValidation.RefundPercent}% of total price)";
+                    }
+                    else
+                    {
+                        TempData["SuccessMessage"] = "Booking cancelled successfully!";
+                    }
 
                     // Tạo thông báo
                     try
@@ -226,7 +266,9 @@ namespace FE_Capstone_Project.Controllers
                         {
                             UserId = userId,
                             Title = "Booking Cancelled",
-                            Message = $"Your booking #{bookingId} has been cancelled successfully.",
+                            Message = $"Your booking #{bookingId} has been cancelled successfully." +
+                                     (cancelValidation.RefundAmount.HasValue ?
+                                     $" Refund amount: {cancelValidation.RefundAmount.Value.ToString("N0")} VND" : ""),
                             NotificationType = "System"
                         };
                         await _apiHelper.PostAsync<object, object>(NOTIFICATION_API_ENDPOINT, notificationDto);

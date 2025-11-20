@@ -5,22 +5,6 @@
 }
 
 <div class="container-fluid">
-    <!-- Alert Messages -->
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
-
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0 text-dark">@ViewData["Title"]</h1>
         <div>
@@ -46,14 +30,6 @@
                         <tr>
                             <th width="40%">Tour:</th>
                             <td>@(Model.TourName ?? $"Tour #{Model.TourId}")</td>
-                        </tr>
-                        <tr>
-                            <th>Start Location:</th>
-                            <td>@(Model.StartLocation ?? "N/A")</td>
-                        </tr>
-                        <tr>
-                            <th>End Location:</th>
-                            <td>@(Model.EndLocation ?? "N/A")</td>
                         </tr>
                     </table>
                 </div>

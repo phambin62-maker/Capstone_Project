@@ -56,7 +56,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
         //}
 
         [HttpGet("user/{username}")]
-        [Authorize] // Cần đăng nhập để xem booking của user
+        /*[Authorize]*/ // Cần đăng nhập để xem booking của user
         public async Task<IActionResult> GetBookingsByUsername(string username)
         {
             var user = await _userService.GetUserByUsername(username);
@@ -173,7 +173,16 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
                 var booking = await _bookingService.GetByIdAsync(bookingId);
                 if (booking == null || booking.UserId != user.Id)
                     return Unauthorized(new { message = "Booking not found or not authorized", success = false });
-
+                var cancelValidation = await _bookingService.ValidateCancelConditionAsync(bookingId);
+                if (!cancelValidation.CanCancel)
+                {
+                    return BadRequest(new
+                    {
+                        message = cancelValidation.Message,
+                        success = false,
+                        canCancel = false
+                    });
+                }
                 // Sử dụng method có sẵn
                 var cancelRequest = new UpdateBookingStatusRequest
                 {
@@ -181,15 +190,43 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
                 };
 
                 var success = await _bookingService.UpdateBookingStatusAsync(bookingId, cancelRequest);
-
                 if (!success)
-                    return BadRequest(new
-                    {
-                        message = "Cannot cancel booking",
-                        success = false
-                    });
+                    return BadRequest(new { message = "Cannot cancel booking", success = false });
 
-                return Ok(new { message = "Booking cancelled successfully", success = true });
+                return Ok(new
+                {
+                    message = "Booking cancelled successfully",
+                    success = true,
+                    refundAmount = cancelValidation.RefundAmount,
+                    refundPercent = cancelValidation.RefundPercent
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+        }
+        [HttpGet("{bookingId}/cancel-validation")]
+        //[Authorize]
+        public async Task<IActionResult> CheckCancelConditions(int bookingId)
+        {
+            try
+            {
+                var validation = await _bookingService.ValidateCancelConditionAsync(bookingId);
+                return Ok(validation);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+        }
+        [HttpGet("cancel-conditions")]
+        public async Task<IActionResult> GetCancelConditions()
+        {
+            try
+            {
+                var conditions = await _bookingService.GetActiveCancelConditionsAsync();
+                return Ok(conditions);
             }
             catch (Exception ex)
             {

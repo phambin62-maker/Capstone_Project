@@ -36,6 +36,7 @@ else
                     <th>Children</th>
                     <th>Total Price</th>
                     <th>Status</th>
+                    <th>Cancellation Info</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -70,17 +71,54 @@ else
                             }
                         </td>
                         <td>
-                            @if (booking.Status == BookingStatus.Confirmed || booking.Status == BookingStatus.Pending)
+                            @if (booking.CancelCondition != null)
+                            {
+                                if (booking.CancelCondition.CanCancel)
+                                {
+                                    <div class="text-success">
+                                        <small>
+                                            <i class="fas fa-check-circle"></i>
+                                            @booking.CancelMessage
+                                        </small>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="text-danger">
+                                        <small>
+                                            <i class="fas fa-times-circle"></i>
+                                            @booking.CancelMessage 
+                                        </small>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <small class="text-muted">Checking...</small>
+                            }
+                        </td>
+                        <td>
+                            @if (booking.CanCancel && (booking.Status == BookingStatus.Confirmed || booking.Status == BookingStatus.Pending))
                             {
                                 <button type="button" class="btn btn-danger btn-sm"
                                         data-bs-toggle="modal" data-bs-target="#cancelModal"
-                                        data-booking-id="@booking.BookingId" data-booking-name="@booking.TourName">
+                                        data-booking-id="@booking.BookingId"
+                                        data-booking-name="@booking.TourName"
+                                        data-refund-amount="@(booking.CancelCondition?.RefundAmount?.ToString("N0") ?? "0")"
+                                        data-refund-percent="@(booking.CancelCondition?.RefundPercent?.ToString() ?? "0")">
                                     Cancel Booking
                                 </button>
                             }
                             else if (booking.Status == BookingStatus.Cancelled)
                             {
                                 <span class="text-muted">Cancelled</span>
+                            }
+                            else if (!booking.CanCancel && (booking.Status == BookingStatus.Confirmed || booking.Status == BookingStatus.Pending))
+                            {
+                                <button type="button" class="btn btn-outline-secondary btn-sm" disabled
+                                        title="@booking.CancelMessage">
+                                    Cannot Cancel
+                                </button>
                             }
                             else
                             {
@@ -104,6 +142,12 @@ else
             </div>
             <div class="modal-body">
                 <p>Are you sure you want to cancel booking for <strong id="tourName"></strong>?</p>
+
+                <div id="refundInfo" class="alert alert-info mt-3">
+                    <h6><i class="fas fa-info-circle"></i> Refund Information:</h6>
+                    <p id="refundDetails" class="mb-0"></p>
+                </div>
+
                 <p class="text-danger"><small>This action cannot be undone.</small></p>
             </div>
             <div class="modal-footer">
@@ -126,10 +170,37 @@ else
                 var button = event.relatedTarget;
                 var bookingId = button.getAttribute('data-booking-id');
                 var tourName = button.getAttribute('data-booking-name');
+                var refundAmount = button.getAttribute('data-refund-amount');
+                var refundPercent = button.getAttribute('data-refund-percent');
 
                 document.getElementById('tourName').textContent = tourName;
                 document.getElementById('bookingIdInput').value = bookingId;
+
+                // Hiển thị thông tin hoàn tiền
+                var refundDetails = document.getElementById('refundDetails');
+                if (refundPercent > 0) {
+                    refundDetails.innerHTML = `You will receive a refund of <strong>${refundPercent}% (${refundAmount} VND)</strong> according to our cancellation policy.`;
+                    document.getElementById('refundInfo').style.display = 'block';
+                } else {
+                    refundDetails.innerHTML = 'No refund available for this cancellation.';
+                    document.getElementById('refundInfo').style.display = 'block';
+                }
             });
         });
     </script>
+
+    <style>
+        .badge {
+            font-size: 0.8em;
+        }
+
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .alert {
+            margin-bottom: 1rem;
+        }
+    </style>
 }
