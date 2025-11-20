@@ -190,8 +190,6 @@ namespace FE_Capstone_Project.Models
         public short MaxSeats { get; set; } = 30;
 
         [Required(ErrorMessage = "Tour images are required")]
-        [MinLength(1, ErrorMessage = "Must have at least 1 image")]
-        [MaxLength(10, ErrorMessage = "Cannot upload more than 10 images")]
         public List<IFormFile> Images { get; set; } = new List<IFormFile>();
     }
 

@@ -85,7 +85,7 @@ namespace BE_Capstone_Project.DAO
             try{
                 return await _context.Bookings
                     .Include(b => b.User)
-                    .Include(b => b.TourSchedule)
+                    .Include(b => b.TourSchedule).ThenInclude(ts => ts.Tour)
                     .Include(b => b.BookingCustomers)
                     .FirstOrDefaultAsync(b => b.Id == bookingId);
             }
