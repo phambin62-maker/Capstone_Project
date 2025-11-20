@@ -81,7 +81,6 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
             };
         }
 
-        // === 3. SỬA HÀM CREATEASYNC (THÊM LOGIC THÔNG BÁO) ===
         public async Task<int> CreateAsync(CreateBookingDTO dto)
         {
             var newBooking = new Booking
@@ -106,13 +105,10 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
 
             var newBookingId = await _bookingDAO.AddBookingAsync(newBooking);
 
-            // NẾU LƯU THÀNH CÔNG:
             if (newBookingId > 0)
             {
-                // === BẮT ĐẦU THÊM LOGIC THÔNG BÁO ===
                 try
                 {
-                    // Lấy lại booking vừa tạo để có TourName
                     var savedBooking = await _bookingDAO.GetBookingByIdAsync(newBookingId);
                     if (savedBooking != null) // Kiểm tra an toàn
                     {
@@ -126,7 +122,6 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                             NotificationType = NotificationType.System
                         };
 
-                        // Gọi Service (BE) để tạo thông báo
                         _ = _notificationService.CreateAsync(notificationDto);
                     }
                 }
@@ -134,21 +129,17 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                 {
                     Console.WriteLine($"Failed to send booking notification: {ex.Message}");
                 }
-                // === KẾT THÚC LOGIC THÔNG BÁO ===
             }
 
-            return newBookingId; // Trả về ID
+            return newBookingId; 
         }
-        // === KẾT THÚC SỬA LỖI ===
 
 
-        // === 4. SỬA HÀM UPDATEASYNC (THÊM LOGIC CANCEL) ===
         public async Task<bool> UpdateAsync(int id, CreateBookingDTO dto)
         {
             var existing = await _bookingDAO.GetBookingByIdAsync(id);
             if (existing == null) return false;
 
-            // Kiểm tra xem đây có phải là một hành động HỦY (Cancel) hay không
             bool isCancelling = (dto.BookingStatus == BookingStatus.Cancelled &&
                                  existing.BookingStatus != BookingStatus.Cancelled);
 
@@ -165,10 +156,8 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
 
             var updateSuccess = await _bookingDAO.UpdateBookingAsync(existing);
 
-            // NẾU CẬP NHẬT THÀNH CÔNG VÀ LÀ HÀNH ĐỘNG HỦY
             if (updateSuccess && isCancelling)
             {
-                // === BẮT ĐẦU THÊM LOGIC THÔNG BÁO ===
                 try
                 {
                     var tourName = existing.TourSchedule?.Tour?.Name ?? "Your Tour";
@@ -181,19 +170,16 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                         NotificationType = NotificationType.System
                     };
 
-                    // Gọi Service (BE) để tạo thông báo
                     _ = _notificationService.CreateAsync(notificationDto);
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Failed to send cancellation notification: {ex.Message}");
                 }
-                // === KẾT THÚC LOGIC THÔNG BÁO ===
             }
 
             return updateSuccess;
         }
-        // === KẾT THÚC SỬA LỖI ===
 
         public async Task<bool> DeleteAsync(int id)
         {
@@ -509,9 +495,13 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
         }
         public async Task<CancelValidationResult> ValidateCancelConditionAsync(int bookingId)
         {
+            // DEBUG: Thêm log để theo dõi
+            Console.WriteLine($"=== VALIDATE CANCEL CONDITION START - Booking {bookingId} ===");
+
             var booking = await _bookingDAO.GetBookingByIdAsync(bookingId);
             if (booking == null)
             {
+                Console.WriteLine($"Booking {bookingId} not found");
                 return new CancelValidationResult
                 {
                     CanCancel = false,
@@ -519,19 +509,26 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                 };
             }
 
+            // DEBUG: Log booking info
+            Console.WriteLine($"Booking Status: {booking.BookingStatus}");
+            Console.WriteLine($"TourSchedule: {booking.TourSchedule != null}");
+            Console.WriteLine($"Tour: {booking.TourSchedule?.Tour != null}");
+
             if (booking.BookingStatus != BookingStatus.Confirmed &&
                 booking.BookingStatus != BookingStatus.Pending)
             {
+                Console.WriteLine($"Booking status invalid for cancellation: {booking.BookingStatus}");
                 return new CancelValidationResult
                 {
                     CanCancel = false,
-                    Message = $"Cannot cancel booking"
+                    Message = $"Cannot cancel booking with status: {booking.BookingStatus}"
                 };
             }
 
             var tourSchedule = booking.TourSchedule;
             if (tourSchedule?.DepartureDate == null)
             {
+                Console.WriteLine("Tour schedule or departure date is null");
                 return new CancelValidationResult
                 {
                     CanCancel = false,
@@ -539,62 +536,112 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                 };
             }
 
-            // QUAN TRỌNG: Lấy tour để biết cancel condition nào được áp dụng
+            // === SỬA QUAN TRỌNG: KIỂM TRA TOUR CÓ TỒN TẠI KHÔNG ===
             var tour = tourSchedule.Tour;
-            if (tour?.CancelConditionId == null)
+            if (tour == null)
             {
+                Console.WriteLine($"Tour is NULL for booking {bookingId}");
+
+                // Vẫn cho phép hủy nhưng không có thông tin refund
                 return new CancelValidationResult
                 {
-                    CanCancel = false,
-                    Message = "Tour cancellation policy not found"
+                    CanCancel = true,
+                    Message = "Cancellation allowed (tour information not available)",
+                    RefundAmount = 0,
+                    RefundPercent = 0,
+                    AppliedCondition = null
                 };
             }
 
-            // TÍNH SỐ NGÀY TỪ KHI ĐẶT BOOKING
-            var bookingDate = booking.BookingDate.Value;
-            var daysSinceBooking = (DateTime.Now - bookingDate).Days;
+            // DEBUG: Log tour info
+            Console.WriteLine($"Tour Name: {tour.Name}");
+            Console.WriteLine($"Tour CancelConditionId: {tour.CancelConditionId}");
 
-            Console.WriteLine($"=== DEBUG: Booking Date = {bookingDate} ===");
-            Console.WriteLine($"=== DEBUG: Days Since Booking = {daysSinceBooking} ===");
+            if (tour.CancelConditionId == null)
+            {
+                Console.WriteLine("Tour has no cancel condition ID");
+                return new CancelValidationResult
+                {
+                    CanCancel = true,
+                    Message = "Cancellation allowed but no refund policy available",
+                    RefundAmount = 0,
+                    RefundPercent = 0,
+                    AppliedCondition = null
+                };
+            }
 
-            // CHỈ LẤY ĐÚNG CANCEL CONDITION CỦA TOUR NÀY
             var tourCancelCondition = await _context.CancelConditions
-                .FirstOrDefaultAsync(cc => cc.Id == tour.CancelConditionId && cc.CancelStatus == CancelStatus.Active);
+                .FirstOrDefaultAsync(cc => cc.Id == tour.CancelConditionId);
 
             if (tourCancelCondition == null)
             {
+                Console.WriteLine($"Cancel condition not found for ID: {tour.CancelConditionId}");
                 return new CancelValidationResult
                 {
-                    CanCancel = false,
-                    Message = "Cancellation policy not found for this tour"
+                    CanCancel = true,
+                    Message = "Cancellation allowed (policy not found - no refund)",
+                    RefundAmount = 0,
+                    RefundPercent = 0,
+                    AppliedCondition = null
                 };
             }
 
-            Console.WriteLine($"=== DEBUG: Tour's Condition ===");
-            Console.WriteLine($"ID: {tourCancelCondition.Id}, MinDays: {tourCancelCondition.MinDaysBeforeTrip}, Refund%: {tourCancelCondition.RefundPercent}, Title: {tourCancelCondition.Title}");
+            // DEBUG: Log condition info
+            Console.WriteLine($"Cancel Condition: {tourCancelCondition.Title}");
+            Console.WriteLine($"Min Days: {tourCancelCondition.MinDaysBeforeTrip}, Refund %: {tourCancelCondition.RefundPercent}");
 
-            // KIỂM TRA: còn trong thời gian hủy không?
-            // Có thể hủy khi: daysSinceBooking <= MinDaysBeforeTrip
+            // Kiểm tra nếu condition không active
+            if (tourCancelCondition.CancelStatus != CancelStatus.Active)
+            {
+                Console.WriteLine($"Cancel condition is not active: {tourCancelCondition.CancelStatus}");
+                return new CancelValidationResult
+                {
+                    CanCancel = true,
+                    Message = $"Cancellation allowed - {tourCancelCondition.Title} (no refund)",
+                    RefundAmount = 0,
+                    RefundPercent = 0,
+                    AppliedCondition = null
+                };
+            }
+
+            var bookingDate = booking.BookingDate.Value;
+            var daysSinceBooking = (DateTime.Now - bookingDate).Days;
+
+            Console.WriteLine($"Booking Date: {bookingDate}, Days since booking: {daysSinceBooking}");
+
             if (daysSinceBooking > tourCancelCondition.MinDaysBeforeTrip)
             {
+                Console.WriteLine($"Cannot cancel - exceeded {tourCancelCondition.MinDaysBeforeTrip} days limit");
                 return new CancelValidationResult
                 {
                     CanCancel = false,
-                    Message = $"Cannot cancel booking. Cancellation must be within {tourCancelCondition.MinDaysBeforeTrip} days from booking date."
+                    Message = $"Cannot cancel booking. Cancellation must be within {tourCancelCondition.MinDaysBeforeTrip} days from booking date. (Current: {daysSinceBooking} days)"
                 };
             }
 
             bool hasRefund = tourCancelCondition.RefundPercent > 0;
             string message = hasRefund
                 ? tourCancelCondition.Title
-                : $"{tourCancelCondition.Title} - Không được hoàn tiền";
+                : $"{tourCancelCondition.Title} - No refund";
+
+            // Tính toán số tiền hoàn lại
+            decimal? refundAmount = 0;
+            int? refundPercent = tourCancelCondition.RefundPercent;
+
+            if (hasRefund && booking.TotalPrice.HasValue && booking.TotalPrice.Value > 0)
+            {
+                refundAmount = booking.TotalPrice.Value * (tourCancelCondition.RefundPercent / 100m); // SỬA: thêm 'm' để decimal division
+                refundAmount = Math.Round(refundAmount.Value, 2);
+            }
+
+            Console.WriteLine($"=== VALIDATION RESULT: CanCancel={true}, Message={message}, Refund={refundPercent}% ===");
 
             return new CancelValidationResult
             {
                 CanCancel = true,
                 Message = message,
-                RefundAmount = null,
-                RefundPercent = null,
+                RefundAmount = refundAmount,
+                RefundPercent = refundPercent,
                 AppliedCondition = new CancelConditionDTO
                 {
                     Id = tourCancelCondition.Id,

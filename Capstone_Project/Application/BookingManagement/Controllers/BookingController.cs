@@ -56,7 +56,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
         //}
 
         [HttpGet("user/{username}")]
-        /*[Authorize]*/ // Cần đăng nhập để xem booking của user
+        /*[Authorize] */// Cần đăng nhập để xem booking của user
         public async Task<IActionResult> GetBookingsByUsername(string username)
         {
             var user = await _userService.GetUserByUsername(username);

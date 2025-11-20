@@ -99,7 +99,8 @@ namespace FE_Capstone_Project.Models
     {
         public int BookingId { get; set; }
         public string TourName { get; set; } = string.Empty;
-        public DateTime DepartureDate { get; set; }
+        public DateOnly DepartureDate { get; set; }
+        public DateTime DepartureDateTime => DepartureDate.ToDateTime(TimeOnly.MinValue);
         public int Adults { get; set; }
         public int Children { get; set; }
         public decimal TotalPrice { get; set; }

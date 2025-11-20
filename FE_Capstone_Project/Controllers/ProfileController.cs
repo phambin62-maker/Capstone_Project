@@ -165,7 +165,6 @@ namespace FE_Capstone_Project.Controllers
             }
         }
 
-        // === SỬA LỖI LOGIC (DÙNG UserName) ===
         public async Task<IActionResult> MyBookings()
         {
             var username = HttpContext.Session.GetString("UserName");
@@ -205,20 +204,15 @@ namespace FE_Capstone_Project.Controllers
         {
             try
             {
-                Console.WriteLine($"=== FE CANCEL REQUEST ===");
-                Console.WriteLine($"Booking ID: {bookingId}");
 
                 var username = HttpContext.Session.GetString("UserName");
                 if (string.IsNullOrEmpty(username))
                 {
-                    Console.WriteLine("No username in session");
                     TempData["ErrorMessage"] = "User session invalid. Please log in again.";
                     return RedirectToAction("MyBookings");
                 }
 
-                Console.WriteLine($"Username from session: {username}");
 
-                // Kiểm tra cancel condition trước khi hủy
                 var cancelValidation = await _apiHelper.GetAsync<CancelValidationResult>($"Booking/{bookingId}/cancel-validation");
                 if (cancelValidation == null || !cancelValidation.CanCancel)
                 {
@@ -226,29 +220,19 @@ namespace FE_Capstone_Project.Controllers
                     return RedirectToAction("MyBookings");
                 }
 
-                // Tạo request data
                 var cancelRequest = new
                 {
                     Username = username
                 };
 
-                Console.WriteLine($"Calling API: Booking/user/{bookingId}/cancel");
-
-                // Gọi API để hủy booking
                 var response = await _apiHelper.PutAsync<object, ApiResponse<object>>(
                     $"Booking/user/{bookingId}/cancel",
                     cancelRequest
                 );
 
-                Console.WriteLine($"API Response: {response != null}");
-                Console.WriteLine($"API Success: {response?.Success}");
-                Console.WriteLine($"API Message: {response?.Message}");
-
                 if (response != null && response.Success)
                 {
-                    Console.WriteLine("Cancellation successful in FE");
 
-                    // Hiển thị thông tin hoàn tiền nếu có
                     if (cancelValidation.RefundAmount.HasValue && cancelValidation.RefundAmount.Value > 0)
                     {
                         TempData["SuccessMessage"] = $"Booking cancelled successfully! Refund amount: {cancelValidation.RefundAmount.Value.ToString("N0")} VND ({cancelValidation.RefundPercent}% of total price)";
@@ -258,7 +242,6 @@ namespace FE_Capstone_Project.Controllers
                         TempData["SuccessMessage"] = "Booking cancelled successfully!";
                     }
 
-                    // Tạo thông báo
                     try
                     {
                         var userId = GetCurrentUserId();

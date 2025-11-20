@@ -18,7 +18,6 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 }
-
 @if (!Model.Any())
 {
     <p>You have no booked tours yet.</p>
@@ -46,7 +45,7 @@ else
                     <tr>
                         <td>#@booking.BookingId</td>
                         <td>@booking.TourName</td>
-                        <td>@booking.DepartureDate.ToString("MMMM dd, yyyy")</td>
+                        <td>@booking.DepartureDateTime.ToString("MMMM dd, yyyy")</td>
                         <td>@booking.Adults</td>
                         <td>@booking.Children</td>
                         <td>@booking.TotalPrice.ToString("N0") VND</td>
@@ -72,13 +71,26 @@ else
                         </td>
                         <td>
                             @if (booking.CancelCondition != null)
-                            {
-                                if (booking.CancelCondition.CanCancel)
+                            {                               
+                                @if (booking.CancelCondition.CanCancel)
                                 {
                                     <div class="text-success">
                                         <small>
                                             <i class="fas fa-check-circle"></i>
-                                            @booking.CancelMessage
+                                            <!-- LUÔN DÙNG CancelCondition.Message -->
+                                            <strong>@booking.CancelCondition.Message</strong>
+                                            @if (booking.CancelCondition.RefundPercent > 0)
+                                            {
+                                                <br />
+                                                <span class="text-info">
+                                                    <i class="fas fa-money-bill-wave"></i>
+                                                    Refund: @booking.CancelCondition.RefundPercent%
+                                                    @if (booking.CancelCondition.RefundAmount > 0)
+                                                    {
+                                                        <text>(@booking.CancelCondition.RefundAmount.Value.ToString("N0") VND)</text>
+                                                    }
+                                                </span>
+                                            }
                                         </small>
                                     </div>
                                 }
@@ -87,25 +99,31 @@ else
                                     <div class="text-danger">
                                         <small>
                                             <i class="fas fa-times-circle"></i>
-                                            @booking.CancelMessage 
+                                            <!-- LUÔN DÙNG CancelCondition.Message -->
+                                            <strong>@booking.CancelCondition.Message</strong>
                                         </small>
                                     </div>
                                 }
                             }
                             else
                             {
-                                <small class="text-muted">Checking...</small>
+                                <small class="text-muted">Checking cancellation policy...</small>
                             }
                         </td>
                         <td>
                             @if (booking.CanCancel && (booking.Status == BookingStatus.Confirmed || booking.Status == BookingStatus.Pending))
                             {
+                                var refundAmount = booking.CancelCondition?.RefundAmount?.ToString("N0") ?? "0";
+                                var refundPercent = booking.CancelCondition?.RefundPercent?.ToString() ?? "0";
+                                var cancelMessage = booking.CancelCondition?.Message ?? booking.CancelMessage;
+
                                 <button type="button" class="btn btn-danger btn-sm"
                                         data-bs-toggle="modal" data-bs-target="#cancelModal"
                                         data-booking-id="@booking.BookingId"
                                         data-booking-name="@booking.TourName"
-                                        data-refund-amount="@(booking.CancelCondition?.RefundAmount?.ToString("N0") ?? "0")"
-                                        data-refund-percent="@(booking.CancelCondition?.RefundPercent?.ToString() ?? "0")">
+                                        data-refund-amount="@refundAmount"
+                                        data-refund-percent="@refundPercent"
+                                        title="@cancelMessage">
                                     Cancel Booking
                                 </button>
                             }
@@ -162,32 +180,37 @@ else
     </div>
 </div>
 
-@section Scripts {
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var cancelModal = document.getElementById('cancelModal');
-            cancelModal.addEventListener('show.bs.modal', function (event) {
-                var button = event.relatedTarget;
-                var bookingId = button.getAttribute('data-booking-id');
-                var tourName = button.getAttribute('data-booking-name');
-                var refundAmount = button.getAttribute('data-refund-amount');
-                var refundPercent = button.getAttribute('data-refund-percent');
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var cancelModal = document.getElementById('cancelModal');
+        cancelModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var bookingId = button.getAttribute('data-booking-id');
+            var tourName = button.getAttribute('data-booking-name');
 
-                document.getElementById('tourName').textContent = tourName;
-                document.getElementById('bookingIdInput').value = bookingId;
+            // XỬ LÝ NULL AN TOÀN
+            var refundAmount = button.getAttribute('data-refund-amount') || "0";
+            var refundPercent = button.getAttribute('data-refund-percent') || "0";
 
-                // Hiển thị thông tin hoàn tiền
-                var refundDetails = document.getElementById('refundDetails');
-                if (refundPercent > 0) {
-                    refundDetails.innerHTML = `You will receive a refund of <strong>${refundPercent}% (${refundAmount} VND)</strong> according to our cancellation policy.`;
-                    document.getElementById('refundInfo').style.display = 'block';
-                } else {
-                    refundDetails.innerHTML = 'No refund available for this cancellation.';
-                    document.getElementById('refundInfo').style.display = 'block';
-                }
-            });
+            document.getElementById('tourName').textContent = tourName;
+            document.getElementById('bookingIdInput').value = bookingId;
+
+            // Hiển thị thông tin hoàn tiền
+            var refundDetails = document.getElementById('refundDetails');
+            var refundInfo = document.getElementById('refundInfo');
+
+            if (parseFloat(refundPercent) > 0) {
+                refundDetails.innerHTML = `You will receive a refund of <strong>${refundPercent}% (${parseFloat(refundAmount).toLocaleString()} VND)</strong> according to our cancellation policy.`;
+                refundInfo.style.display = 'block';
+                refundInfo.className = 'alert alert-info mt-3';
+            } else {
+                refundDetails.innerHTML = '<strong>No refund available</strong> for this cancellation according to our policy.';
+                refundInfo.style.display = 'block';
+                refundInfo.className = 'alert alert-warning mt-3';
+            }
         });
-    </script>
+    });
+</script>
 
     <style>
         .badge {
