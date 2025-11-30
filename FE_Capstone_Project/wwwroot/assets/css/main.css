@@ -8557,3 +8557,11 @@ section,
     pointer-events: none;
     cursor: not-allowed;
 }
+
+.tour-content p, p.description, p.brief {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

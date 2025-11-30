@@ -39,14 +39,6 @@
     {
         <link href="~/css/chat.css" rel="stylesheet" />
     }
-
-    <!-- =======================================================
-    * Template Name: Tour
-    * Template URL: https://bootstrapmade.com/tour-bootstrap-travel-website-template/
-    * Updated: Jul 01 2025 with Bootstrap v5.3.7
-    * Author: BootstrapMade.com
-    * License: https://bootstrapmade.com/license/
-    ======================================================== -->
 </head>
 <body>
     @{
@@ -72,20 +64,22 @@
                         @* Menu cho Admin *@
                         @if (AuthHelper.IsAdmin())
                         {
-                            <li><a asp-controller="AdminWeb" asp-action="Account">Admin Management</a></li>
+                            <li class="dropdown">
+                                <a><span>Management</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+                                <ul>
+                                    <li><a asp-controller="AdminWeb" asp-action="Account">Admin Management</a></li>
+                                    <li><a asp-controller="AdminWeb" asp-action="Report">Report</a></li>
+                                </ul>
+                            </li>
                         }
                         
-                        @* Menu cho Admin và Staff *@
-                        @if (AuthHelper.IsAdminOrStaff())
+                        @* Menu cho Staff *@
+                        @if (AuthHelper.IsStaff())
                         {
                             <li class="dropdown">
-                                <a href="#"><span>Management</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+                                <a><span>Management</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
                                 <ul>
                                     <li><a asp-controller="Staff" asp-action="Tours">Tour Management</a></li>
-                                    @if (AuthHelper.IsAdmin())
-                                    {
-                                        <li><a asp-controller="AdminWeb" asp-action="Report">Report</a></li>
-                                    }
                                 </ul>
                             </li>
                         }

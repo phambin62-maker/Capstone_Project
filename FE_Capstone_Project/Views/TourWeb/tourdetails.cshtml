@@ -51,7 +51,6 @@
                                     <span class="rating"><i class="bi bi-star-fill"></i> @avgRatingText (@Model.Reviews!.Count reviews)</span>
                                     <span class="rating"><i class="bi bi-people-fill"></i> @Model.MaxSeats seats per booking</span>
                                 </div>
-                                <p class="hero-tagline">Experience ancient wonders, pristine beaches, and vibrant cultures across three magnificent countries</p>
                                 <a asp-controller="@(isLoggedIn ? "BookingWeb" : "AuthWeb")"
                                    asp-action="@(isLoggedIn ? "Index" : "Login")"
                                    asp-route-tourId="@Model.Id"

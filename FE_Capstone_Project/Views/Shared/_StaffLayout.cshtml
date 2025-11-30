@@ -1,8 +1,8 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 @{
-                var firstname = Context.Session.GetString("UserName");
-                var hideHeader = ViewData["HideHeader"] as bool? ?? false;
+    var firstname = Context.Session.GetString("UserName");
+    var hideHeader = ViewData["HideHeader"] as bool? ?? false;
 }
 <head>
     <meta charset="utf-8">
@@ -37,18 +37,15 @@
                 {
                     <nav id="user-nav" class="navmenu">
                         <ul>
+                            <li><a asp-controller="Home" asp-action="Index">Home</a></li>
                             <li class="dropdown">
                                 <a style="color: white;">
                                     <span style="color: white;">Welcome, @firstname</span>
                                     <i class="bi bi-chevron-down toggle-dropdown" style="color: white;"></i>
                                 </a>
                                 <ul>
+                                    <li><a asp-action="Profile" asp-controller="AuthWeb">Profile</a></li>
                                     <li><a asp-action="Logout" asp-controller="AuthWeb">Logout</a></li>
-                                    <li>
-                                        <a href="/">
-                                            Home
-                                        </a>
-                                    </li>
                                 </ul>
                             </li>
                         </ul>
