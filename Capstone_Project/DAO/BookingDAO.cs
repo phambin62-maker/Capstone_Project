@@ -200,9 +200,15 @@ namespace BE_Capstone_Project.DAO
             var expiredBookingCustomers = await _context.BookingCustomers
                 .Where(bc => expiredBookingIds.Contains(bc.BookingId))
                 .ToListAsync();
+            var expiredReviews = await _context.Reviews
+                .Where(r => expiredBookingIds.Contains(r.BookingId))
+                .ToListAsync();
 
             if (expiredBookingCustomers.Any())
                 _context.BookingCustomers.RemoveRange(expiredBookingCustomers);
+
+            if (expiredReviews.Any())
+                _context.Reviews.RemoveRange(expiredReviews);
 
             _context.Bookings.RemoveRange(expiredBookings);
 

@@ -205,7 +205,7 @@ namespace FE_Capstone_Project.Controllers
 
         public IActionResult Forbidden()
         {
-            ViewData["Title"] = "Không có quyền truy cập";
+            ViewData["Title"] = "No Access";
             return View();
         }
     }

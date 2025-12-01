@@ -29,9 +29,24 @@
     <link href="~/assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
     <link href="~/assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
     <link href="~/assets/css/site.css" rel="stylesheet">
-
-
     <link href="~/assets/css/main.css" rel="stylesheet">
+
+    <style>
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .main-wrapper {
+            flex: 1;
+        }
+    </style>
 
     @await RenderSectionAsync("Styles", required: false)
     <!-- Chat Widget CSS (only for logged-in customers) -->
@@ -39,14 +54,6 @@
     {
         <link href="~/css/chat.css" rel="stylesheet" />
     }
-
-    <!-- =======================================================
-    * Template Name: Tour
-    * Template URL: https://bootstrapmade.com/tour-bootstrap-travel-website-template/
-    * Updated: Jul 01 2025 with Bootstrap v5.3.7
-    * Author: BootstrapMade.com
-    * License: https://bootstrapmade.com/license/
-    ======================================================== -->
 </head>
 <body>
     @{
@@ -72,20 +79,22 @@
                         @* Menu cho Admin *@
                         @if (AuthHelper.IsAdmin())
                         {
-                            <li><a asp-controller="AdminWeb" asp-action="Account">Admin Management</a></li>
+                            <li class="dropdown">
+                                <a><span>Management</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+                                <ul>
+                                    <li><a asp-controller="AdminWeb" asp-action="Account">Admin Management</a></li>
+                                    <li><a asp-controller="AdminWeb" asp-action="Report">Report</a></li>
+                                </ul>
+                            </li>
                         }
                         
-                        @* Menu cho Admin và Staff *@
-                        @if (AuthHelper.IsAdminOrStaff())
+                        @* Menu cho Staff *@
+                        @if (AuthHelper.IsStaff())
                         {
                             <li class="dropdown">
-                                <a href="#"><span>Management</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+                                <a><span>Management</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
                                 <ul>
                                     <li><a asp-controller="Staff" asp-action="Tours">Tour Management</a></li>
-                                    @if (AuthHelper.IsAdmin())
-                                    {
-                                        <li><a asp-controller="AdminWeb" asp-action="Report">Report</a></li>
-                                    }
                                 </ul>
                             </li>
                         }
@@ -139,61 +148,51 @@
                 <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
             </div>
         </header>
-        <main role="main" class="container">
-            @RenderBody()
-        </main>
-        <footer id="footer" class="footer position-relative dark-background">
-
-            <div class="container footer-top">
-                <div class="row gy-4">
-                    <div class="col-md-6 footer-about">
-                        <a href="index.html" class="d-flex align-items-center">
-                            <span class="sitename">Tour</span>
-                        </a>
-                        <div class="footer-contact pt-3">
-                            <p>A108 Adam Street</p>
-                            <p>New York, NY 535022</p>
-                            <p class="mt-3"><strong>Phone:</strong> <span>+1 5589 55488 55</span></p>
-                            <p><strong>Email:</strong> <span>info@example.com</span></p>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6 footer-links">
-                        <h4>Useful Links</h4>
-                        <ul>
-                            <li><a asp-controller="Home" asp-action="Index" class="bi bi-chevron-right">Home</a></li>
-                            <li><a asp-controller="TourWeb" asp-action="Tours" class="bi bi-chevron-right">Tours</a></li>
-                            <li><a asp-controller="News" asp-action="Index" class="bi bi-chevron-right">News</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            @* <script type="module">
-                import Chatbot from "https://cdn.jsdelivr.net/npm/@@denserai/embed-chat@1/dist/web.min.js";
-                Chatbot.init({
-                  chatbotId: "chatbot_9xvb6ebmc018oc9vpa1j5",
-                });
-            </script> *@
-            <div class="container copyright text-center mt-4">
-                <p>© <span>Copyright</span> <strong class="px-1 sitename">OTMS</strong> <span>All Rights Reserved</span></p>
-            </div>
-        </footer>
     }
-    <div class="container"> 
-        <main role="main">
+    <div class="main-wrapper">
+        <main class="container pt-5">
             @RenderBody()
         </main>
     </div>
+    <footer id="footer" class="footer position-relative dark-background">
+
+        <div class="container footer-top">
+            <div class="row gy-4">
+                <div class="col-md-6 footer-about">
+                    <a href="index.html" class="d-flex align-items-center">
+                        <span class="sitename">Tour</span>
+                    </a>
+                    <div class="footer-contact pt-3">
+                        <p>A108 Adam Street</p>
+                        <p>New York, NY 535022</p>
+                        <p class="mt-3"><strong>Phone:</strong> <span>+1 5589 55488 55</span></p>
+                        <p><strong>Email:</strong> <span>info@example.com</span></p>
+                    </div>
+                </div>
+
+                <div class="col-md-6 footer-links">
+                    <h4>Useful Links</h4>
+                    <ul>
+                        <li><a asp-controller="Home" asp-action="Index" class="bi bi-chevron-right">Home</a></li>
+                        <li><a asp-controller="TourWeb" asp-action="Tours" class="bi bi-chevron-right">Tours</a></li>
+                        <li><a asp-controller="News" asp-action="Index" class="bi bi-chevron-right">News</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="container copyright text-center mt-4">
+            <p>© <span>Copyright</span> <strong class="px-1 sitename">OTMS</strong> <span>All Rights Reserved</span></p>
+        </div>
+    </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/notification.js" asp-append-version="true"></script>
-    <!-- Chat Widget -->
-    @await Html.PartialAsync("_ChatWidget") 
     <!-- Chat Widget Scripts (for logged-in Staff and Customer) -->
     @if (!string.IsNullOrEmpty(Context.Session.GetString("JwtToken")) && (Context.Session.GetInt32("UserRoleId") == 2 || Context.Session.GetInt32("UserRoleId") == 3))
     {
+        <!-- Chat Widget -->
+        @await Html.PartialAsync("_ChatWidget")
         <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
         <script src="~/js/chat-widget.js" asp-append-version="true"></script>
     }

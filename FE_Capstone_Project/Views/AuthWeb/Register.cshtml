@@ -1,4 +1,8 @@
 ﻿@model FE_Capstone_Project.Models.RegisterViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Register";
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -279,21 +283,21 @@
 
                 <!-- Username -->
                 <div class="form-group">
-                    <input asp-for="Username" type="text" id="username" name="username" required autocomplete="username" placeholder="Username" class="form-control" />
+                    <input asp-for="Username" type="text" id="username" name="username" required autocomplete="username" placeholder="" class="form-control" />
                     <label for="username">Username</label>
                     <span class="error-message" id="usernameError"></span>
                 </div>
 
                 <!-- Email -->
                 <div class="form-group">
-                    <input asp-for="Email" type="email" id="email" name="email" required autocomplete="email" placeholder="Email" class="form-control" />
+                    <input asp-for="Email" type="email" id="email" name="email" required autocomplete="email" placeholder="" class="form-control" />
                     <label for="email">Email</label>
                     <span class="error-message" id="emailError"></span>
                 </div>
 
                 <!-- Password -->
                 <div class="form-group">
-                    <input asp-for="Password" type="password" id="password" name="password" required autocomplete="new-password" placeholder="Password" class="form-control" />
+                    <input asp-for="Password" type="password" id="password" name="password" required autocomplete="new-password" placeholder="" class="form-control" />
                     <label for="password">Password</label>
 
                     <button type="button" class="password-toggle" id="passwordToggle" aria-label="Toggle password visibility">

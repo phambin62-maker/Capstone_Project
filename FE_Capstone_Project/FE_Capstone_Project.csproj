@@ -16,8 +16,6 @@
 
   <ItemGroup>
     <None Include="Views\404.cshtml" />
-    <None Include="Views\Staff\about.cshtml" />
-    <None Include="Views\Staff\blog.cshtml" />
     <None Include="Views\Home\Index.cshtml" />
     <None Include="wwwroot\assets\css\main.css" />
     <None Include="wwwroot\assets\img\apple-touch-icon.png" />

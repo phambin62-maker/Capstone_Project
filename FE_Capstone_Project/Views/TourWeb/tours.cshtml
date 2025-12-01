@@ -206,7 +206,7 @@
                                                 <p>@tour.Description</p>
                                                 <div class="tour-details">
                                                     <span><i class="bi bi-clock"></i> @tour.Duration Day@(tour.Duration == 1 ? "" : "s")</span>
-                                                    <span><i class="bi bi-star-fill"></i> @avgRatingText (@tour.Reviews.Count reviews)</span>
+                                                    <span><i class="bi bi-star-fill"></i> @avgRatingText (@tour.Reviews.Count review)@(tour.Reviews.Count == 1 ? "" : "s")</span>
                                                 </div>
                                                 <a asp-action="TourDetails" asp-route-tourId="@tour.Id" class="btn btn-outline-primary">View Tour</a>
                                             </div>
