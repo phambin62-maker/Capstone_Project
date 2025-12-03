@@ -5,21 +5,7 @@
 }
 
 <div class="container-fluid">
-    <!-- Alert Messages -->
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
+    
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0 text-dark">@ViewData["Title"]</h1>
@@ -36,15 +22,7 @@
             </h5>
         </div>
         <div class="card-body">
-            <div class="row">
-                <div class="col-md-8">
-                    <div class="input-group">
-                        <input type="text" class="form-control" id="tourSearch" placeholder="Search tour by name...">
-                        <button class="btn btn-outline-secondary" type="button" id="searchTourBtn">
-                            <i class="bi bi-search"></i>
-                        </button>
-                    </div>
-                </div>
+            <div class="row">                
                 <div class="col-md-4">
                     <button class="btn btn-outline-primary w-100" type="button" data-bs-toggle="modal" data-bs-target="#tourModal">
                         <i class="bi bi-list-ul me-2"></i>View Tour List

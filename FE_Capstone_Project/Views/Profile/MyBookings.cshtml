@@ -71,13 +71,22 @@ else
                         </td>
                         <td>
                             @if (booking.CancelCondition != null)
-                            {                               
-                                @if (booking.CancelCondition.CanCancel)
+                            {
+                                @if (booking.Status == BookingStatus.Completed)
+                                {
+                                    <div class="text-success">
+
+                                        <small>
+                                            <i class="fas fa-check-circle"></i>
+                                            <strong>@booking.CancelCondition.Message</strong>                                           
+                                        </small>
+                                    </div>
+                                }
+                                else if (booking.CancelCondition.CanCancel)
                                 {
                                     <div class="text-success">
                                         <small>
                                             <i class="fas fa-check-circle"></i>
-                                            <!-- LUÔN DÙNG CancelCondition.Message -->
                                             <strong>@booking.CancelCondition.Message</strong>
                                             @if (booking.CancelCondition.RefundPercent > 0)
                                             {
@@ -99,7 +108,6 @@ else
                                     <div class="text-danger">
                                         <small>
                                             <i class="fas fa-times-circle"></i>
-                                            <!-- LUÔN DÙNG CancelCondition.Message -->
                                             <strong>@booking.CancelCondition.Message</strong>
                                         </small>
                                     </div>
@@ -200,7 +208,7 @@ else
             var refundInfo = document.getElementById('refundInfo');
 
             if (parseFloat(refundPercent) > 0) {
-                refundDetails.innerHTML = `You will receive a refund of <strong>${refundPercent}% (${parseFloat(refundAmount).toLocaleString()} VND)</strong> according to our cancellation policy.`;
+                refundDetails.innerHTML = `You will receive a refund of <strong>${refundPercent}%</strong> according to our cancellation policy.`;
                 refundInfo.style.display = 'block';
                 refundInfo.className = 'alert alert-info mt-3';
             } else {

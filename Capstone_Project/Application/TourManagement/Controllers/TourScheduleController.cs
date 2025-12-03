@@ -86,7 +86,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Staff")] // Chỉ Admin và Staff mới được tạo lịch tour
+        [Authorize(Roles = "Admin,Staff")] 
         public async Task<ActionResult<ApiResponse<int>>> CreateTourSchedule([FromBody] CreateTourScheduleRequest request)
         {
             try
@@ -101,11 +101,11 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
                     return StatusCode(500, new ApiResponse<int>(false, "Failed to create tour schedule"));
             }
             catch (ArgumentException ex) { return BadRequest(new ApiResponse<int>(false, ex.Message)); }
-            catch (Exception ex) { return StatusCode(500, new ApiResponse<int>(false, $"Internal server error: {ex.Message}")); }
+            catch (Exception ex) { return StatusCode(500, new ApiResponse<int>(false, ex.Message)); }
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,Staff")] // Chỉ Admin và Staff mới được cập nhật lịch tour
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<ActionResult<ApiResponse<bool>>> UpdateTourSchedule(int id, [FromBody] UpdateTourScheduleRequest request)
         {
             try
@@ -122,7 +122,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin,Staff")] // Chỉ Admin và Staff mới được xóa lịch tour
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<ActionResult<ApiResponse<bool>>> DeleteTourSchedule(int id)
         {
             try

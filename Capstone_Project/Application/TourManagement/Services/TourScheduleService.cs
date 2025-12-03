@@ -33,7 +33,14 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
         {
             if (request.DepartureDate >= request.ArrivalDate)
                 throw new ArgumentException("Departure date must be before arrival date");
+            
+            var isDuplicate = await _tourScheduleDAO.ExistsAsync(
+                request.TourId,
+                request.DepartureDate
+            );
 
+            if (isDuplicate)
+                throw new InvalidOperationException("This tour already has a schedule on the selected date.");
             var tourSchedule = new TourSchedule
             {
                 TourId = request.TourId,
@@ -49,10 +56,18 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
         {
             if (request.DepartureDate >= request.ArrivalDate)
                 throw new ArgumentException("Departure date must be before arrival date");
-
+            
             var existingSchedule = await _tourScheduleDAO.GetTourScheduleById(id);
             if (existingSchedule == null)
                 throw new KeyNotFoundException($"Tour schedule with ID {id} not found");
+            var isDuplicate = await _tourScheduleDAO.ExistsForUpdateAsync(
+                existingSchedule.TourId,
+                request.DepartureDate,
+                id
+            );
+
+            if (isDuplicate)
+                throw new InvalidOperationException("This tour already has a schedule on the selected date.");
 
             existingSchedule.DepartureDate = request.DepartureDate;
             existingSchedule.ArrivalDate = request.ArrivalDate;
