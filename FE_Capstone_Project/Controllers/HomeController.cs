@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Text.Json;
+using System.Linq;
 
 namespace FE_Capstone_Project.Controllers
 {
@@ -102,6 +103,27 @@ namespace FE_Capstone_Project.Controllers
                     };
                 }
 
+                // --- Load Featured Tours for the homepage ---
+                var toursResponse = await _apiHelper.GetAsync<TourListResponse>("Tour/GetPaginatedTours?page=1&pageSize=6");
+                if (toursResponse?.Tours != null && toursResponse.Tours.Any())
+                {
+                    model.FeaturedTours = toursResponse.Tours
+                        .Where(t => t.TourStatus)
+                        .Take(6)
+                        .ToList();
+                }
+
+                // --- Load Latest News ---
+                var newsResponse = await _apiHelper.GetAsync<List<NewsViewModel>>("News");
+                if (newsResponse != null && newsResponse.Any())
+                {
+                    model.LatestNews = newsResponse
+                        .Where(n => n.NewsStatus == "1" || string.Equals(n.NewsStatus, "published", StringComparison.OrdinalIgnoreCase))
+                        .OrderByDescending(n => n.CreatedDate ?? DateTime.MinValue)
+                        .Take(3)
+                        .ToList();
+                }
+
                 // --- Load About Us content từ Company API ---
                 var companyResponse = await _apiHelper.GetAsync<CompanyDTO>("Company/active");
                 if (companyResponse != null)
@@ -187,6 +209,8 @@ namespace FE_Capstone_Project.Controllers
                 ViewBag.Categories = new List<TourCategoryViewModel>();
                 model.Features = new List<FeatureViewModel>();
                 model.AboutUs = new AboutUsViewModel();
+                model.FeaturedTours = new List<TourViewModel>();
+                model.LatestNews = new List<NewsViewModel>();
             }
 
             return View(model);

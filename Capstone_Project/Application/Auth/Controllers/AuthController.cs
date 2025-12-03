@@ -106,7 +106,7 @@ public async Task<IActionResult> Register([FromBody] RegisterDto request)
             {
                 return Unauthorized(new 
                 { 
-                    message = "Tài khoản của bạn chưa được kích hoạt. Vui lòng liên hệ quản trị viên.",
+                    message = "Your account are AccountInactive.Please contacr to admin.",
                     error = "AccountInactive",
                     status = user.UserStatus?.ToString() ?? "Unknown"
                 });

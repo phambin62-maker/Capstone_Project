@@ -4,8 +4,6 @@
     var roleId = Context.Session.GetInt32("UserRoleId");
     var jwtToken = Context.Session.GetString("JwtToken");
 }
-<div id="botContainer" style="width: 400px; height: 600px; border-radius: 8px; overflow: hidden;"></div>
-
 <!-- Chat Widget - Hiển thị cho cả người chưa đăng nhập -->
 <div id="chatWidget" class="chat-widget">
     <!-- Chat Button -->
@@ -67,9 +65,16 @@
                 </div>
             </div>
 
-            <!-- Bot Container - sẽ chứa bot widget -->
-            <div id="botContainer" class="bot-container" style="display: none; height: 100%; width: 100%;">
-                <!-- Bot widget sẽ được khởi tạo ở đây -->
+            <!-- Bot Container - chứa iframe DenserAI -->
+            <div id="botContainer" class="bot-container" style="display: none;">
+                <iframe
+                    id="botFrame"
+                    src="@Url.Action("BotWidget", "ChatWeb")"
+                    title="AI Assistant"
+                    frameborder="0"
+                    allow="clipboard-write; microphone"
+                    loading="lazy">
+                </iframe>
             </div>
 
             <!-- Staff selection -->

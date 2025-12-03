@@ -19,6 +19,16 @@ namespace FE_Capstone_Project.Controllers
         }
 
         /// <summary>
+        /// View hiển thị chatbot DenserAI cho iframe widget
+        /// </summary>
+        [AllowAnonymous]
+        [HttpGet("/ChatWeb/BotWidget")]
+        public IActionResult BotWidget()
+        {
+            return View("BotWidget");
+        }
+
+        /// <summary>
         /// Trang danh sách cuộc trò chuyện (cho Customer)
         /// </summary>
         [HttpGet]

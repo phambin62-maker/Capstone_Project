@@ -60,7 +60,7 @@
                 <a asp-controller="Home" asp-action="Index" class="logo d-flex align-items-center me-auto me-xl-0">
                     <!-- Uncomment the line below if you also wish to use an image logo -->
                     <!-- <img src="~/assets/img/logo.webp" alt=""> -->
-                    <h1 class="sitename">OTMS</h1>
+                    <h1 class="sitename">otms</h1>
                 </a>
 
                 <nav id="navmenu" class="navmenu">
@@ -190,13 +190,16 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/notification.js" asp-append-version="true"></script>
     <!-- Chat Widget -->
-    @await Html.PartialAsync("_ChatWidget") 
-    <!-- Chat Widget Scripts (for logged-in Staff and Customer) -->
-    @if (!string.IsNullOrEmpty(Context.Session.GetString("JwtToken")) && (Context.Session.GetInt32("UserRoleId") == 2 || Context.Session.GetInt32("UserRoleId") == 3))
+    @await Html.PartialAsync("_ChatWidget")
+    @{
+        var hasChatSignalR = !string.IsNullOrEmpty(Context.Session.GetString("JwtToken")) &&
+                             (Context.Session.GetInt32("UserRoleId") == 2 || Context.Session.GetInt32("UserRoleId") == 3);
+    }
+    @if (hasChatSignalR)
     {
         <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
-        <script src="~/js/chat-widget.js" asp-append-version="true"></script>
     }
+    <script src="~/js/chat-widget.js" asp-append-version="true"></script>
     @RenderSection("Scripts", required: false)
 </body>
 </html>
