@@ -27,6 +27,6 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services.Interfaces
         Task<List<BookingStatus>> GetAvailableBookingStatusesAsync();
         Task<List<PaymentStatus>> GetAvailablePaymentStatusesAsync();
         Task<CancelValidationResult> ValidateCancelConditionAsync(int bookingId);
-        Task<List<CancelConditionDTO>> GetActiveCancelConditionsAsync();
+        
     }
 }

@@ -6,7 +6,6 @@ using BE_Capstone_Project.Domain.Models;
 using DocumentFormat.OpenXml.Office2010.Excel;
 using BE_Capstone_Project.Application.Notifications.Services;
 using BE_Capstone_Project.Application.Notifications.DTOs;
-// using BE_Capstone_Project.Domain.Enums; // (Dòng này bị lặp, đã xóa)
 using System; 
 using System.Linq; 
 using System.Collections.Generic;
@@ -110,7 +109,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                 try
                 {
                     var savedBooking = await _bookingDAO.GetBookingByIdAsync(newBookingId);
-                    if (savedBooking != null) // Kiểm tra an toàn
+                    if (savedBooking != null) 
                     {
                         var tourName = savedBooking.TourSchedule?.Tour?.Name ?? "Your Tour";
 
@@ -293,7 +292,6 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                 .Include(b => b.BookingCustomers)
                 .AsQueryable();
 
-            // Search by username, full name, email, phone, or tour name
             if (!string.IsNullOrEmpty(request.SearchTerm))
             {
                 var searchTerm = request.SearchTerm.ToLower();
@@ -416,7 +414,6 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
 
             if (updateSuccess)
             {
-                // Send notification to user about status change
                 try
                 {
                     var tourName = booking.TourSchedule?.Tour?.Name ?? "Your Tour";
@@ -447,7 +444,6 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
             var oldStatus = booking.PaymentStatus;
             booking.PaymentStatus = request.PaymentStatus;
 
-            // If payment is completed, update booking status to confirmed
             if (request.PaymentStatus == PaymentStatus.Completed && booking.BookingStatus == BookingStatus.Pending)
             {
                 booking.BookingStatus = BookingStatus.Confirmed;
@@ -457,7 +453,6 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
 
             if (updateSuccess)
             {
-                // Send notification to user about payment status change
                 try
                 {
                     var tourName = booking.TourSchedule?.Tour?.Name ?? "Your Tour";
@@ -495,8 +490,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
         }
         public async Task<CancelValidationResult> ValidateCancelConditionAsync(int bookingId)
         {
-            // DEBUG: Thêm log để theo dõi
-            Console.WriteLine($"=== VALIDATE CANCEL CONDITION START - Booking {bookingId} ===");
+            
 
             var booking = await _bookingDAO.GetBookingByIdAsync(bookingId);
             if (booking == null)
@@ -508,12 +502,50 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                     Message = "Booking not found"
                 };
             }
+            if (booking.BookingStatus == BookingStatus.Completed)
+            {
+                Console.WriteLine($"Booking {bookingId} is already completed");
+               
+                return new CancelValidationResult
+                {
+                    CanCancel = false,
+                    Message = "The tour has been completed.",                 
+                };
+            }
+            if (booking.BookingStatus == BookingStatus.Cancelled)
+            {
+                Console.WriteLine($"Booking {bookingId} is already cancelled");
 
-            // DEBUG: Log booking info
-            Console.WriteLine($"Booking Status: {booking.BookingStatus}");
-            Console.WriteLine($"TourSchedule: {booking.TourSchedule != null}");
-            Console.WriteLine($"Tour: {booking.TourSchedule?.Tour != null}");
+                var schedule = booking.TourSchedule;
+                var tourInfo = schedule?.Tour;
+                decimal? calculatedRefundAmount = 0;
+                string successMessage = "Cancel successful!";
 
+                if (tourInfo != null && tourInfo.CancelConditionId != null)
+                {
+                    var cancelCondition = await _context.CancelConditions
+                        .FirstOrDefaultAsync(cc => cc.Id == tourInfo.CancelConditionId);
+
+                    if (cancelCondition != null && cancelCondition.RefundPercent > 0 &&
+                        booking.TotalPrice.HasValue && booking.TotalPrice.Value > 0)
+                    {
+                        calculatedRefundAmount = booking.TotalPrice.Value * (cancelCondition.RefundPercent / 100m);
+                        calculatedRefundAmount = Math.Round(calculatedRefundAmount.Value, 2);
+
+                        if (calculatedRefundAmount > 0)
+                        {
+                            successMessage += $" Refund amount: ${calculatedRefundAmount:F2}";
+                        }
+                    }
+                }
+
+                return new CancelValidationResult
+                {
+                    CanCancel = false,
+                    Message = successMessage,
+                    RefundAmount = calculatedRefundAmount
+                };
+            }
             if (booking.BookingStatus != BookingStatus.Confirmed &&
                 booking.BookingStatus != BookingStatus.Pending)
             {
@@ -535,14 +567,25 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                     Message = "Tour schedule information is missing"
                 };
             }
+            
+            var departureDate = tourSchedule.DepartureDate.Value;
+            var currentDateOnly = DateOnly.FromDateTime(DateTime.Now);
 
-            // === SỬA QUAN TRỌNG: KIỂM TRA TOUR CÓ TỒN TẠI KHÔNG ===
+            if (departureDate <= currentDateOnly)
+            {
+                Console.WriteLine($"Departure date has passed: {departureDate}, Current: {currentDateOnly}");
+                return new CancelValidationResult
+                {
+                    CanCancel = false,
+                    Message = $"Cannot cancel booking. The tour has already departed on {departureDate:dd/MM/yyyy}."
+                };
+            }
+
             var tour = tourSchedule.Tour;
             if (tour == null)
             {
                 Console.WriteLine($"Tour is NULL for booking {bookingId}");
 
-                // Vẫn cho phép hủy nhưng không có thông tin refund
                 return new CancelValidationResult
                 {
                     CanCancel = true,
@@ -553,9 +596,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                 };
             }
 
-            // DEBUG: Log tour info
-            Console.WriteLine($"Tour Name: {tour.Name}");
-            Console.WriteLine($"Tour CancelConditionId: {tour.CancelConditionId}");
+            
 
             if (tour.CancelConditionId == null)
             {
@@ -586,11 +627,8 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                 };
             }
 
-            // DEBUG: Log condition info
-            Console.WriteLine($"Cancel Condition: {tourCancelCondition.Title}");
-            Console.WriteLine($"Min Days: {tourCancelCondition.MinDaysBeforeTrip}, Refund %: {tourCancelCondition.RefundPercent}");
 
-            // Kiểm tra nếu condition không active
+
             if (tourCancelCondition.CancelStatus != CancelStatus.Active)
             {
                 Console.WriteLine($"Cancel condition is not active: {tourCancelCondition.CancelStatus}");
@@ -623,19 +661,16 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
             string message = hasRefund
                 ? tourCancelCondition.Title
                 : $"{tourCancelCondition.Title} - No refund";
-
-            // Tính toán số tiền hoàn lại
+           
             decimal? refundAmount = 0;
             int? refundPercent = tourCancelCondition.RefundPercent;
 
             if (hasRefund && booking.TotalPrice.HasValue && booking.TotalPrice.Value > 0)
             {
-                refundAmount = booking.TotalPrice.Value * (tourCancelCondition.RefundPercent / 100m); // SỬA: thêm 'm' để decimal division
+                refundAmount = booking.TotalPrice.Value * (tourCancelCondition.RefundPercent / 100m); 
                 refundAmount = Math.Round(refundAmount.Value, 2);
             }
-
-            Console.WriteLine($"=== VALIDATION RESULT: CanCancel={true}, Message={message}, Refund={refundPercent}% ===");
-
+            
             return new CancelValidationResult
             {
                 CanCancel = true,
@@ -652,22 +687,6 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                 }
             };
         }
-
-        public async Task<List<CancelConditionDTO>> GetActiveCancelConditionsAsync()
-        {
-            var conditions = await _context.CancelConditions
-                .Where(cc => cc.CancelStatus == CancelStatus.Active)
-                .OrderByDescending(cc => cc.MinDaysBeforeTrip)
-                .ToListAsync();
-
-            return conditions.Select(cc => new CancelConditionDTO
-            {
-                Id = cc.Id,
-                Title = cc.Title,
-                MinDaysBeforeTrip = cc.MinDaysBeforeTrip,
-                RefundPercent = cc.RefundPercent,
-                CancelStatus = cc.CancelStatus
-            }).ToList();
-        }
+       
     }
 }

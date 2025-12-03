@@ -111,11 +111,11 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
             return await _tourDAO.GetFilteredTourCountAsync(
                 status, startLocation, endLocation, category, minPrice, maxPrice, search);
         }
-        public async Task<List<Tour>> GetActiveTours(string search = "")
+        public async Task<List<Tour>> GetActiveTours()
         {
             try
             {
-                return await _tourDAO.GetActiveTours(search);
+                return await _tourDAO.GetActiveTours();
             }
             catch (Exception ex)
             {
@@ -123,5 +123,6 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
                 return new List<Tour>();
             }
         }
+
     }
 }
