@@ -21,7 +21,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Services.Interfaces
         Task<List<Tour>> GetFilteredTours(
         int page = 1,
         int pageSize = 10,
-        bool? status = null,  // Đổi từ string sang bool?
+        bool? status = null,  
         int? startLocation = null,
         int? endLocation = null,
         int? category = null,
@@ -31,14 +31,15 @@ namespace BE_Capstone_Project.Application.TourManagement.Services.Interfaces
         string search = null);
 
         Task<int> GetFilteredTourCount(
-            bool? status = null,  // Đổi từ string sang bool?
+            bool? status = null,  
             int? startLocation = null,
             int? endLocation = null,
             int? category = null,
             decimal? minPrice = null,
             decimal? maxPrice = null,
             string search = null);
-        Task<List<Tour>> GetActiveTours(string search = "");
+        Task<List<Tour>> GetActiveTours();
+
     }
 
 }

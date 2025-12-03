@@ -129,7 +129,6 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
             {
                 await _tourImageService.DeleteTourImagesByTourId(tour.Id.Value);
 
-                // Xóa file vật lý
                 foreach (var oldImage in existingTourImages)
                 {
                     if (!string.IsNullOrEmpty(oldImage.Image))
@@ -327,7 +326,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
             {
                 var tour = await _tourService.GetTourById(tourId);
                 if (tour == null)
-                    return NotFound(new { message = $"Không tìm thấy tour với id {tourId}" });
+                    return NotFound(new { message = $"No tour found with id {tourId}" });
 
                 tour.TourStatus = !tour.TourStatus;
                 var newStatus = tour.TourStatus;
@@ -335,19 +334,19 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
                 var result = await _tourService.UpdateTour(tour);
 
                 if (!result)
-                    return BadRequest(new { message = "Thay đổi trạng thái thất bại" });
+                    return BadRequest(new { message = "Failed to change status" });
 
                 return Ok(new
                 {
-                    message = (bool)newStatus ? "Tour đã được hiển thị" : "Tour đã được ẩn",
+                    message = (bool)newStatus ? "Tour has been shown" : "Tour has been hidden",
                     newStatus = newStatus
                 });
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "Lỗi khi thay đổi trạng thái", error = ex.Message });
+                return BadRequest(new { message = "Error changing state", error = ex.Message });
             }
-        }
+            }
 
         [HttpGet("GetTopToursByEachCategories")]
         [AllowAnonymous]
@@ -413,13 +412,11 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
                 if (imageToDelete == null)
                     return NotFound(new { success = false, message = "Image not found" });
 
-                // Xóa từ database
                 var result = await _tourImageService.DeleteTourImage(imageId);
 
                 if (!result)
                     return BadRequest(new { success = false, message = "Failed to delete image" });
 
-                // Xóa file vật lý (nếu có)
                 if (!string.IsNullOrEmpty(imageToDelete.Image))
                 {
                     var imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", imageToDelete.Image.TrimStart('/'));
@@ -438,7 +435,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpPost("UploadTourImages")]
-        [Authorize(Roles = "Admin,Staff")] // Chỉ Admin và Staff mới được upload ảnh tour
+        [Authorize(Roles = "Admin,Staff")] 
         public async Task<IActionResult> UploadTourImages(int tourId, List<IFormFile> images)
         {
             try
@@ -529,11 +526,11 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpGet("GetActiveTours")]
-        public async Task<ActionResult<ApiResponse<List<Tour>>>> GetActiveTours([FromQuery] string? search = null)
+        public async Task<ActionResult<ApiResponse<List<Tour>>>> GetActiveTours()
         {
             try
             {
-                var tours = await _tourService.GetActiveTours(search);
+                var tours = await _tourService.GetActiveTours();
 
                 if (tours == null || !tours.Any())
                 {
@@ -547,5 +544,6 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
                 return StatusCode(500, new ApiResponse<List<Tour>>(false, $"Internal server error: {ex.Message}"));
             }
         }
+
     }
 }
