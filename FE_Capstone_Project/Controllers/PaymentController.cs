@@ -44,7 +44,7 @@ namespace FE_Capstone_Project.Controllers
                 {
                     Success = success,
                     OrderDescription = orderDescription,
-                    Amount = (int.Parse(amount) / 100).ToString(),
+                    Amount = (long.Parse(amount) / 100).ToString(),
                     TransactionId = transactionId,
                     PaymentMethod = paymentMethod,
                     Error = error
