@@ -358,47 +358,12 @@ namespace FE_Capstone_Project.Controllers
 
             return RedirectToAction("Details", new { id });
         }
-
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public async Task<IActionResult> CancelBooking(int id, string note = null)
-        //{
-        //    try
-        //    {
-        //        var model = new UpdateBookingStatusRequest
-        //        {
-        //            BookingStatus = BookingStatus.Cancelled,
-        //            Note = note
-        //        };
-
-        //        var json = JsonSerializer.Serialize(model);
-        //        var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-        //        var (success, result, error) = await CallApiAsync<object>($"Booking/staff/bookings/{id}/status", HttpMethod.Put, content);
-
-        //        if (success)
-        //        {
-        //            TempData["SuccessMessage"] = "Hủy booking thành công!";
-        //        }
-        //        else
-        //        {
-        //            TempData["ErrorMessage"] = error ?? "Hủy booking thất bại!";
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, "Error cancelling booking ID: {BookingId}", id);
-        //        TempData["ErrorMessage"] = $"Lỗi hệ thống: {ex.Message}";
-        //    }
-
-        //    return RedirectToAction("Bookings");
-        //}
+       
 
         private async Task LoadStatusDropdowns()
         {
             try
             {
-                // Lấy danh sách booking status
                 var (bookingSuccess, bookingResult, bookingError) = await CallApiAsync<List<BookingStatus>>("Booking/staff/booking-statuses");
                 if (bookingSuccess)
                 {

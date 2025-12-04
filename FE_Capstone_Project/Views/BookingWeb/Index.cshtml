@@ -17,19 +17,19 @@
                         <div class="booking-form-container">
                             <!-- Progress Steps -->
                             <div class="booking-progress nav nav-tabs" data-aos="fade-up" data-aos-delay="200">
-                                <button class="step nav-link active" data-bs-toggle="tab" data-bs-target="#travel-booking-step-1" aria-current="page">
+                                <button class="step nav-link disabled-step active" data-bs-toggle="tab" data-bs-target="#travel-booking-step-1" aria-current="page">
                                     <span class="step-number">1</span>
                                     <span class="step-title">Tour &amp; Dates</span>
                                 </button>
-                                <button class="step nav-link" data-bs-toggle="tab" data-bs-target="#travel-booking-step-2">
+                                <button class="step nav-link disabled-step" data-bs-toggle="tab" data-bs-target="#travel-booking-step-2">
                                     <span class="step-number">2</span>
                                     <span class="step-title">Booking Person</span>
                                 </button>
-                                <button class="step nav-link" data-bs-toggle="tab" data-bs-target="#travel-booking-step-3">
+                                <button class="step nav-link disabled-step" data-bs-toggle="tab" data-bs-target="#travel-booking-step-3">
                                     <span class="step-number">3</span>
                                     <span class="step-title">Travelers</span>
                                 </button>
-                                <button class="step nav-link" data-bs-toggle="tab" data-bs-target="#travel-booking-step-4">
+                                <button class="step nav-link disabled-step" data-bs-toggle="tab" data-bs-target="#travel-booking-step-4">
                                     <span class="step-number">4</span>
                                     <span class="step-title">Payment Method</span>
                                 </button>
@@ -82,6 +82,9 @@
                                                 <input type="number" name="infants" id="infants" class="form-control" required="" min="0" value="0">
                                             </div>
                                         </div>
+                                        <div class="form-navigation mt-4 d-flex justify-content-end">
+                                            <button type="button" class="btn btn-primary next-button">Next</button>
+                                        </div>
                                     </div><!-- End Step 1 -->
                                     <!-- Step 2: Traveler Information -->
                                     <div class="form-step tab-pane fade" id="travel-booking-step-2" role="tabpanel">
@@ -112,10 +115,18 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        <div class="form-navigation mt-4 d-flex justify-content-between">
+                                            <button type="button" class="btn btn-secondary prev-button">Previous</button>
+                                            <button type="button" class="btn btn-primary next-button">Next</button>
+                                        </div>
                                     </div><!-- End Step 2 -->
                                     <!-- Step 3: Travelers -->
                                     <div class="form-step tab-pane fade" id="travel-booking-step-3" role="tabpanel">
                                         <div id="travelers-list" class="row gy-3 travelers-container"></div>
+                                        <div class="form-navigation mt-4 d-flex justify-content-between">
+                                            <button type="button" class="btn btn-secondary prev-button">Previous</button>
+                                            <button type="button" class="btn btn-primary next-button">Next</button>
+                                        </div>
                                     </div><!-- End Step 3 -->
                                     <!-- Step 4: Payment Information -->
                                     <div class="form-step tab-pane fade" id="travel-booking-step-4" role="tabpanel">
@@ -131,12 +142,11 @@
                                                 <label for="cash"><i class="bi bi-cash-stack"></i> Cash</label>
                                             </div>
                                         </div>
-
-                                        <div class="form-navigation">
+                                        <div class="form-navigation mt-4 d-flex justify-content-between">
+                                            <button type="button" class="btn btn-secondary prev-button">Previous</button>
                                             <button type="submit" class="btn btn-book">Complete Booking</button>
                                         </div>
                                     </div><!-- End Step 4 -->
-
                                 </div><!-- End Tab Content -->
 
                             </form><!-- End Booking Form -->
@@ -152,7 +162,8 @@
 
                             <div class="selected-tour">
                                 @{
-                                    var mainImageUrl = $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(ViewBag.FirstImage)}";
+                                    var img = ViewBag.FirstImage ?? "default";
+                                    var mainImageUrl = $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(img)}";
                                 }
                                 <img src="@mainImageUrl" alt="Selected Tour" class="img-fluid">
                                 <div class="tour-info">
@@ -251,6 +262,10 @@
             infantsInput.disabled = true;
 
             step3Button.addEventListener("click", function () {
+                generateTravelers();
+            });
+
+            function generateTravelers() {
                 const adults = parseInt(document.getElementById("adults").value) || 0;
                 const children = parseInt(document.getElementById("children").value) || 0;
                 const infants = parseInt(document.getElementById("infants").value) || 0;
@@ -304,17 +319,17 @@
                     `;
                 }
 
-                // Generate adult forms
+                // Adults
                 for (let i = 0; i < adults; i++) {
                     travelersList.innerHTML += createTravelerForm(i, i + 1, "Adult");
                 }
 
-                // Generate child forms
+                // Children
                 for (let i = 0; i < children; i++) {
                     travelersList.innerHTML += createTravelerForm(adults + i, i + 1, "Child");
                 }
 
-                // Generate infant forms
+                // Infants
                 for (let i = 0; i < infants; i++) {
                     travelersList.innerHTML += createTravelerForm(adults + children + i, i + 1, "Infant");
                 }
@@ -322,7 +337,7 @@
                 if (adults + children + infants === 0) {
                     travelersList.innerHTML = `<p class="text-muted">Please enter the number of travelers in Step 1.</p>`;
                 }
-            });
+            }
 
             function updateSummary() {
                 const numAdultsEl = document.getElementById("adults");
@@ -343,6 +358,13 @@
                 const scheduleId = document.getElementById("tour-schedule").value;
                 const available = calculateAvailableSeats(scheduleId);
 
+                const seatEl = document.getElementById("availableSeats");
+                const remaining = available !== null ? available - totalTravelers : 0;
+                seatEl.textContent = remaining >= 0 ? remaining : "0";
+
+                const btnBook = document.querySelector(".btn-book");
+                btnBook.disabled = (scheduleId === "-1" || totalTravelers === 0 || remaining < 0);
+
                 if (scheduleId === "-1") {
                     document.getElementById("availableSeats").textContent = "-";
                     document.getElementById("numAdults").textContent = 0;
@@ -354,13 +376,6 @@
                     document.getElementById("totalPrice").textContent = "0 VND";
                     return;
                 }
-
-                const seatEl = document.getElementById("availableSeats");
-                const remaining = available !== null ? available - totalTravelers : 0;
-                seatEl.textContent = remaining >= 0 ? remaining : "0";
-
-                const btnBook = document.querySelector(".btn-book");
-                btnBook.disabled = (scheduleId === "-1" || totalTravelers === 0 || remaining < 0);
 
                 if (available !== null) {
                     const maxAllowed = available;
@@ -501,6 +516,58 @@
                     input.value = max;
                 }
             }
+
+            // Step navigation
+            const steps = document.querySelectorAll(".form-step");
+            const stepTabs = document.querySelectorAll(".step.nav-link");
+            const nextButtons = document.querySelectorAll(".next-button");
+            const prevButtons = document.querySelectorAll(".prev-button");
+            let currentStep = 0;
+
+            function showStep(index) {
+                steps.forEach(step => step.classList.remove("show", "active"));
+                steps[index].classList.add("show", "active");
+
+                stepTabs.forEach((tab, i) => {
+                    if (i === index) {
+                        tab.classList.add("active");
+                        tab.setAttribute("aria-selected", "true");
+                        tab.removeAttribute("tabindex");
+                    } else {
+                        tab.classList.remove("active");
+                        tab.setAttribute("aria-selected", "false");
+                        tab.setAttribute("tabindex", "-1");
+                    }
+                });
+            }
+
+            nextButtons.forEach(btn => {
+                btn.addEventListener("click", function () {
+                    if (currentStep === 1) {
+                        generateTravelers();
+                    }
+
+                    if (currentStep < steps.length - 1) {
+                        currentStep++;
+                        showStep(currentStep);
+                    }
+
+                    if(currentStep === 2){
+                        updateSummary();
+                    }
+                });
+            });
+
+            prevButtons.forEach(btn => {
+                btn.addEventListener("click", function () {
+                    if (currentStep > 0) {
+                        currentStep--;
+                        showStep(currentStep);
+                    }
+                });
+            });
+
+            showStep(currentStep);
         });
     </script>
 </body>

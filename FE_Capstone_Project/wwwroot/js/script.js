@@ -5,7 +5,7 @@ class TravelBookingLoginForm {
         this.emailInput = document.getElementById('email');
         this.passwordInput = document.getElementById('password');
         this.passwordToggle = document.getElementById('passwordToggle');
-        this.submitButton = this.form.querySelector('.login-btn');
+        //this.submitButton = this.form.querySelector('.login-btn');
         this.successMessage = document.getElementById('successMessage');
         this.socialButtons = document.querySelectorAll('.social-btn');
 
@@ -19,7 +19,7 @@ class TravelBookingLoginForm {
     }
 
     bindEvents() {
-        this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+        //this.form.addEventListener('submit', (e) => this.handleSubmit(e));
         this.emailInput.addEventListener('blur', () => this.validateEmail());
         this.passwordInput.addEventListener('blur', () => this.validatePassword());
         this.emailInput.addEventListener('input', () => this.clearError('email'));

@@ -69,7 +69,7 @@ namespace FE_Capstone_Project.Models
         public Location EndLocation { get; set; } = new Location();
     }
 
-    // User model cho View
+    // User model for View
     public class UserViewModel
     {
         [JsonPropertyName("id")]
@@ -82,7 +82,7 @@ namespace FE_Capstone_Project.Models
         public string Email { get; set; } = string.Empty;
     }
 
-    // TourImage model cho View
+    // TourImage model for View
     public class TourImageViewModel
     {
         [JsonPropertyName("id")]
@@ -144,54 +144,52 @@ namespace FE_Capstone_Project.Models
 
     public class TourCreateModel
     {
-        [Required(ErrorMessage = "Tên tour là bắt buộc")]
-        [StringLength(100, ErrorMessage = "Tên tour không được vượt quá 100 ký tự")]
-        public string Name { get; set; } = "Tour Hà Nội - Sapa";
+        [Required(ErrorMessage = "Tour name is required")]
+        [StringLength(100, ErrorMessage = "Tour name cannot exceed 100 characters")]
+        public string Name { get; set; } = "Hanoi - Sapa Tour";
 
-        [Required(ErrorMessage = "Mô tả là bắt buộc")]
-        public string Description { get; set; } = "Tour du lịch Hà Nội Sapa 3 ngày 2 đêm";
+        [Required(ErrorMessage = "Description is required")]
+        public string Description { get; set; } = "3 days 2 nights Hanoi Sapa tour";
 
-        [Required(ErrorMessage = "Giá là bắt buộc")]
-        [Range(1000, 1000000000, ErrorMessage = "Giá phải từ 1,000 VND đến 1,000,000,000 VND")]
+        [Required(ErrorMessage = "Price is required")]
+        [Range(1000, 1000000000, ErrorMessage = "Price must be from 1,000 VND to 1,000,000,000 VND")]
         public decimal Price { get; set; } = 2500000;
 
-        [Required(ErrorMessage = "Thời lượng là bắt buộc")]
+        [Required(ErrorMessage = "Duration is required")]
         public byte Duration { get; set; } = 3;
 
-        [Required(ErrorMessage = "Điểm xuất phát là bắt buộc")]
-        [Range(1, int.MaxValue, ErrorMessage = "Chọn điểm xuất phát")]
+        [Required(ErrorMessage = "Start location is required")]
+        [Range(1, int.MaxValue, ErrorMessage = "Select start location")]
         public int StartLocationId { get; set; } = 1;
 
-        [Required(ErrorMessage = "Điểm đến là bắt buộc")]
-        [Range(1, int.MaxValue, ErrorMessage = "Chọn điểm đến")]
+        [Required(ErrorMessage = "End location is required")]
+        [Range(1, int.MaxValue, ErrorMessage = "Select end location")]
         public int EndLocationId { get; set; } = 2;
 
-        [Required(ErrorMessage = "Danh mục là bắt buộc")]
-        [Range(1, int.MaxValue, ErrorMessage = "Chọn danh mục")]
+        [Required(ErrorMessage = "Category is required")]
+        [Range(1, int.MaxValue, ErrorMessage = "Select category")]
         public int CategoryId { get; set; } = 1;
 
-        [Required(ErrorMessage = "Điều kiện hủy là bắt buộc")]
-        [Range(1, int.MaxValue, ErrorMessage = "Chọn điều kiện hủy")]
+        [Required(ErrorMessage = "Cancellation condition is required")]
+        [Range(1, int.MaxValue, ErrorMessage = "Select cancellation condition")]
         public int CancelConditionId { get; set; } = 1;
 
-        [Range(0, 100, ErrorMessage = "Giảm giá trẻ em phải từ 0-100%")]
+        [Range(0, 100, ErrorMessage = "Child discount must be 0-100%")]
         public decimal ChildDiscount { get; set; } = 10;
 
-        [Range(0, 100, ErrorMessage = "Giảm giá nhóm phải từ 0-100%")]
+        [Range(0, 100, ErrorMessage = "Group discount must be 0-100%")]
         public decimal GroupDiscount { get; set; } = 15;
 
-        [Range(1, 100, ErrorMessage = "Số người nhóm phải từ 1-100")]
+        [Range(1, 100, ErrorMessage = "Group size must be 1-100")]
         public byte GroupNumber { get; set; } = 8;
 
-        [Range(1, 100, ErrorMessage = "Số chỗ tối thiểu phải từ 1-100")]
+        [Range(1, 100, ErrorMessage = "Minimum seats must be 1-100")]
         public short MinSeats { get; set; } = 10;
 
-        [Range(1, 100, ErrorMessage = "Số chỗ tối đa phải từ 1-100")]
+        [Range(1, 100, ErrorMessage = "Maximum seats must be 1-100")]
         public short MaxSeats { get; set; } = 30;
 
-        [Required(ErrorMessage = "Hình ảnh tour là bắt buộc")]
-        [MinLength(1, ErrorMessage = "Phải có ít nhất 1 hình ảnh")]
-        [MaxLength(10, ErrorMessage = "Không được upload quá 10 hình ảnh")]
+        [Required(ErrorMessage = "Tour images are required")]
         public List<IFormFile> Images { get; set; } = new List<IFormFile>();
     }
 
@@ -203,6 +201,4 @@ namespace FE_Capstone_Project.Models
 
         public List<string> ExistingImages { get; set; } = new List<string>();
     }
-
-    
 }

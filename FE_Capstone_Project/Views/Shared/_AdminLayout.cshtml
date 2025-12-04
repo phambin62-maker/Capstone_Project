@@ -27,7 +27,7 @@
     {
         <header id="header" class="header d-flex align-items-center fixed-top">
             <div class="header-container container-fluid container-xl d-flex align-items-center justify-content-between">
-                <a  class="logo d-flex align-items-center me-auto me-xl-0">
+                <a asp-action="Account" asp-controller="AdminWeb" class="logo d-flex align-items-center me-auto me-xl-0">
                     <h1 class="sitename">ADMIN PANEL</h1>
                 </a>
                 @if (!string.IsNullOrEmpty(firstname))
@@ -36,6 +36,7 @@
                         <ul>
                             @if (!string.IsNullOrEmpty(firstname))
                             {
+                                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
                                 <li class="dropdown">
                                     <a>
                                         <span>Welcome, @firstname</span>
@@ -43,13 +44,7 @@
                                     </a>
                                     <ul>
                                         <li><a asp-action="Profile" asp-controller="AuthWeb">Profile</a></li>
-                                        <li><a asp-action="Wishlist" asp-controller="Profile">Wishlist</a></li>
                                         <li><a asp-action="Logout" asp-controller="AuthWeb">Logout</a></li>
-                                        <li>
-                                            <a href="/" >
-                                                Home
-                                            </a>
-                                        </li>
                                     </ul>
                                 </li>
                             }
@@ -80,7 +75,7 @@
                     <li class="nav-item">
                         <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Accounts" ? "active" : "")"
                            href="/AdminWeb/Account">
-                            <i class="bi bi-people me-2"></i>Account Manangement
+                            <i class="bi bi-people me-2"></i>Account Management
                             <span class="badge bg-info ms-2">@ViewBag.AccountCount</span>
                         </a>
                     </li>

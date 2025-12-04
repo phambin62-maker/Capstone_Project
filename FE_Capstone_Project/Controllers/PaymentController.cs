@@ -24,24 +24,31 @@ namespace FE_Capstone_Project.Controllers
             if (match.Success)
             {
                 bookingId = int.Parse(match.Groups[1].Value);
-                PaymentDTO data = new PaymentDTO()
+                if (success)
                 {
-                    BookingId = bookingId.Value,
-                    PaymentMethod = paymentMethod,
-                    Success = success,
-                };
-                var paymentResponse = await _apiHelper.PostAsync<PaymentDTO, bool>("Booking/payment-update", data);
+                    PaymentDTO data = new PaymentDTO()
+                    {
+                        BookingId = bookingId.Value,
+                        PaymentMethod = paymentMethod,
+                        Success = success,
+                    };
+                    var paymentResponse = await _apiHelper.PostAsync<PaymentDTO, bool>("Booking/payment-update", data);
+                }
+                //else
+                //{
+                //    var deleteBookingResponse = await _apiHelper.DeleteAsync($"Booking/{bookingId}");
+                //}
             }
 
-            var model = new PaymentResultViewModel
-            {
-                Success = success,
-                OrderDescription = orderDescription,
-                Amount = (int.Parse(amount) / 100).ToString(),
-                TransactionId = transactionId,
-                PaymentMethod = paymentMethod,
-                Error = error
-            };  
+                var model = new PaymentResultViewModel
+                {
+                    Success = success,
+                    OrderDescription = orderDescription,
+                    Amount = (long.Parse(amount) / 100).ToString(),
+                    TransactionId = transactionId,
+                    PaymentMethod = paymentMethod,
+                    Error = error
+                };  
 
             return View(model);
         }

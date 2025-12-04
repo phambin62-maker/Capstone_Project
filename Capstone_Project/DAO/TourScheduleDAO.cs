@@ -27,6 +27,23 @@ namespace BE_Capstone_Project.DAO
                 return -1;
             }
         }
+        public async Task<bool> ExistsAsync(int tourId, DateOnly departureDate)
+{
+        return await _context.TourSchedules.AnyAsync(ts =>
+            ts.TourId == tourId &&
+            ts.DepartureDate == departureDate
+        );
+}
+        public async Task<bool> ExistsForUpdateAsync(int tourId, DateOnly departureDate, int excludeId)
+        {
+            return await _context.TourSchedules.AnyAsync(ts =>
+                ts.TourId == tourId &&
+                ts.DepartureDate == departureDate &&
+                ts.Id != excludeId
+            );
+        }
+
+
         public async Task<bool> UpdateTourSchedule(TourSchedule tourSchedule)
         {
             try

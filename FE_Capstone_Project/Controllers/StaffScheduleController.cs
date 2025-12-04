@@ -67,7 +67,6 @@ namespace FE_Capstone_Project.Controllers
                 if (content != null)
                     request.Content = content;
 
-                // === Add Token to Request ===
                 var token = GetToken();
                 if (string.IsNullOrEmpty(token))
                 {
@@ -75,25 +74,19 @@ namespace FE_Capstone_Project.Controllers
                     return (false, default, "Token not found. Please log in again.");
                 }
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                // === End adding Token ===
 
                 var response = await _httpClient.SendAsync(request);
                 var responseContent = await response.Content.ReadAsStringAsync();
 
                 _logger.LogInformation($"API Call: {endpoint}, Status: {response.StatusCode}, Response: {responseContent}");
 
-                // Handle different status codes separately
                 if (response.StatusCode == HttpStatusCode.Unauthorized)
                 {
-                    // 401 - Token invalid/expired
-                    _logger.LogWarning($"Unauthorized access to {endpoint}");
                     return (false, default, "Login session has expired. Please log in again.");
                 }
                 else if (response.StatusCode == HttpStatusCode.Forbidden)
                 {
-                    // 403 - Valid token but insufficient permissions
-                    _logger.LogWarning($"Forbidden access to {endpoint}. User lacks required permissions.");
-                    return (false, default, "You don't have permission to perform this action. Please contact administrator.");
+                    return (false, default, "You don't have permission to perform this action.");
                 }
 
                 if (response.IsSuccessStatusCode)
@@ -102,9 +95,13 @@ namespace FE_Capstone_Project.Controllers
                     {
                         // Try to parse as ApiResponse<T> first
                         var apiResponse = JsonSerializer.Deserialize<ApiResponse<T>>(responseContent, _jsonOptions);
-                        if (apiResponse != null)
+                        if (apiResponse != null && apiResponse.Success)
                         {
                             return (true, apiResponse.Data, string.Empty);
+                        }
+                        else if (apiResponse != null)
+                        {
+                            return (false, default, apiResponse.Message);
                         }
                     }
                     catch (JsonException)
@@ -126,7 +123,16 @@ namespace FE_Capstone_Project.Controllers
                 }
                 else
                 {
-                    return (false, default, $"API Error: {response.StatusCode}");
+                    // Try to extract error message from response
+                    try
+                    {
+                        var errorResponse = JsonSerializer.Deserialize<ApiResponse<object>>(responseContent, _jsonOptions);
+                        return (false, default, errorResponse?.Message ?? $"API Error: {response.StatusCode}");
+                    }
+                    catch
+                    {
+                        return (false, default, $"API Error: {response.StatusCode}");
+                    }
                 }
             }
             catch (Exception ex)
@@ -143,24 +149,23 @@ namespace FE_Capstone_Project.Controllers
         }
 
         public async Task<IActionResult> Schedules(
-    int? tourId = null,
-    int page = 1,
-    int pageSize = 3,
-    string tourName = null,
-    string location = null,
-    string category = null,
-    string status = null,
-    string sort = null,
-    string search = null,
-    string fromDate = null,
-    string toDate = null)
+            int? tourId = null,
+            int page = 1,
+            int pageSize = 3,
+            string tourName = null,
+            string location = null,
+            string category = null,
+            string status = null,
+            string sort = null,
+            string search = null,
+            string fromDate = null,
+            string toDate = null)
         {
             try
             {
                 List<TourScheduleDTO> schedules;
                 int totalCount;
 
-                // Build API URL với các tham số filter
                 var queryParams = new List<string>
                 {
                     $"page={page}",
@@ -172,7 +177,6 @@ namespace FE_Capstone_Project.Controllers
                     queryParams.Add($"tourId={tourId.Value}");
                     ViewData["Title"] = $"Lịch trình Tour #{tourId}";
 
-                    // Sử dụng CallApiAsync với token
                     var (tourSuccess, tourResult, tourError) = await CallApiAsync<TourResponse>($"TourSchedule/GetTourNameById?id={tourId}");
                     if (tourSuccess)
                     {
@@ -281,7 +285,6 @@ namespace FE_Capstone_Project.Controllers
             }
         }
 
-        // Các method khác giữ nguyên...
         public IActionResult Create(int? tourId = null)
         {
             ViewData["Title"] = "Thêm Lịch trình Mới";
@@ -313,12 +316,11 @@ namespace FE_Capstone_Project.Controllers
                 var json = JsonSerializer.Serialize(model);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                // Sử dụng CallApiAsync với token
                 var (success, result, error) = await CallApiAsync<ApiResponse<int>>("TourSchedule", HttpMethod.Post, content);
 
                 if (success)
                 {
-                    TempData["SuccessMessage"] = "Thêm lịch trình thành công!";
+                    TempData["SuccessMessage"] = "Add new tour schedule successfully!";
                     return RedirectToAction("Schedules");
                 }
                 else
@@ -339,22 +341,21 @@ namespace FE_Capstone_Project.Controllers
         {
             try
             {
-                // Sử dụng CallApiAsync với token
-                var (success, result, error) = await CallApiAsync<ApiResponse<TourScheduleDTO>>($"TourSchedule/{id}");
+                var (success, result, error) = await CallApiAsync<TourScheduleDTO>($"TourSchedule/{id}"); // Remove ApiResponse wrapper
 
-                if (success && result?.Data != null)
+                if (success && result != null)
                 {
-                    ViewData["Title"] = $"Chỉnh sửa Lịch trình - {result.Data.TourName}";
+                    ViewData["Title"] = $"Chỉnh sửa Lịch trình - {result.TourName}";
 
                     var editModel = new UpdateTourScheduleRequest
                     {
-                        DepartureDate = result.Data.DepartureDate ?? DateOnly.FromDateTime(DateTime.Now),
-                        ArrivalDate = result.Data.ArrivalDate ?? DateOnly.FromDateTime(DateTime.Now.AddDays(1)),
-                        ScheduleStatus = result.Data.ScheduleStatus ?? ScheduleStatus.Scheduled
+                        DepartureDate = result.DepartureDate ?? DateOnly.FromDateTime(DateTime.Now),
+                        ArrivalDate = result.ArrivalDate ?? DateOnly.FromDateTime(DateTime.Now.AddDays(1)),
+                        ScheduleStatus = result.ScheduleStatus ?? ScheduleStatus.Scheduled
                     };
 
-                    ViewBag.ScheduleId = result.Data.Id;
-                    ViewBag.TourName = result.Data.TourName;
+                    ViewBag.ScheduleId = result.Id;
+                    ViewBag.TourName = result.TourName;
                     return View(editModel);
                 }
 
@@ -396,12 +397,12 @@ namespace FE_Capstone_Project.Controllers
 
                 if (success)
                 {
-                    TempData["SuccessMessage"] = "Cập nhật lịch trình thành công!";
+                    TempData["SuccessMessage"] = "Schedule update successful!";
                     return RedirectToAction("Schedules");
                 }
                 else
                 {
-                    TempData["ErrorMessage"] = error ?? "Cập nhật lịch trình thất bại!";
+                    TempData["ErrorMessage"] = error ?? "Schedule update failed!";
                     ViewBag.ScheduleId = id;
                     return View(model);
                 }
@@ -421,7 +422,6 @@ namespace FE_Capstone_Project.Controllers
         {
             try
             {
-                // Sử dụng CallApiAsync với token
                 var (success, result, error) = await CallApiAsync<ApiResponse<bool>>($"TourSchedule/{id}", HttpMethod.Delete);
 
                 if (success)
@@ -446,13 +446,12 @@ namespace FE_Capstone_Project.Controllers
         {
             try
             {
-                // Sử dụng CallApiAsync với token
-                var (success, result, error) = await CallApiAsync<ApiResponse<TourScheduleDTO>>($"TourSchedule/{id}");
+                var (success, result, error) = await CallApiAsync<TourScheduleDTO>($"TourSchedule/{id}"); 
 
-                if (success && result?.Data != null)
+                if (success && result != null)
                 {
-                    ViewData["Title"] = $"Chi tiết Lịch trình - {result.Data.TourName}";
-                    return View(result.Data);
+                    ViewData["Title"] = $"Chi tiết Lịch trình - {result.TourName}";
+                    return View(result);
                 }
 
                 TempData["ErrorMessage"] = error ?? "Không tìm thấy lịch trình.";
@@ -467,20 +466,18 @@ namespace FE_Capstone_Project.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetActiveTours(string search = "")
+        public async Task<IActionResult> GetActiveTours()
         {
             try
             {
-                var apiUrl = $"Tour/GetActiveTours?search={Uri.EscapeDataString(search)}";
+                var apiUrl = $"Tour/GetActiveTours";
 
-                // Sử dụng CallApiAsync với token
                 var (success, result, error) = await CallApiAsync<ApiResponse<List<Tour>>>(apiUrl);
 
                 if (success)
                 {
                     var tours = result?.Data ?? new List<Tour>();
 
-                    // Transform to simple DTO for selection
                     var tourList = tours.Select(t => new
                     {
                         id = t.Id,
@@ -490,7 +487,7 @@ namespace FE_Capstone_Project.Controllers
                         endLocationName = t.EndLocation?.LocationName,
                         categoryName = t.Category?.CategoryName,
                         price = t.Price?.ToString("N0") + " VND",
-                        duration = t.Duration + " ngày"
+                        duration = t.Duration + " day"
                     }).ToList();
 
                     return Json(tourList);
@@ -504,6 +501,7 @@ namespace FE_Capstone_Project.Controllers
                 return Json(new List<object>());
             }
         }
+
 
         [HttpGet]
         public async Task<IActionResult> GetTourById(int id)

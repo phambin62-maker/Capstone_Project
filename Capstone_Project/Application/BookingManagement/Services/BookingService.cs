@@ -6,7 +6,6 @@ using BE_Capstone_Project.Domain.Models;
 using DocumentFormat.OpenXml.Office2010.Excel;
 using BE_Capstone_Project.Application.Notifications.Services;
 using BE_Capstone_Project.Application.Notifications.DTOs;
-// using BE_Capstone_Project.Domain.Enums; // (Dòng này bị lặp, đã xóa)
 using System; 
 using System.Linq; 
 using System.Collections.Generic;
@@ -81,7 +80,6 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
             };
         }
 
-        // === 3. SỬA HÀM CREATEASYNC (THÊM LOGIC THÔNG BÁO) ===
         public async Task<int> CreateAsync(CreateBookingDTO dto)
         {
             var newBooking = new Booking
@@ -106,15 +104,12 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
 
             var newBookingId = await _bookingDAO.AddBookingAsync(newBooking);
 
-            // NẾU LƯU THÀNH CÔNG:
             if (newBookingId > 0)
             {
-                // === BẮT ĐẦU THÊM LOGIC THÔNG BÁO ===
                 try
                 {
-                    // Lấy lại booking vừa tạo để có TourName
                     var savedBooking = await _bookingDAO.GetBookingByIdAsync(newBookingId);
-                    if (savedBooking != null) // Kiểm tra an toàn
+                    if (savedBooking != null) 
                     {
                         var tourName = savedBooking.TourSchedule?.Tour?.Name ?? "Your Tour";
 
@@ -126,7 +121,6 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                             NotificationType = NotificationType.System
                         };
 
-                        // Gọi Service (BE) để tạo thông báo
                         _ = _notificationService.CreateAsync(notificationDto);
                     }
                 }
@@ -134,21 +128,17 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                 {
                     Console.WriteLine($"Failed to send booking notification: {ex.Message}");
                 }
-                // === KẾT THÚC LOGIC THÔNG BÁO ===
             }
 
-            return newBookingId; // Trả về ID
+            return newBookingId; 
         }
-        // === KẾT THÚC SỬA LỖI ===
 
 
-        // === 4. SỬA HÀM UPDATEASYNC (THÊM LOGIC CANCEL) ===
         public async Task<bool> UpdateAsync(int id, CreateBookingDTO dto)
         {
             var existing = await _bookingDAO.GetBookingByIdAsync(id);
             if (existing == null) return false;
 
-            // Kiểm tra xem đây có phải là một hành động HỦY (Cancel) hay không
             bool isCancelling = (dto.BookingStatus == BookingStatus.Cancelled &&
                                  existing.BookingStatus != BookingStatus.Cancelled);
 
@@ -165,10 +155,8 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
 
             var updateSuccess = await _bookingDAO.UpdateBookingAsync(existing);
 
-            // NẾU CẬP NHẬT THÀNH CÔNG VÀ LÀ HÀNH ĐỘNG HỦY
             if (updateSuccess && isCancelling)
             {
-                // === BẮT ĐẦU THÊM LOGIC THÔNG BÁO ===
                 try
                 {
                     var tourName = existing.TourSchedule?.Tour?.Name ?? "Your Tour";
@@ -181,22 +169,22 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                         NotificationType = NotificationType.System
                     };
 
-                    // Gọi Service (BE) để tạo thông báo
                     _ = _notificationService.CreateAsync(notificationDto);
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Failed to send cancellation notification: {ex.Message}");
                 }
-                // === KẾT THÚC LOGIC THÔNG BÁO ===
             }
 
             return updateSuccess;
         }
-        // === KẾT THÚC SỬA LỖI ===
 
         public async Task<bool> DeleteAsync(int id)
         {
+            var success = await _bookingCustomerDAO.DeleteBookingCustomerByBookingIdAsync(id);
+            if (!success) return false;
+
             return await _bookingDAO.DeleteBookingByIdAsync(id);
         }
 
@@ -223,17 +211,29 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
         public async Task<IEnumerable<UserBookingDTO>> GetByUserIdAsync2(int userId)
         {
             var list = await _bookingDAO.GetBookingsByUserIdAsync(userId);
-            return list.Select(b => new UserBookingDTO
+            var result = new List<UserBookingDTO>();
+            foreach (var b in list)
             {
-                BookingId = b.Id,
-                TourName = b.TourSchedule!.Tour!.Name!,
-                DepartureDate = b.TourSchedule!.DepartureDate!.Value,
-                ArrivalDate = b.TourSchedule!.ArrivalDate!.Value,
-                Adults = b.BookingCustomers.Count(bc => bc.CustomerType == CustomerType.Adult),
-                Children = b.BookingCustomers.Count(bc => bc.CustomerType == CustomerType.Child),
-                TotalPrice = b.TotalPrice!.Value,
-                Status = b.BookingStatus!.Value,
-            });
+                var cancelValidation = await ValidateCancelConditionAsync(b.Id);
+
+                var userBooking = new UserBookingDTO
+                {
+                    BookingId = b.Id,
+                    TourName = b.TourSchedule!.Tour!.Name!,
+                    DepartureDate = b.TourSchedule!.DepartureDate!.Value,
+                    Adults = b.BookingCustomers.Count(bc => bc.CustomerType == CustomerType.Adult),
+                    Children = b.BookingCustomers.Count(bc => bc.CustomerType == CustomerType.Child),
+                    TotalPrice = b.TotalPrice!.Value,
+                    Status = b.BookingStatus!.Value,
+                    CancelCondition = cancelValidation,
+                    CanCancel = cancelValidation.CanCancel,
+                    CancelMessage = cancelValidation.Message
+                };
+
+                result.Add(userBooking);
+            }
+
+            return result;
         }
 
         public async Task<bool> HasUserBookedTour(int userId, int tourId)
@@ -278,6 +278,11 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
         {
             return await _bookingCustomerDAO.GetBookedSeatsByTourAsync(tourId);
         }
+        
+        public async Task DeleteExpiredPendingBookingsAsync()
+        {
+            await _bookingDAO.DeleteExpiredPendingBookingsAsync();
+        }
         public async Task<BookingListResponse> GetBookingsForStaffAsync(BookingSearchRequest request)
         {
             var query = _context.Bookings
@@ -287,7 +292,6 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                 .Include(b => b.BookingCustomers)
                 .AsQueryable();
 
-            // Search by username, full name, email, phone, or tour name
             if (!string.IsNullOrEmpty(request.SearchTerm))
             {
                 var searchTerm = request.SearchTerm.ToLower();
@@ -410,7 +414,6 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
 
             if (updateSuccess)
             {
-                // Send notification to user about status change
                 try
                 {
                     var tourName = booking.TourSchedule?.Tour?.Name ?? "Your Tour";
@@ -441,7 +444,6 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
             var oldStatus = booking.PaymentStatus;
             booking.PaymentStatus = request.PaymentStatus;
 
-            // If payment is completed, update booking status to confirmed
             if (request.PaymentStatus == PaymentStatus.Completed && booking.BookingStatus == BookingStatus.Pending)
             {
                 booking.BookingStatus = BookingStatus.Confirmed;
@@ -451,7 +453,6 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
 
             if (updateSuccess)
             {
-                // Send notification to user about payment status change
                 try
                 {
                     var tourName = booking.TourSchedule?.Tour?.Name ?? "Your Tour";
@@ -487,5 +488,205 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                 .Cast<PaymentStatus>()
                 .ToList());
         }
+        public async Task<CancelValidationResult> ValidateCancelConditionAsync(int bookingId)
+        {
+            
+
+            var booking = await _bookingDAO.GetBookingByIdAsync(bookingId);
+            if (booking == null)
+            {
+                Console.WriteLine($"Booking {bookingId} not found");
+                return new CancelValidationResult
+                {
+                    CanCancel = false,
+                    Message = "Booking not found"
+                };
+            }
+            if (booking.BookingStatus == BookingStatus.Completed)
+            {
+                Console.WriteLine($"Booking {bookingId} is already completed");
+               
+                return new CancelValidationResult
+                {
+                    CanCancel = false,
+                    Message = "The tour has been completed.",                 
+                };
+            }
+            if (booking.BookingStatus == BookingStatus.Cancelled)
+            {
+                Console.WriteLine($"Booking {bookingId} is already cancelled");
+
+                var schedule = booking.TourSchedule;
+                var tourInfo = schedule?.Tour;
+                decimal? calculatedRefundAmount = 0;
+                string successMessage = "Cancel successful!";
+
+                if (tourInfo != null && tourInfo.CancelConditionId != null)
+                {
+                    var cancelCondition = await _context.CancelConditions
+                        .FirstOrDefaultAsync(cc => cc.Id == tourInfo.CancelConditionId);
+
+                    if (cancelCondition != null && cancelCondition.RefundPercent > 0 &&
+                        booking.TotalPrice.HasValue && booking.TotalPrice.Value > 0)
+                    {
+                        calculatedRefundAmount = booking.TotalPrice.Value * (cancelCondition.RefundPercent / 100m);
+                        calculatedRefundAmount = Math.Round(calculatedRefundAmount.Value, 2);
+
+                        if (calculatedRefundAmount > 0)
+                        {
+                            successMessage += $" Refund amount: ${calculatedRefundAmount:F2}";
+                        }
+                    }
+                }
+
+                return new CancelValidationResult
+                {
+                    CanCancel = false,
+                    Message = successMessage,
+                    RefundAmount = calculatedRefundAmount
+                };
+            }
+            if (booking.BookingStatus != BookingStatus.Confirmed &&
+                booking.BookingStatus != BookingStatus.Pending)
+            {
+                Console.WriteLine($"Booking status invalid for cancellation: {booking.BookingStatus}");
+                return new CancelValidationResult
+                {
+                    CanCancel = false,
+                    Message = $"Cannot cancel booking with status: {booking.BookingStatus}"
+                };
+            }
+
+            var tourSchedule = booking.TourSchedule;
+            if (tourSchedule?.DepartureDate == null)
+            {
+                Console.WriteLine("Tour schedule or departure date is null");
+                return new CancelValidationResult
+                {
+                    CanCancel = false,
+                    Message = "Tour schedule information is missing"
+                };
+            }
+            
+            var departureDate = tourSchedule.DepartureDate.Value;
+            var currentDateOnly = DateOnly.FromDateTime(DateTime.Now);
+
+            if (departureDate <= currentDateOnly)
+            {
+                Console.WriteLine($"Departure date has passed: {departureDate}, Current: {currentDateOnly}");
+                return new CancelValidationResult
+                {
+                    CanCancel = false,
+                    Message = $"Cannot cancel booking. The tour has already departed on {departureDate:dd/MM/yyyy}."
+                };
+            }
+
+            var tour = tourSchedule.Tour;
+            if (tour == null)
+            {
+                Console.WriteLine($"Tour is NULL for booking {bookingId}");
+
+                return new CancelValidationResult
+                {
+                    CanCancel = true,
+                    Message = "Cancellation allowed (tour information not available)",
+                    RefundAmount = 0,
+                    RefundPercent = 0,
+                    AppliedCondition = null
+                };
+            }
+
+            
+
+            if (tour.CancelConditionId == null)
+            {
+                Console.WriteLine("Tour has no cancel condition ID");
+                return new CancelValidationResult
+                {
+                    CanCancel = true,
+                    Message = "Cancellation allowed but no refund policy available",
+                    RefundAmount = 0,
+                    RefundPercent = 0,
+                    AppliedCondition = null
+                };
+            }
+
+            var tourCancelCondition = await _context.CancelConditions
+                .FirstOrDefaultAsync(cc => cc.Id == tour.CancelConditionId);
+
+            if (tourCancelCondition == null)
+            {
+                Console.WriteLine($"Cancel condition not found for ID: {tour.CancelConditionId}");
+                return new CancelValidationResult
+                {
+                    CanCancel = true,
+                    Message = "Cancellation allowed (policy not found - no refund)",
+                    RefundAmount = 0,
+                    RefundPercent = 0,
+                    AppliedCondition = null
+                };
+            }
+
+
+
+            if (tourCancelCondition.CancelStatus != CancelStatus.Active)
+            {
+                Console.WriteLine($"Cancel condition is not active: {tourCancelCondition.CancelStatus}");
+                return new CancelValidationResult
+                {
+                    CanCancel = true,
+                    Message = $"Cancellation allowed - {tourCancelCondition.Title} (no refund)",
+                    RefundAmount = 0,
+                    RefundPercent = 0,
+                    AppliedCondition = null
+                };
+            }
+
+            var bookingDate = booking.BookingDate.Value;
+            var daysSinceBooking = (DateTime.Now - bookingDate).Days;
+
+            Console.WriteLine($"Booking Date: {bookingDate}, Days since booking: {daysSinceBooking}");
+
+            if (daysSinceBooking > tourCancelCondition.MinDaysBeforeTrip)
+            {
+                Console.WriteLine($"Cannot cancel - exceeded {tourCancelCondition.MinDaysBeforeTrip} days limit");
+                return new CancelValidationResult
+                {
+                    CanCancel = false,
+                    Message = $"Cannot cancel booking. Cancellation must be within {tourCancelCondition.MinDaysBeforeTrip} days from booking date. (Current: {daysSinceBooking} days)"
+                };
+            }
+
+            bool hasRefund = tourCancelCondition.RefundPercent > 0;
+            string message = hasRefund
+                ? tourCancelCondition.Title
+                : $"{tourCancelCondition.Title} - No refund";
+           
+            decimal? refundAmount = 0;
+            int? refundPercent = tourCancelCondition.RefundPercent;
+
+            if (hasRefund && booking.TotalPrice.HasValue && booking.TotalPrice.Value > 0)
+            {
+                refundAmount = booking.TotalPrice.Value * (tourCancelCondition.RefundPercent / 100m); 
+                refundAmount = Math.Round(refundAmount.Value, 2);
+            }
+            
+            return new CancelValidationResult
+            {
+                CanCancel = true,
+                Message = message,
+                RefundAmount = refundAmount,
+                RefundPercent = refundPercent,
+                AppliedCondition = new CancelConditionDTO
+                {
+                    Id = tourCancelCondition.Id,
+                    Title = tourCancelCondition.Title,
+                    MinDaysBeforeTrip = tourCancelCondition.MinDaysBeforeTrip,
+                    RefundPercent = tourCancelCondition.RefundPercent,
+                    CancelStatus = tourCancelCondition.CancelStatus
+                }
+            };
+        }
+       
     }
 }

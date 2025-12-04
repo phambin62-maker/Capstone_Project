@@ -245,7 +245,6 @@ namespace BE_Capstone_Project.DAO
         {
             try
             {
-                // 1) Booking counts per TourId via Bookings -> TourSchedules -> TourId
                 var bookingCountsDict = await _context.Bookings
                     .Join(_context.TourSchedules,
                           b => b.TourScheduleId,
@@ -255,19 +254,16 @@ namespace BE_Capstone_Project.DAO
                     .Select(g => new { TourId = g.Key, Count = g.Count() })
                     .ToDictionaryAsync(x => x.TourId, x => x.Count);
 
-                // 2) Average stars per TourId from Reviews
                 var avgStarsDict = await _context.Reviews
                     .GroupBy(r => r.TourId)
                     .Select(g => new { TourId = g.Key, AvgStars = g.Average(r => (double?)r.Stars) })
                     .ToDictionaryAsync(x => x.TourId, x => x.AvgStars ?? 0.0);
 
-                // 3) Load tours (include images if desired)
                 var tours = await _context.Tours
                     .Include(t => t.TourImages)
                     .Include(t => t.Category)
                     .ToListAsync();
 
-                // 4) Project with counts and avg stars (0 when missing)
                 var toursWithMetrics = tours
                     .Select(t => new
                     {
@@ -278,7 +274,6 @@ namespace BE_Capstone_Project.DAO
                     })
                     .ToList();
 
-                // 5) For each category pick the top tour (booking count desc, then avg stars desc, then id tie-breaker)
                 var topToursByCategory = toursWithMetrics
                     .GroupBy(x => x.CategoryId)
                     .Select(g => g
@@ -394,7 +389,6 @@ namespace BE_Capstone_Project.DAO
             {
                 var query = _context.Tours.AsQueryable();
 
-                // Áp dụng các filter (giống như trong GetFilteredToursAsync)
                 if (status.HasValue)
                 {
                     query = query.Where(t => t.TourStatus == status.Value);
@@ -439,25 +433,15 @@ namespace BE_Capstone_Project.DAO
             }
         }
 
-        public async Task<List<Tour>> GetActiveTours(string search = "")
+        public async Task<List<Tour>> GetActiveTours()
         {
             try
             {
                 var query = _context.Tours
-                    .Where(t => t.TourStatus == true) // Only active tours
+                    .Where(t => t.TourStatus == true)
                     .Include(t => t.StartLocation)
                     .Include(t => t.EndLocation)
-                    .Include(t => t.Category)
-                    .AsQueryable();
-
-                // Apply search filter
-                if (!string.IsNullOrEmpty(search))
-                {
-                    query = query.Where(t =>
-                        t.Name.Contains(search) ||
-                        (t.Description != null && t.Description.Contains(search))
-                    );
-                }
+                    .Include(t => t.Category);
 
                 return await query.ToListAsync();
             }
@@ -467,5 +451,6 @@ namespace BE_Capstone_Project.DAO
                 return new List<Tour>();
             }
         }
+
     }
 }

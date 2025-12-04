@@ -1,11 +1,11 @@
-﻿        using BE_Capstone_Project.Application.BookingManagement.DTOs;
-        using BE_Capstone_Project.Application.BookingManagement.Services.Interfaces;
-        using BE_Capstone_Project.Application.Services;
-        using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
+﻿using BE_Capstone_Project.Application.BookingManagement.DTOs;
+using BE_Capstone_Project.Application.BookingManagement.Services.Interfaces;
+using BE_Capstone_Project.Application.Services;
+using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
 using BE_Capstone_Project.Domain.Enums;
 using BE_Capstone_Project.Domain.Models;
-        using Microsoft.AspNetCore.Authorization;
-        using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BE_Capstone_Project.Application.BookingManagement.Controllers
 {
@@ -31,7 +31,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
         }
 
                 [HttpGet]
-                [Authorize(Roles = "Admin,Staff")] // Chỉ Admin và Staff mới được xem tất cả booking
+                [Authorize(Roles = "Admin,Staff")] 
                 public async Task<IActionResult> GetAll()
                 {
                     var list = await _bookingService.GetAllAsync();
@@ -56,7 +56,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
         //}
 
         [HttpGet("user/{username}")]
-        [Authorize] // Cần đăng nhập để xem booking của user
+        /*[Authorize] */// Cần đăng nhập để xem booking của user
         public async Task<IActionResult> GetBookingsByUsername(string username)
         {
             var user = await _userService.GetUserByUsername(username);
@@ -105,13 +105,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
                 }
                 else
                 {
-                    Console.WriteLine("===================");
-                    Console.WriteLine("Sccess");
-                    Console.WriteLine("===================");
                     await _bookingService.AddBookingCustomersToBookId(bookingId, request.Travelers);
-                    Console.WriteLine("===================");
-                    Console.WriteLine("Scces1123s");
-                    Console.WriteLine("===================");
                     return Ok(new BookingSuccessResponse
                     {
                         BookingId = bookingId,
@@ -175,33 +169,55 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
                 if (user == null)
                     return Unauthorized(new { message = "User not found", success = false });
 
-                // Kiểm tra booking tồn tại và thuộc về user
                 var booking = await _bookingService.GetByIdAsync(bookingId);
                 if (booking == null || booking.UserId != user.Id)
                     return Unauthorized(new { message = "Booking not found or not authorized", success = false });
-
-                // Sử dụng method có sẵn
+                var cancelValidation = await _bookingService.ValidateCancelConditionAsync(bookingId);
+                if (!cancelValidation.CanCancel)
+                {
+                    return BadRequest(new
+                    {
+                        message = cancelValidation.Message,
+                        success = false,
+                        canCancel = false
+                    });
+                }
                 var cancelRequest = new UpdateBookingStatusRequest
                 {
                     BookingStatus = BookingStatus.Cancelled
                 };
 
                 var success = await _bookingService.UpdateBookingStatusAsync(bookingId, cancelRequest);
-
                 if (!success)
-                    return BadRequest(new
-                    {
-                        message = "Cannot cancel booking",
-                        success = false
-                    });
+                    return BadRequest(new { message = "Cannot cancel booking", success = false });
 
-                return Ok(new { message = "Booking cancelled successfully", success = true });
+                return Ok(new
+                {
+                    message = "Booking cancelled successfully",
+                    success = true,
+                    refundAmount = cancelValidation.RefundAmount,
+                    refundPercent = cancelValidation.RefundPercent
+                });
             }
             catch (Exception ex)
             {
                 return BadRequest(new { message = ex.Message, success = false });
             }
         }
+        [HttpGet("{bookingId}/cancel-validation")]
+        [Authorize]
+        public async Task<IActionResult> CheckCancelConditions(int bookingId)
+        {
+            try
+            {
+                var validation = await _bookingService.ValidateCancelConditionAsync(bookingId);
+                return Ok(validation);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+        }        
 
 
         [HttpGet("staff/bookings")]

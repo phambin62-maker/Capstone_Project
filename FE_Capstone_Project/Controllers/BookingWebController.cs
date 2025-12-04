@@ -20,7 +20,10 @@ namespace FE_Capstone_Project.Controllers
 
         public async Task<IActionResult> Index(int tourId)
         {
+
             var username = HttpContext.Session.GetString("UserName");
+
+            if(username == null) return RedirectToAction("Index", "Home");
 
             var tourResponse = await _apiHelper.GetAsync<TourDetailResponse>($"Tour/GetTourById/{tourId}");
             var tourSchedulesResponse = await _apiHelper.GetAsync<TourScheduleListResponse>($"TourSchedule/tour/available/{tourId}");
@@ -44,7 +47,9 @@ namespace FE_Capstone_Project.Controllers
         public async Task<IActionResult> BookTour(BookingRequest request)
         {
             if (!ModelState.IsValid)
-                return BadRequest("Invalid booking data.");
+            {
+                return RedirectToAction("Index", "Booking");
+            }
 
             var username = HttpContext.Session.GetString("UserName");
 
