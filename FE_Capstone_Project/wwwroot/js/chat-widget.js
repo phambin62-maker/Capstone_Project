@@ -12,10 +12,10 @@
     function getAuthToken() {
         const tokenMeta = document.querySelector('meta[name="jwt-token"]');
         if (tokenMeta) return tokenMeta.getAttribute('content');
-        
+
         const tokenInput = document.getElementById('jwtToken');
         if (tokenInput) return tokenInput.value;
-        
+
         return null;
     }
 
@@ -52,13 +52,13 @@
                     displayWidgetMessage(message);
                     updateBadge();
                 }
-            } else if (currentRoleId === 2) {
+            }  else if (currentRoleId === 2) {
                 // Staff chatting with a customer
                 if (currentCustomerId && message.customerId === currentCustomerId) {
                     displayWidgetMessage(message);
                     updateBadge();
                 }
-            }
+            } 
         });
 
         // Listen for notifications
@@ -157,12 +157,12 @@
     // Select staff and load conversation
     async function selectStaff(staffId, staffName) {
         currentStaffId = staffId;
-        
+
         // Hide staff selection, show chat
         const staffSelection = document.getElementById('staffSelection');
         const messagesContainer = document.getElementById('chatMessagesContainer');
         const inputContainer = document.getElementById('chatInputContainer');
-        
+
         if (staffSelection) staffSelection.style.display = 'none';
         if (messagesContainer) messagesContainer.style.display = 'block';
         if (inputContainer) inputContainer.style.display = 'block';
@@ -204,7 +204,7 @@
 
         const header = document.querySelector('.chat-window-header h6');
         if (header) {
-            header.innerHTML = `<i class="bi bi-robot"></i> Chat với Bot`;
+            header.innerHTML = `<i class="bi bi-robot"></i> Chat with Bot`;
         }
 
         if (botFrame && botFrame.contentWindow) {
@@ -332,14 +332,14 @@
 
         const currentUserId = parseInt(document.getElementById('currentUserId')?.value || '0');
         const currentRoleId = parseInt(document.getElementById('currentRoleId')?.value || '0');
-        
+
         // Xác định isSender dựa trên ChatType
         // ChatType: 1 = Customer, 2 = Staff
         let isSender = false;
         if (message.chatType !== undefined && message.chatType !== null) {
             // Nếu ChatType = 1 (Customer) và currentRoleId = 3 (Customer) → tin nhắn của mình
             // Nếu ChatType = 2 (Staff) và currentRoleId = 2 (Staff) → tin nhắn của mình
-            if ((message.chatType === 1 && currentRoleId === 3) || 
+            if ((message.chatType === 1 && currentRoleId === 3) ||
                 (message.chatType === 2 && currentRoleId === 2)) {
                 isSender = true;
             }
@@ -400,7 +400,7 @@
         }
 
         const message = input.value.trim();
-        
+
         // Disable button
         if (sendButton) {
             sendButton.disabled = true;
@@ -471,14 +471,14 @@
             } else {
                 const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
                 console.error('Error sending message:', errorData);
-                
+
                 // Hiển thị lỗi chi tiết hơn
                 let errorMessage = errorData.message || 'Unknown error';
                 if (errorData.errors && Array.isArray(errorData.errors)) {
                     const errorDetails = errorData.errors.map(e => `${e.field}: ${e.message}`).join('\n');
                     errorMessage += '\n' + errorDetails;
                 }
-                
+
                 alert('Error sending message: ' + errorMessage);
             }
         } catch (error) {
@@ -544,11 +544,11 @@
                 staffSel.style.display = 'none';
             }
             if (customerSel) customerSel.style.display = 'none';
-        } else if (currentRoleId === 2) {
+        } /* else if (currentRoleId === 2) {
             if (customerSel) customerSel.style.display = currentCustomerId ? 'none' : 'block';
             if (staffSel) staffSel.style.display = 'none';
             if (initialSel) initialSel.style.display = 'none';
-        }
+        } */
 
         if (botContainer) {
             botContainer.style.display = isBotMode ? 'block' : 'none';
@@ -563,38 +563,29 @@
     function showInitialSelection() {
         const currentRoleId = parseInt(document.getElementById('currentRoleId')?.value || '0');
         const isLoggedIn = document.getElementById('isLoggedIn')?.value === 'true';
-        currentStaffId = null;
-        isBotMode = false;
-        
-        const botContainer = document.getElementById('botContainer');
-        if (botContainer) {
-            botContainer.style.display = 'none';
-        }
 
-        if (currentRoleId === 3 || !isLoggedIn) {
-            const initialSel = document.getElementById('initialSelection');
-            const staffSel = document.getElementById('staffSelection');
-            const msgs = document.getElementById('chatMessagesContainer');
-            const input = document.getElementById('chatInputContainer');
-            
-            if (initialSel) initialSel.style.display = 'block';
-            if (staffSel) staffSel.style.display = 'none';
-            if (msgs) msgs.style.display = 'none';
-            if (input) input.style.display = 'none';
-        } else if (currentRoleId === 2) {
-            const initialSel = document.getElementById('initialSelection');
-            const staffSel = document.getElementById('staffSelection');
-            const customerSel = document.getElementById('customerSelection');
-            const msgs = document.getElementById('chatMessagesContainer');
-            const input = document.getElementById('chatInputContainer');
-            
-            if (initialSel) initialSel.style.display = 'none';
-            if (staffSel) staffSel.style.display = 'none';
-            if (customerSel) customerSel.style.display = 'block';
-            if (msgs) msgs.style.display = 'none';
-            if (input) input.style.display = 'none';
-            
-            currentCustomerId = null;
+        // Reset state
+        currentStaffId = null;
+        currentCustomerId = null;
+        isBotMode = false;
+
+        const initialSel = document.getElementById('initialSelection');
+        const staffSel = document.getElementById('staffSelection');
+        const customerSel = document.getElementById('customerSelection');
+        const msgs = document.getElementById('chatMessagesContainer');
+        const input = document.getElementById('chatInputContainer');
+        const botContainer = document.getElementById('botContainer');
+
+        // Ẩn tất cả các phần khác
+        if (staffSel) staffSel.style.display = 'none';
+        if (customerSel) customerSel.style.display = 'none';
+        if (msgs) msgs.style.display = 'none';
+        if (input) input.style.display = 'none';
+        if (botContainer) botContainer.style.display = 'none';
+
+        // Hiển thị initial selection
+        if (initialSel) {
+            initialSel.style.display = 'block';
         }
     }
 
@@ -602,10 +593,10 @@
     function showStaffSelection() {
         const initialSel = document.getElementById('initialSelection');
         const staffSel = document.getElementById('staffSelection');
-        
+
         if (initialSel) initialSel.style.display = 'none';
         if (staffSel) staffSel.style.display = 'block';
-        
+
         loadStaffList();
     }
 
@@ -613,33 +604,41 @@
     function toggleChatWindow() {
         const chatWindow = document.getElementById('chatWindow');
         const chatButton = document.getElementById('chatWidgetButton');
-        
+
         if (!chatWindow || !chatButton) return;
 
         isWidgetOpen = !isWidgetOpen;
-        
+
         if (isWidgetOpen) {
             chatWindow.style.display = 'flex';
 
             const currentRoleId = parseInt(document.getElementById('currentRoleId')?.value || '0');
             const isLoggedIn = document.getElementById('isLoggedIn')?.value === 'true';
 
-            // Reset view to appropriate selection
-            resetWidgetView();
+            // QUAN TRỌNG: Kiểm tra trạng thái hiện tại trước khi reset
+            const hasActiveChat = (currentRoleId === 3 && currentStaffId) ||
+                (currentRoleId === 2 && currentCustomerId) ||
+                isBotMode;
 
-            if (currentRoleId === 3 || !isLoggedIn) {
-                // Customer or Guest: show initial selection if no staff selected
-                if (!currentStaffId) {
+            if (hasActiveChat) {
+                // Nếu đang trong chat, chỉ cần reset view
+                resetWidgetView();
+            } else {
+                // Nếu chưa có chat active, hiển thị màn hình chọn
+                if (currentRoleId === 3 || !isLoggedIn) {
                     showInitialSelection();
-                }
-            } else if (currentRoleId === 2) {
-                // Staff: Load customer conversations if not loaded
-                const customerList = document.getElementById('customerList');
-                if (customerList && (customerList.children.length === 1 || customerList.querySelector('.spinner-border'))) {
-                    loadCustomerConversations();
+                } else if (currentRoleId === 2) {
+                    const customerList = document.getElementById('customerList');
+                    const customerSelection = document.getElementById('customerSelection');
+
+                    if (customerSelection) customerSelection.style.display = 'block';
+
+                    if (customerList && (customerList.children.length === 1 || customerList.querySelector('.spinner-border'))) {
+                        loadCustomerConversations();
+                    }
                 }
             }
-            
+
             // Initialize SignalR if not connected (only for logged in users)
             if (isLoggedIn && typeof signalR !== 'undefined') {
                 if (!connection || connection.state !== signalR.HubConnectionState.Connected) {
@@ -664,9 +663,9 @@
         const isLoggedIn = document.getElementById('isLoggedIn')?.value === 'true';
         if (currentRoleId === 3 || !isLoggedIn) {
             currentStaffId = null;
-        } else if (currentRoleId === 2) {
+        } /* else if (currentRoleId === 2) {
             currentCustomerId = null;
-        }
+        } */
         isBotMode = false;
         resetWidgetView();
     }
