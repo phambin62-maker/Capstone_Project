@@ -254,7 +254,7 @@ namespace FE_Capstone_Project.Controllers
             var token = HttpContext.Session.GetString("JwtToken");
             var email = HttpContext.Session.GetString("UserEmail");
 
-            if (string.IsNullOrEmpty(email))
+            if (string.IsNullOrEmpty(token))
                 return RedirectToAction("Login");
 
             _httpClient.DefaultRequestHeaders.Authorization =
@@ -302,7 +302,7 @@ namespace FE_Capstone_Project.Controllers
 
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["Success"] = "Cập nhật thông tin thành công.";
+                    TempData["Success"] = "Update Infomation successfully.";
                     return RedirectToAction("profile");
                 }
 
@@ -348,7 +348,6 @@ namespace FE_Capstone_Project.Controllers
     {
         public string Token { get; set; }
         public int RoleId { get; set; }
-        // === BẠN CŨNG CÓ THỂ CẦN SỬA DTO NÀY ĐỂ LẤY UserId TỪ BE ===
-        // public int UserId { get; set; } 
+       
     }
 }

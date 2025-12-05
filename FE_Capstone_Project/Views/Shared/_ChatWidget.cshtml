@@ -4,8 +4,6 @@
     var roleId = Context.Session.GetInt32("UserRoleId");
     var jwtToken = Context.Session.GetString("JwtToken");
 }
-<div id="botContainer" style="width: 400px; height: 600px; border-radius: 8px; overflow: hidden;"></div>
-
 <!-- Chat Widget - Hiển thị cho cả người chưa đăng nhập -->
 <div id="chatWidget" class="chat-widget">
     <!-- Chat Button -->
@@ -29,52 +27,48 @@
         <div class="chat-window-body" id="chatWidgetMessages">
             <!-- Initial selection: Bot / Staff (for logged in users) / Login prompt (for guests) -->
             <div id="initialSelection" class="initial-selection" style="display: none;">
-                <p class="text-center text-muted mb-3">Chọn để bắt đầu chat:</p>
+                <p class="text-center text-muted mb-3">Chose for start chat:</p>
                 <div class="selection-options">
                     <div class="selection-option bot-option" id="selectBotOption">
                         <div class="option-icon">
                             <i class="bi bi-robot"></i>
                         </div>
                         <div class="option-content">
-                            <h6 class="mb-1">Chat với Bot</h6>
-                            <p class="text-muted small mb-0">Trợ lý ảo tự động @(!isLoggedIn ? "(Không cần đăng nhập)" : "")</p>
+                            <h6 class="mb-1">Chat with Bot</h6>
+                            <p class="text-muted small mb-0" @(!isLoggedIn ? "(Không cần đăng nhập)" : "")</p>
                         </div>
                     </div>
-                    @if (isLoggedIn)
+                    @if (isLoggedIn && roleId != 2)
                     {
                         <div class="selection-option staff-option" id="selectStaffOption">
                             <div class="option-icon">
                                 <i class="bi bi-person-badge"></i>
                             </div>
                             <div class="option-content">
-                                <h6 class="mb-1">Chat với Nhân viên</h6>
-                                <p class="text-muted small mb-0">Nhân viên hỗ trợ trực tiếp</p>
+                                <h6 class="mb-1">Chat with Staff</h6>
+                                <p class="text-muted small mb-0">Live support</p>
                             </div>
                         </div>
                     }
-                    else
-                    {
-                        <div class="selection-option staff-option" id="selectStaffOption" style="opacity: 0.6; cursor: not-allowed;" title="Cần đăng nhập">
-                            <div class="option-icon">
-                                <i class="bi bi-person-badge"></i>
-                            </div>
-                            <div class="option-content">
-                                <h6 class="mb-1">Chat với Nhân viên</h6>
-                                <p class="text-muted small mb-0">Cần đăng nhập để sử dụng</p>
-                            </div>
-                        </div>
-                    }
+
                 </div>
             </div>
 
-            <!-- Bot Container - sẽ chứa bot widget -->
-            <div id="botContainer" class="bot-container" style="display: none; height: 100%; width: 100%;">
-                <!-- Bot widget sẽ được khởi tạo ở đây -->
+            <!-- Bot Container - chứa iframe DenserAI -->
+            <div id="botContainer" class="bot-container" style="display: none;">
+                <iframe
+                    id="botFrame"
+                    src="@Url.Action("BotWidget", "ChatWeb")"
+                    title="AI Assistant"
+                    frameborder="0"
+                    allow="clipboard-write; microphone"
+                    loading="lazy">
+                </iframe>
             </div>
 
             <!-- Staff selection -->
             <div id="staffSelection" class="staff-selection" style="display: none;">
-                <p class="text-center text-muted mb-3">Chọn nhân viên để bắt đầu chat:</p>
+                <p class="text-center text-muted mb-3">Select a staff to start chatting:</p>
                 <div id="staffList" class="staff-list">
                     <div class="text-center py-3">
                         <div class="spinner-border spinner-border-sm text-primary" role="status">
@@ -123,5 +117,4 @@
     <input type="hidden" id="currentUserId" value="@(userId ?? 0)">
     <input type="hidden" id="currentRoleId" value="@(roleId ?? 0)">
     <input type="hidden" id="isLoggedIn" value="@(isLoggedIn ? "true" : "false")">
-</div>
 

@@ -1,0 +1,45 @@
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            font-family: "Roboto", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        #denserai-root {
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="denserai-root"></div>
+
+    <script type="module">
+        import Chatbot from "https://cdn.jsdelivr.net/npm/@@denserai/embed-chat@1/dist/web.min.js";
+
+        Chatbot.init({
+            chatbotId: "chatbot_9xvb6ebmc018oc9vpa1j5",
+            container: document.getElementById("denserai-root"),
+            theme: {
+                chatWindow: {
+                    width: "100%",
+                    height: "100%",
+                    backgroundColor: "#ffffff"
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+
