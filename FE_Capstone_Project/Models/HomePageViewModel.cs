@@ -6,6 +6,8 @@
         public List<ReviewViewModel> Reviews { get; set; } = new();
         public List<FeatureViewModel> Features { get; set; } = new();
         public AboutUsViewModel AboutUs { get; set; } = new();
+        public List<TourViewModel> FeaturedTours { get; set; } = new();
+        public List<NewsViewModel> LatestNews { get; set; } = new();
     }
 
     public class FeatureViewModel

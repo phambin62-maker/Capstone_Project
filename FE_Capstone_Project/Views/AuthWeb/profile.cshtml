@@ -86,18 +86,15 @@
             }
 
         @@keyframes slideDown {
-            from
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
 
-        {
-            opacity: 0;
-            transform: translateY(-10px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .form-check {
@@ -198,37 +195,22 @@
     <!-- SweetAlert2 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-            // Toggle password field visibility
-            function togglePasswordField() {
-                const checkbox = document.getElementById('changePasswordCheck');
-                const passwordSection = document.getElementById('passwordSection');
-
-                if (checkbox && passwordSection) {
-                    if (checkbox.checked) {
-                        passwordSection.classList.add('show');
-                    } else {
-                        passwordSection.classList.remove('show');
-                        // Clear password fields when hiding
-                        const newPasswordInput = document.getElementById('newPassword');
-                        const confirmPasswordInput = document.getElementById('confirmPassword');
-                        if (newPasswordInput) newPasswordInput.value = '';
-                        if (confirmPasswordInput) confirmPasswordInput.value = '';
-                    }
-                }
-            }
-    <script>
         // Toggle password field visibility
         function togglePasswordField() {
             const checkbox = document.getElementById('changePasswordCheck');
             const passwordSection = document.getElementById('passwordSection');
 
-            if (checkbox.checked) {
-                passwordSection.classList.add('show');
-            } else {
-                passwordSection.classList.remove('show');
-                // Clear password fields when hiding
-                document.getElementById('newPassword').value = '';
-                document.getElementById('confirmPassword').value = '';
+            if (checkbox && passwordSection) {
+                if (checkbox.checked) {
+                    passwordSection.classList.add('show');
+                } else {
+                    passwordSection.classList.remove('show');
+                    // Clear password fields when hiding
+                    const newPasswordInput = document.getElementById('newPassword');
+                    const confirmPasswordInput = document.getElementById('confirmPassword');
+                    if (newPasswordInput) newPasswordInput.value = '';
+                    if (confirmPasswordInput) confirmPasswordInput.value = '';
+                }
             }
         }
 
