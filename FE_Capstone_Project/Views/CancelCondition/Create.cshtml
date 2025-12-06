@@ -1,0 +1,70 @@
+@model FE_Capstone_Project.Models.CancelConditionCreateRequest
+@using BE_Capstone_Project.Domain.Enums
+
+@{
+    ViewData["Title"] = "Thêm Điều kiện Hủy Mới";
+    Layout = "~/Views/Shared/_StaffLayout.cshtml";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="text-primary"><i class="fas fa-plus-circle me-2"></i>@ViewData["Title"]</h2>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">        
+
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label fw-bold">Title</label>
+                <input asp-for="Title" class="form-control" placeholder="Example: Cancel 3 days before..." />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="MinDaysBeforeTrip" class="form-label fw-bold">Minimum days before trip</label>
+                    <div class="input-group">
+                        <input asp-for="MinDaysBeforeTrip" class="form-control" type="number" min="0" max="255" />
+                        <span class="input-group-text">days</span>
+                    </div>
+                    <span asp-validation-for="MinDaysBeforeTrip" class="text-danger"></span>
+                    <small class="text-muted">Customer must cancel before these many days to apply.</small>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label asp-for="RefundPercent" class="form-label fw-bold">Refund Percent</label>
+                    <div class="input-group">
+                        <input asp-for="RefundPercent" class="form-control" type="number" min="0" max="100" />
+                        <span class="input-group-text">%</span>
+                    </div>
+                    <span asp-validation-for="RefundPercent" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label asp-for="CancelStatus" class="form-label fw-bold">Status</label>
+                <select asp-for="CancelStatus" class="form-select" asp-items="Html.GetEnumSelectList<CancelStatus>()">
+                </select>
+                <span asp-validation-for="CancelStatus" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Back
+                </a>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-1"></i> Save
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

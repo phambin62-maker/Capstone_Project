@@ -109,14 +109,6 @@ namespace FE_Capstone_Project.Models
         public bool CanCancel { get; set; }
         public string? CancelMessage { get; set; }
     }
-    public class CancelConditionDTO
-    {
-        public int Id { get; set; }
-        public string? Title { get; set; }
-        public byte? MinDaysBeforeTrip { get; set; }
-        public byte? RefundPercent { get; set; }
-        public CancelStatus? CancelStatus { get; set; }
-    }
 
     public class CancelValidationResult
     {

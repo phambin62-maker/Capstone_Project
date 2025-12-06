@@ -3,6 +3,7 @@ using BE_Capstone_Project.Application.CancelConditions.Services.Interfaces;
 using BE_Capstone_Project.DAO;
 using BE_Capstone_Project.Domain.Enums;
 using BE_Capstone_Project.Domain.Models;
+using BE_Capstone_Project.Application.Admin.DTOs;
 
 namespace BE_Capstone_Project.Application.CancelConditions.Services
 {
@@ -27,6 +28,30 @@ namespace BE_Capstone_Project.Application.CancelConditions.Services
                 CreatedDate = c.CreatedDate,
                 CancelStatus = c.CancelStatus
             }).ToList();
+        }
+
+        public async Task<PagedResultDto<CancelConditionDTO>> GetPagingAsync(string keyword, int pageIndex, int pageSize)
+        {
+            var (list, totalCount) = await _dao.GetCancelConditionsPagingAsync(keyword, pageIndex, pageSize);
+
+            var dtos = list.Select(c => new CancelConditionDTO
+            {
+                Id = c.Id,
+                Title = c.Title,
+                MinDaysBeforeTrip = c.MinDaysBeforeTrip,
+                RefundPercent = c.RefundPercent,
+                CreatedDate = c.CreatedDate,
+                CancelStatus = c.CancelStatus
+            }).ToList();
+
+            return new PagedResultDto<CancelConditionDTO>
+            {
+                Data = dtos,
+                TotalCount = totalCount,
+                Page = pageIndex,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            };
         }
 
         public async Task<CancelConditionDTO?> GetByIdAsync(int id)
@@ -61,6 +86,15 @@ namespace BE_Capstone_Project.Application.CancelConditions.Services
 
         public async Task<int> CreateAsync(CancelConditionCreateDTO dto)
         {
+            // Check for duplicate title
+            var existing = (await _dao.GetAllCancelConditionsAsync())
+                            .FirstOrDefault(c => c.Title.ToLower() == dto.Title.ToLower());
+            
+            if (existing != null)
+            {
+                throw new InvalidOperationException($"Cancel condition with title '{dto.Title}' already exists.");
+            }
+
             var model = new CancelCondition
             {
                 Title = dto.Title,
@@ -77,6 +111,15 @@ namespace BE_Capstone_Project.Application.CancelConditions.Services
             var model = await _dao.GetCancelConditionByIdAsync(dto.Id);
             if (model == null) return false;
 
+            // Check for duplicate title (excluding self)
+            var existing = (await _dao.GetAllCancelConditionsAsync())
+                            .FirstOrDefault(c => c.Title.ToLower() == dto.Title.ToLower() && c.Id != dto.Id);
+
+            if (existing != null)
+            {
+                throw new InvalidOperationException($"Cancel condition with title '{dto.Title}' already exists.");
+            }
+
             model.Title = dto.Title;
             model.MinDaysBeforeTrip = dto.MinDaysBeforeTrip;
             model.RefundPercent = dto.RefundPercent;
@@ -84,6 +127,7 @@ namespace BE_Capstone_Project.Application.CancelConditions.Services
 
             return await _dao.UpdateCancelConditionAsync(model);
         }
+
 
         public async Task<bool> DeleteAsync(int id)
         {
