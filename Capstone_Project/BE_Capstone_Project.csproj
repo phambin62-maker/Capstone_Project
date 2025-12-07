@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
     <DisableBuildCompression>true</DisableBuildCompression>
+    <ValidateStaticWebAssetUniqueIds>false</ValidateStaticWebAssetUniqueIds>
   </PropertyGroup>
 
   <ItemGroup>

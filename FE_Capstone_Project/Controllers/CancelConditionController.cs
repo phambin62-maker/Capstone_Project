@@ -7,11 +7,10 @@ using System.Text.Json.Serialization;
 using System.Text;
 using System.Net;
 using BE_Capstone_Project.Domain.Enums;
-using BE_Capstone_Project.Domain.Enums;
 
 namespace FE_Capstone_Project.Controllers
 {
-    [AuthorizeRole(2)] // Assuming 2 is Staff role
+    [AuthorizeRole(2)] 
     public class CancelConditionController : Controller
     {
         private readonly HttpClient _httpClient;
@@ -243,11 +242,13 @@ namespace FE_Capstone_Project.Controllers
             var (success, result, error) = await CallApiAsync<object>($"CancelCondition/{id}", HttpMethod.Delete);
             if (success)
             {
-                TempData["SuccessMessage"] = "Delete successful!";
+                TempData["SuccessMessage"] = "Cancel condition has been deleted successfully!";
             }
             else
             {
-                TempData["ErrorMessage"] = error ?? "Delete failed!";
+                TempData["ErrorMessage"] = !string.IsNullOrEmpty(error) 
+                    ? error 
+                    : "Failed to delete cancel condition. Please try again.";
             }
             return RedirectToAction("Index");
         }

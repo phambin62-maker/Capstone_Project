@@ -86,13 +86,24 @@ namespace BE_Capstone_Project.Application.CancelConditions.Services
 
         public async Task<int> CreateAsync(CancelConditionCreateDTO dto)
         {
-            // Check for duplicate title
-            var existing = (await _dao.GetAllCancelConditionsAsync())
-                            .FirstOrDefault(c => c.Title.ToLower() == dto.Title.ToLower());
+            var allConditions = await _dao.GetAllCancelConditionsAsync();
             
-            if (existing != null)
+            // Check duplicate title
+            var existingTitle = allConditions
+                .FirstOrDefault(c => c.Title.ToLower() == dto.Title.ToLower());
+            
+            if (existingTitle != null)
             {
                 throw new InvalidOperationException($"Cancel condition with title '{dto.Title}' already exists.");
+            }
+
+            // Check duplicate refund percent
+            var existingRefund = allConditions
+                .FirstOrDefault(c => c.RefundPercent == dto.RefundPercent);
+            
+            if (existingRefund != null)
+            {
+                throw new InvalidOperationException($"Cancel condition with refund percent {dto.RefundPercent}% already exists.");
             }
 
             var model = new CancelCondition
@@ -111,13 +122,24 @@ namespace BE_Capstone_Project.Application.CancelConditions.Services
             var model = await _dao.GetCancelConditionByIdAsync(dto.Id);
             if (model == null) return false;
 
-            // Check for duplicate title (excluding self)
-            var existing = (await _dao.GetAllCancelConditionsAsync())
-                            .FirstOrDefault(c => c.Title.ToLower() == dto.Title.ToLower() && c.Id != dto.Id);
+            var allConditions = await _dao.GetAllCancelConditionsAsync();
+            
+            // Check duplicate title (exclude current record)
+            var existingTitle = allConditions
+                .FirstOrDefault(c => c.Title.ToLower() == dto.Title.ToLower() && c.Id != dto.Id);
 
-            if (existing != null)
+            if (existingTitle != null)
             {
                 throw new InvalidOperationException($"Cancel condition with title '{dto.Title}' already exists.");
+            }
+
+            // Check duplicate refund percent (exclude current record)
+            var existingRefund = allConditions
+                .FirstOrDefault(c => c.RefundPercent == dto.RefundPercent && c.Id != dto.Id);
+
+            if (existingRefund != null)
+            {
+                throw new InvalidOperationException($"Cancel condition with refund percent {dto.RefundPercent}% already exists.");
             }
 
             model.Title = dto.Title;
