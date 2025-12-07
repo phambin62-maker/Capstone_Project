@@ -2,7 +2,7 @@
 @using BE_Capstone_Project.Domain.Enums
 
 @{
-    ViewData["Title"] = "Cập nhật Điều kiện Hủy";
+    ViewData["Title"] = "Update Cancellation Policy";
     Layout = "~/Views/Shared/_StaffLayout.cshtml";
 }
 
@@ -14,13 +14,6 @@
 
 <div class="card shadow-sm">
     <div class="card-body">
-        @if (TempData["ErrorMessage"] != null)
-        {
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                @TempData["ErrorMessage"]
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        }
 
         <form asp-action="Edit" method="post">
             @Html.AntiForgeryToken()

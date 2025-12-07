@@ -1,7 +1,7 @@
 @model List<FE_Capstone_Project.Models.CancelConditionDTO>
 
 @{
-    ViewData["Title"] = "Quản lý Điều kiện Hủy Tour";
+    ViewData["Title"] = "Manage Cancellation Policy";
     Layout = "~/Views/Shared/_StaffLayout.cshtml";
     int currentPage = ViewBag.CurrentPage ?? 1;
     int totalPages = ViewBag.TotalPages ?? 1;
@@ -18,22 +18,6 @@
         </a>
     </div>
 </div>
-
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        @TempData["SuccessMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
-
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        @TempData["ErrorMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
 
 <div class="card shadow-sm mb-4">
     <div class="card-body">
@@ -86,12 +70,16 @@
                                     }
                                 </td>
                                 <td class="text-center">
-                                    <div class="btn-group">
-                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-primary btn-sm" title="Edit">
-                                            <i class="fas fa-edit"></i>
+                                    <div class="btn-group" role="group">
+                                        <!-- Nút Edit lớn hơn với biểu tượng và text -->
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary btn-action" title="Edit">
+                                            <i class="fas fa-edit me-1"></i>Edit
                                         </a>
-                                        <button type="button" class="btn btn-outline-danger btn-sm" title="Delete" data-bs-toggle="modal" data-bs-target="#deleteModal-@item.Id">
-                                            <i class="fas fa-trash-alt"></i>
+
+                                        <!-- Nút Delete lớn hơn với biểu tượng và text -->
+                                        <button type="button" class="btn btn-danger btn-action" title="Delete"
+                                                data-bs-toggle="modal" data-bs-target="#deleteModal-@item.Id">
+                                            <i class="fas fa-trash-alt me-1"></i>Delete
                                         </button>
                                     </div>
 
@@ -163,3 +151,47 @@
         </div>
     }
 </div>
+    <style>
+    /* CSS cho các nút action */
+    .btn-action {
+        padding: 8px 16px;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 6px;
+        min-width: 100px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    .btn-action:active {
+        transform: translateY(0);
+    }
+
+    .btn-group {
+        gap: 10px;
+    }
+
+    /* Modal buttons */
+    .btn-lg {
+        padding: 10px 20px;
+        font-size: 16px;
+    }
+
+    /* Responsive adjustments */
+    @@media (max-width: 768px) {
+        .btn-action {
+            padding: 6px 12px;
+            font-size: 13px;
+            min-width: 80px;
+        }
+
+        .btn-group {
+            flex-direction: column;
+            gap: 5px;
+        }
+    }
+</style>
