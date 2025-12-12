@@ -7,7 +7,16 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddScoped<DataService>();
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews()
+    .ConfigureApplicationPartManager(apm => 
+    {
+        var backendAssembly = apm.ApplicationParts
+            .FirstOrDefault(p => p.Name == "BE_Capstone_Project");
+        if (backendAssembly != null)
+        {
+            apm.ApplicationParts.Remove(backendAssembly);
+        }
+    });
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {

@@ -23,7 +23,6 @@
         </div>
     </div>
 
-
     <!-- Booking locked notification -->
     @if (!isEditable)
     {
@@ -63,14 +62,14 @@
                                     <td class="fw-bold text-muted">Departure Date:</td>
                                     <td>
                                         <i class="fas fa-plane-departure text-primary me-2"></i>
-                                        @Model.DepartureDate?.ToString("dd/MM/yyyy HH:mm")
+                                        @Model.DepartureDate?.ToString("dd/MM/yyyy ")
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="fw-bold text-muted">Arrival Date:</td>
                                     <td>
                                         <i class="fas fa-plane-arrival text-success me-2"></i>
-                                        @Model.ArrivalDate?.ToString("dd/MM/yyyy HH:mm")
+                                        @Model.ArrivalDate?.ToString("dd/MM/yyyy ")
                                     </td>
                                 </tr>
                             </table>
@@ -173,7 +172,7 @@
             <div class="card shadow mb-4 @editableClass"
                  @if (!isEditable)
                  {
-                         <text>data-bs-toggle="tooltip" title="@editableTooltip"</text>
+                             <text>data-bs-toggle="tooltip" title="@editableTooltip"</text>
                  }
 >
                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
@@ -182,16 +181,17 @@
                     </h6>
                     @if (!isEditable)
                     {
-                                <span class="badge bg-secondary">
-                                    <i class="fas fa-lock me-1"></i>Locked
-                                </span>
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-lock me-1"></i>Locked
+                                    </span>
                     }
                 </div>
                 <div class="card-body">
                     <!-- Update Booking Status -->
-                    <form method="post" action="@Url.Action("UpdateBookingStatus", new { id = Model.Id })"
-                          class="ajax-form" data-success-message="Booking status updated successfully!">
+                    <form method="post" action="@Url.Action("UpdateBookingStatus", "StaffBooking")"
+                          id="bookingStatusForm">
                         @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
                         <div class="mb-3">
                             <label for="BookingStatus" class="form-label fw-bold">
                                 <i class="fas fa-calendar-check me-1"></i>Booking Status
@@ -199,14 +199,14 @@
                             <select class="form-control" id="BookingStatus" name="BookingStatus" required
                                     @if (!isEditable)
                                     {
-                                            <text>disabled</text>
+                                                <text>disabled</text>
                                     }
 >
                                 @foreach (var status in ViewBag.BookingStatuses)
                                 {
-                                            <option value="@status" selected="@(status == Model.BookingStatus)">
-                                                @GetBookingStatusText(status)
-                                            </option>
+                                                <option value="@status" selected="@(status == Model.BookingStatus)">
+                                                    @GetBookingStatusText(status)
+                                                </option>
                                 }
                             </select>
                         </div>
@@ -219,22 +219,22 @@
                                       @if (!isEditable) {
                                       <text>disabled</text>
                                       }
-></textarea>
+                            ></textarea>
                         </div>
                         <button type="submit" class="btn btn-primary w-100"
                                 @if (!isEditable)
                                 {
-                                        <text>disabled</text>
+                                            <text>disabled</text>
                                 }
 >
                             <i class="fas fa-save me-1"></i>
                             @if (isEditable)
                             {
-                                        <text>Update Booking</text>
+                                            <text>Update Booking</text>
                             }
                             else
                             {
-                                        <text>Locked</text>
+                                            <text>Locked</text>
                             }
                         </button>
                     </form>
@@ -242,9 +242,10 @@
                     <hr class="my-4">
 
                     <!-- Update Payment Status -->
-                    <form method="post" action="@Url.Action("UpdatePaymentStatus", new { id = Model.Id })"
-                          class="ajax-form" data-success-message="Payment status updated successfully!">
+                    <form method="post" action="@Url.Action("UpdatePaymentStatus", "StaffBooking")"
+                          id="paymentStatusForm">
                         @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
                         <div class="mb-3">
                             <label for="PaymentStatus" class="form-label fw-bold">
                                 <i class="fas fa-money-bill-wave me-1"></i>Payment Status
@@ -252,14 +253,14 @@
                             <select class="form-control" id="PaymentStatus" name="PaymentStatus" required
                                     @if (!isEditable)
                                     {
-                                            <text>disabled</text>
+                                                <text>disabled</text>
                                     }
 >
                                 @foreach (var status in ViewBag.PaymentStatuses)
                                 {
-                                            <option value="@status" selected="@(status == Model.PaymentStatus)">
-                                                @GetPaymentStatusText(status)
-                                            </option>
+                                                <option value="@status" selected="@(status == Model.PaymentStatus)">
+                                                    @GetPaymentStatusText(status)
+                                                </option>
                                 }
                             </select>
                         </div>
@@ -272,22 +273,22 @@
                                       @if (!isEditable) {
                                       <text>disabled</text>
                                       }
-></textarea>
+                            ></textarea>
                         </div>
                         <button type="submit" class="btn btn-success w-100"
                                 @if (!isEditable)
                                 {
-                                        <text>disabled</text>
+                                            <text>disabled</text>
                                 }
 >
                             <i class="fas fa-money-bill-wave me-1"></i>
                             @if (isEditable)
                             {
-                                        <text>Update Payment</text>
+                                            <text>Update Payment</text>
                             }
                             else
                             {
-                                        <text>Locked</text>
+                                            <text>Locked</text>
                             }
                         </button>
                     </form>
@@ -308,69 +309,69 @@
                 $('.alert').alert('close');
             }, 5000);
 
-            // AJAX form submission - only submit if form enabled
-            $('.ajax-form').submit(function(e) {
-                e.preventDefault();
-
+            // Handle form submission with loading state
+            $('#bookingStatusForm, #paymentStatusForm').submit(function(e) {
                 const form = $(this);
                 const submitBtn = form.find('button[type="submit"]');
 
-                // Check if form is disabled then don't submit
+                // Check if form is disabled
                 if (submitBtn.prop('disabled')) {
+                    e.preventDefault();
                     return false;
                 }
 
+                // Store original text and show loading
                 const originalText = submitBtn.html();
-                const successMessage = form.data('success-message');
-
-                // Disable button and show loading
                 submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Processing...');
 
-                $.ajax({
-                    url: form.attr('action'),
-                    type: 'POST',
-                    data: form.serialize(),
-                    success: function(response) {
-                        showAlert('success', successMessage);
-                        // Reload page after 1.5 seconds to reflect changes
-                        setTimeout(() => location.reload(), 1500);
-                    },
-                    error: function(xhr) {
-                        let errorMessage = 'An error occurred while updating';
-                        if (xhr.responseJSON && xhr.responseJSON.error) {
-                            errorMessage = xhr.responseJSON.error;
-                        }
-                        showAlert('danger', errorMessage);
-                    },
-                    complete: function() {
-                        submitBtn.prop('disabled', false).html(originalText);
-                    }
-                });
+                // Form will submit normally - no AJAX
+                // The loading state will be cleared when page reloads
             });
         });
 
-        function showAlert(type, message) {
-            const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
-            const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
-
-            const alertHtml = `
-                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
-                    <i class="fas ${icon} me-2"></i>${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            `;
-
-            // Remove existing alerts
-            $('.alert').alert('close');
-            // Prepend new alert
-            $('.container-fluid').prepend(alertHtml);
-        }
-
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(function() {
-                showAlert('success', 'Booking ID copied to clipboard!');
+                // Show temporary success message
+                const alertHtml = `
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>Booking ID copied to clipboard!
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+
+                // Create temporary container
+                let tempAlertContainer = $('#tempAlerts');
+                if (tempAlertContainer.length === 0) {
+                    $('.container-fluid').prepend('<div id="tempAlerts"></div>');
+                    tempAlertContainer = $('#tempAlerts');
+                }
+
+                tempAlertContainer.html(alertHtml);
+
+                // Auto remove after 3 seconds
+                setTimeout(() => {
+                    tempAlertContainer.find('.alert').alert('close');
+                }, 3000);
             }, function() {
-                showAlert('danger', 'Failed to copy booking ID');
+                // Show error message
+                const alertHtml = `
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>Failed to copy booking ID
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+
+                let tempAlertContainer = $('#tempAlerts');
+                if (tempAlertContainer.length === 0) {
+                    $('.container-fluid').prepend('<div id="tempAlerts"></div>');
+                    tempAlertContainer = $('#tempAlerts');
+                }
+
+                tempAlertContainer.html(alertHtml);
+
+                setTimeout(() => {
+                    tempAlertContainer.find('.alert').alert('close');
+                }, 3000);
             });
         }
     </script>

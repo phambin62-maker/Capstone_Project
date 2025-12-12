@@ -2,6 +2,7 @@
 using BE_Capstone_Project.Application.CancelConditions.Services.Interfaces;
 using BE_Capstone_Project.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace BE_Capstone_Project.Application.CancelConditions.Controllers
 {
@@ -40,7 +41,15 @@ namespace BE_Capstone_Project.Application.CancelConditions.Controllers
             return Ok(new { success = true, data = result });
         }
 
+        [HttpGet("search")]
+        public async Task<IActionResult> Search([FromQuery] string? keyword, [FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10)
+        {
+            var result = await _service.GetPagingAsync(keyword ?? "", pageIndex, pageSize);
+            return Ok(new { success = true, data = result });
+        }
+
         [HttpPost]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> Create([FromBody] CancelConditionCreateDTO dto)
         {
             if (!ModelState.IsValid)
@@ -58,19 +67,27 @@ namespace BE_Capstone_Project.Application.CancelConditions.Controllers
                 });
             }
 
-            var id = await _service.CreateAsync(dto);
-            if (id <= 0)
-                return BadRequest(new { success = false, message = "Create failed" });
-
-            return Ok(new
+            try 
             {
-                success = true,
-                message = "Created successfully",
-                data = new { id }
-            });
+                var id = await _service.CreateAsync(dto);
+                if (id <= 0)
+                    return BadRequest(new { success = false, message = "Create failed" });
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "Created successfully",
+                    data = new { id }
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                 return BadRequest(new { success = false, message = ex.Message });
+            }
         }
 
         [HttpPut]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> Update([FromBody] CancelConditionUpdateDTO dto)
         {
             if (!ModelState.IsValid)
@@ -88,14 +105,22 @@ namespace BE_Capstone_Project.Application.CancelConditions.Controllers
                 });
             }
 
-            var success = await _service.UpdateAsync(dto);
-            if (!success)
-                return NotFound(new { success = false, message = "Cancel condition not found" });
+            try
+            {
+                var success = await _service.UpdateAsync(dto);
+                if (!success)
+                    return NotFound(new { success = false, message = "Cancel condition not found" });
 
-            return Ok(new { success = true, message = "Updated successfully" });
+                return Ok(new { success = true, message = "Updated successfully" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                 return BadRequest(new { success = false, message = ex.Message });
+            }
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> Delete(int id)
         {
             var success = await _service.DeleteAsync(id);

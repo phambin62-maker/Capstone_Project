@@ -202,14 +202,12 @@ namespace FE_Capstone_Project.Controllers
             }
         }
 
-        // Action để hiển thị view danh sách booking (chỉ trả về view)
         [HttpGet]
         public IActionResult BookingsView()
         {
             return View("Bookings");
         }
 
-        // API endpoint để lấy dữ liệu booking (cho AJAX calls)
         [HttpGet]
         public async Task<IActionResult> GetBookingsData(
             string searchTerm = null,
@@ -265,30 +263,29 @@ namespace FE_Capstone_Project.Controllers
         {
             try
             {
-                // Gọi API để lấy chi tiết booking
+                // Call API to get booking details 
                 var (success, result, error) = await CallApiAsync<StaffBookingDTO>($"Booking/staff/bookings/{id}");
 
                 if (success && result != null)
                 {
-                    ViewData["Title"] = $"Chi tiết Booking #{result.Id}";
+                    ViewData["Title"] = $"Booking Details #{result.Id}";
 
-                    // Lấy danh sách trạng thái cho dropdown
+                    // Get the list of statuses for dropdown 
                     await LoadStatusDropdowns();
 
                     return View(result);
                 }
 
-                TempData["ErrorMessage"] = error ?? "Không tìm thấy booking.";
+                TempData["ErrorMessage"] = error ?? "No booking found.";
                 return RedirectToAction("Bookings");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error loading booking details ID: {BookingId}", id);
-                TempData["ErrorMessage"] = $"Lỗi kết nối đến server: {ex.Message}";
+                TempData["ErrorMessage"] = $"Error connecting to server: {ex.Message}";
                 return RedirectToAction("Bookings");
             }
-        }
-
+            }
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateBookingStatus(int id, UpdateBookingStatusRequest model)
@@ -297,7 +294,7 @@ namespace FE_Capstone_Project.Controllers
             {
                 if (!ModelState.IsValid)
                 {
-                    TempData["ErrorMessage"] = "Dữ liệu không hợp lệ.";
+                    TempData["ErrorMessage"] = "Invalid data.";
                     return RedirectToAction("Details", new { id });
                 }
 
@@ -308,17 +305,17 @@ namespace FE_Capstone_Project.Controllers
 
                 if (success)
                 {
-                    TempData["SuccessMessage"] = "Cập nhật trạng thái booking thành công!";
+                    TempData["SuccessMessage"] = "Booking status updated successfully!";
                 }
                 else
                 {
-                    TempData["ErrorMessage"] = error ?? "Cập nhật trạng thái booking thất bại!";
+                    TempData["ErrorMessage"] = error ?? "Failed to update booking status!";
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating booking status ID: {BookingId}", id);
-                TempData["ErrorMessage"] = $"Lỗi hệ thống: {ex.Message}";
+                TempData["ErrorMessage"] = $"System error: {ex.Message}";
             }
 
             return RedirectToAction("Details", new { id });
@@ -332,7 +329,7 @@ namespace FE_Capstone_Project.Controllers
             {
                 if (!ModelState.IsValid)
                 {
-                    TempData["ErrorMessage"] = "Dữ liệu không hợp lệ.";
+                    TempData["ErrorMessage"] = "Invalid data.";
                     return RedirectToAction("Details", new { id });
                 }
 
@@ -343,17 +340,17 @@ namespace FE_Capstone_Project.Controllers
 
                 if (success)
                 {
-                    TempData["SuccessMessage"] = "Cập nhật trạng thái thanh toán thành công!";
+                    TempData["SuccessMessage"] = "Payment status updated successfully!";
                 }
                 else
                 {
-                    TempData["ErrorMessage"] = error ?? "Cập nhật trạng thái thanh toán thất bại!";
+                    TempData["ErrorMessage"] = error ?? "Payment status update failed!";
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating payment status ID: {BookingId}", id);
-                TempData["ErrorMessage"] = $"Lỗi hệ thống: {ex.Message}";
+                TempData["ErrorMessage"] = $"System error: {ex.Message}";
             }
 
             return RedirectToAction("Details", new { id });
