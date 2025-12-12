@@ -22,10 +22,8 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
         private readonly BookingCustomerDAO _bookingCustomerDAO;
         private readonly OtmsdbContext _context;
 
-        // === 1. DỊCH VỤ THÔNG BÁO ===
         private readonly NotificationService _notificationService;
 
-        // === 2. SỬA LỖI CONSTRUCTOR (THÊM NotificationService VÀO) ===
         public BookingService(BookingDAO bookingDAO,
                               BookingCustomerDAO bookingCustomerDAO,
                               NotificationService notificationService,
@@ -36,7 +34,6 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
             _notificationService = notificationService;
             _context = otmsdbContext;
         }
-        // === KẾT THÚC SỬA LỖI ===
 
         public async Task<IEnumerable<BookingDTO>> GetAllAsync()
         {
@@ -460,7 +457,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                     {
                         UserId = booking.UserId,
                         Title = "Payment Status Updated",
-                        Message = $"Payment status for your booking '{tourName}' has been updated from {oldStatus} to {request.PaymentStatus}. {request.Note}",
+                        Message = $"Payment status for your booking '{tourName}' has been updated from  {oldStatus} to {request.PaymentStatus}. {request.Note}",
                         NotificationType = NotificationType.System
                     };
 

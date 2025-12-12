@@ -177,7 +177,6 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
                 return BadRequest(new { message = "Lỗi khi lấy tên tour", error = ex.Message });
             }
         }
-        // GET: api/TourSchedule/GetFilteredTourSchedules
         [HttpGet("GetFilteredTourSchedules")]
         public async Task<ActionResult<ApiResponse<List<TourScheduleDTO>>>> GetFilteredTourSchedules(
             [FromQuery] int? tourId = null,

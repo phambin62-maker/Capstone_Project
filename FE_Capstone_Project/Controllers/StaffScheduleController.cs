@@ -508,7 +508,6 @@ namespace FE_Capstone_Project.Controllers
         {
             try
             {
-                // Sử dụng CallApiAsync với token
                 var (success, result, error) = await CallApiAsync<ApiResponse<Tour>>($"Tour/GetTourById/{id}");
 
                 if (success && result?.Data != null)

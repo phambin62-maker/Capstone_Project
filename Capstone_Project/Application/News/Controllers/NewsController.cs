@@ -12,8 +12,8 @@ using System.Security.Claims;
 using BE_Capstone_Project.Infrastructure;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
-using System.Globalization; // Cần cho NormalizeString
-using System.Text; // Cần cho NormalizeString
+using System.Globalization;
+using System.Text; 
 
 namespace BE_Capstone_Project.API.Controllers
 {
@@ -34,7 +34,6 @@ namespace BE_Capstone_Project.API.Controllers
             _context = context;
         }
 
-        // === CÁC HÀM HELPER (ĐÃ DI CHUYỂN VÀ THÊM VÀO) ===
 
         private int GetCurrentUserId()
         {
@@ -53,7 +52,6 @@ namespace BE_Capstone_Project.API.Controllers
             return "Unknown";
         }
 
-        // SỬA: Đã di chuyển ParseNewsStatus từ Service sang Controller
         private NewsStatus ParseNewsStatus(string? statusString)
         {
             if (string.IsNullOrEmpty(statusString))
@@ -67,7 +65,6 @@ namespace BE_Capstone_Project.API.Controllers
             return NewsStatus.Draft;
         }
 
-        // === CÁC LỆNH GET (ĐỌC) ===
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
@@ -106,8 +103,6 @@ namespace BE_Capstone_Project.API.Controllers
             return Ok(notifications);
         }
 
-        // === CÁC LỆNH "VIẾT" (WRITE) ===
-
         [HttpPost]
         [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> Create([FromForm] CreateNewsFormDTO formDto)
@@ -143,7 +138,7 @@ namespace BE_Capstone_Project.API.Controllers
                 Title = formDto.Title,
                 Content = formDto.Content,
                 Image = imageUrl,
-                NewsStatus = formDto.NewsStatus // (DTO đã chấp nhận string)
+                NewsStatus = formDto.NewsStatus 
             };
 
             var newId = await _newsService.CreateAsync(createNewsDto);
@@ -206,7 +201,6 @@ namespace BE_Capstone_Project.API.Controllers
             existingNewsEntity.Content = formDto.Content;
             existingNewsEntity.Image = newRelativePath;
 
-            // SỬA LỖI CS1061: Chuyển string (từ DTO) sang Enum (cho Entity)
             if (!string.IsNullOrEmpty(formDto.NewsStatus))
             {
                 existingNewsEntity.NewsStatus = ParseNewsStatus(formDto.NewsStatus);

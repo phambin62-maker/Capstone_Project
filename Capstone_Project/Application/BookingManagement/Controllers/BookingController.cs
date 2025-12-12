@@ -127,7 +127,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
 
 
                 [HttpPut("{id}")]
-                [Authorize] // Cần đăng nhập để cập nhật booking
+                [Authorize]
                 public async Task<IActionResult> Update(int id, [FromBody] CreateBookingDTO dto)
                 {
                     var success = await _bookingService.UpdateAsync(id, dto);
@@ -136,7 +136,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
                 }
 
                 [HttpDelete("{id}")]
-                [Authorize] // Cần đăng nhập để xóa booking
+                [Authorize]
                 public async Task<IActionResult> Delete(int id)
                 {
                     var success = await _bookingService.DeleteAsync(id);
