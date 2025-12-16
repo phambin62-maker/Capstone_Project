@@ -31,6 +31,14 @@
                             <th width="40%">Tour:</th>
                             <td>@(Model.TourName ?? $"Tour #{Model.TourId}")</td>
                         </tr>
+                        <tr>
+                            <th>Status:</th>
+                            <td>
+                                <span class="badge @GetStatusBadgeClass(Model.ScheduleStatus)">
+                                    @GetStatusText(Model.ScheduleStatus)
+                                </span>
+                            </td>
+                        </tr>
                     </table>
                 </div>
                 <div class="col-md-6">
@@ -42,14 +50,6 @@
                         <tr>
                             <th>Arrival Date:</th>
                             <td>@Model.ArrivalDate?.ToString("dd/MM/yyyy")</td>
-                        </tr>
-                        <tr>
-                            <th>Status:</th>
-                            <td>
-                                <span class="badge @GetStatusBadgeClass(Model.ScheduleStatus)">
-                                    @GetStatusText(Model.ScheduleStatus)
-                                </span>
-                            </td>
                         </tr>
                     </table>
                 </div>

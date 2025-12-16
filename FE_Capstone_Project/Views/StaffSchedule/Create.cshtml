@@ -234,32 +234,24 @@
                 });
             }
 
-            // Select a tour
             function selectTour(tourId, tourName) {
-                // Update hidden input
                 $('#tourIdInput').val(tourId);
 
-                // Update display
                 $('#selectedTourId').text(tourId);
                 $('#selectedTourName').text(tourName);
                 $('#tourNameDisplay').text(tourName);
 
-                // Show selected tour info
                 $('#selectedTourInfo').show();
 
-                // Show schedule form section
                 $('#scheduleFormSection').show();
 
-                // Hide tour selection section
                 $('#tourSelectionSection').hide();
             }
 
-            // Clear selection
             $('#clearSelection').on('click', function () {
                 resetTourSelection();
             });
 
-            // Back to tour selection
             $('#backToTourSelection').on('click', function () {
                 resetTourSelection();
             });
@@ -271,7 +263,6 @@
                 $('#tourSelectionSection').show();
             }
 
-            // Search functionality
             $('#searchTourBtn').on('click', function () {
                 const searchTerm = $('#tourSearch').val();
                 loadTours(searchTerm);
@@ -290,7 +281,6 @@
                 }
             });
 
-            // Date validation
             $('#DepartureDate').on('change', function () {
                 const departureDate = new Date($(this).val());
                 const minArrivalDate = new Date(departureDate);
@@ -298,14 +288,12 @@
 
                 $('#ArrivalDate').attr('min', minArrivalDate.toISOString().split('T')[0]);
 
-                // If arrival date is before new min date, clear it
                 const arrivalDate = new Date($('#ArrivalDate').val());
                 if (arrivalDate <= departureDate) {
                     $('#ArrivalDate').val('');
                 }
             });
 
-            // Form validation
             $('#scheduleForm').on('submit', function (e) {
                 if (!$('#tourIdInput').val()) {
                     e.preventDefault();
@@ -323,11 +311,9 @@
                 }
             });
 
-            // Auto-load tours on page load if there's a search term in URL
             const urlParams = new URLSearchParams(window.location.search);
             const tourId = urlParams.get('tourId');
             if (tourId) {
-                // If tourId is provided in URL, try to load that tour
                 $.get('@Url.Action("GetTourById", "StaffSchedule")', { id: tourId })
                     .done(function (tour) {
                         if (tour) {
@@ -339,7 +325,6 @@
                     });
             }
 
-            // Auto-hide alerts after 5 seconds
             setTimeout(function() {
                 $('.alert').alert('close');
             }, 5000);

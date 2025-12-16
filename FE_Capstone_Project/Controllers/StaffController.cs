@@ -835,49 +835,7 @@ namespace FE_Capstone_Project.Controllers
             {
                 setNameAction($"Error: {ex.Message}");
             }
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> DeleteTour(int id)
-        {
-            try
-            {
-                var token = GetToken();
-                if (string.IsNullOrEmpty(token))
-                {
-                    TempData["ErrorMessage"] = "Login session has expired. Please log in again.";
-                    return RedirectToAction("Tours");
-                }
-
-                var request = new HttpRequestMessage(HttpMethod.Delete, $"Tour/DeleteTour?tourId={id}");
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-                var response = await _httpClient.SendAsync(request);
-                var responseContent = await response.Content.ReadAsStringAsync();
-
-                _logger.LogInformation($"DeleteTour Response: {response.StatusCode}, Content: {responseContent}");
-
-                if (response.IsSuccessStatusCode)
-                {
-                    TempData["SuccessMessage"] = "Tour deleted successfully!";
-                }
-                else if (response.StatusCode == HttpStatusCode.Unauthorized)
-                {
-                    TempData["ErrorMessage"] = "Login session has expired. Please log in again.";
-                }
-                else
-                {
-                    TempData["ErrorMessage"] = "Tour deletion failed!";
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error deleting tour ID: {TourId}", id);
-                TempData["ErrorMessage"] = "Server connection error!";
-            }
-
-            return RedirectToAction("Tours");
-        }
+        }       
 
         [HttpPost]
         public async Task<IActionResult> ToggleTourStatus(int id)

@@ -3,6 +3,7 @@ using BE_Capstone_Project.Application.CancelConditions.Services.Interfaces;
 using BE_Capstone_Project.DAO;
 using BE_Capstone_Project.Domain.Enums;
 using BE_Capstone_Project.Domain.Models;
+using BE_Capstone_Project.Application.Admin.DTOs;
 
 namespace BE_Capstone_Project.Application.CancelConditions.Services
 {
@@ -27,6 +28,30 @@ namespace BE_Capstone_Project.Application.CancelConditions.Services
                 CreatedDate = c.CreatedDate,
                 CancelStatus = c.CancelStatus
             }).ToList();
+        }
+
+        public async Task<PagedResultDto<CancelConditionDTO>> GetPagingAsync(string keyword, int pageIndex, int pageSize)
+        {
+            var (list, totalCount) = await _dao.GetCancelConditionsPagingAsync(keyword, pageIndex, pageSize);
+
+            var dtos = list.Select(c => new CancelConditionDTO
+            {
+                Id = c.Id,
+                Title = c.Title,
+                MinDaysBeforeTrip = c.MinDaysBeforeTrip,
+                RefundPercent = c.RefundPercent,
+                CreatedDate = c.CreatedDate,
+                CancelStatus = c.CancelStatus
+            }).ToList();
+
+            return new PagedResultDto<CancelConditionDTO>
+            {
+                Data = dtos,
+                TotalCount = totalCount,
+                Page = pageIndex,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            };
         }
 
         public async Task<CancelConditionDTO?> GetByIdAsync(int id)
@@ -61,6 +86,26 @@ namespace BE_Capstone_Project.Application.CancelConditions.Services
 
         public async Task<int> CreateAsync(CancelConditionCreateDTO dto)
         {
+            var allConditions = await _dao.GetAllCancelConditionsAsync();
+            
+            // Check duplicate title
+            var existingTitle = allConditions
+                .FirstOrDefault(c => c.Title.ToLower() == dto.Title.ToLower());
+            
+            if (existingTitle != null)
+            {
+                throw new InvalidOperationException($"Cancel condition with title '{dto.Title}' already exists.");
+            }
+
+            // Check duplicate refund percent
+            var existingRefund = allConditions
+                .FirstOrDefault(c => c.RefundPercent == dto.RefundPercent);
+            
+            if (existingRefund != null)
+            {
+                throw new InvalidOperationException($"Cancel condition with refund percent {dto.RefundPercent}% already exists.");
+            }
+
             var model = new CancelCondition
             {
                 Title = dto.Title,
@@ -77,6 +122,26 @@ namespace BE_Capstone_Project.Application.CancelConditions.Services
             var model = await _dao.GetCancelConditionByIdAsync(dto.Id);
             if (model == null) return false;
 
+            var allConditions = await _dao.GetAllCancelConditionsAsync();
+            
+            // Check duplicate title (exclude current record)
+            var existingTitle = allConditions
+                .FirstOrDefault(c => c.Title.ToLower() == dto.Title.ToLower() && c.Id != dto.Id);
+
+            if (existingTitle != null)
+            {
+                throw new InvalidOperationException($"Cancel condition with title '{dto.Title}' already exists.");
+            }
+
+            // Check duplicate refund percent (exclude current record)
+            var existingRefund = allConditions
+                .FirstOrDefault(c => c.RefundPercent == dto.RefundPercent && c.Id != dto.Id);
+
+            if (existingRefund != null)
+            {
+                throw new InvalidOperationException($"Cancel condition with refund percent {dto.RefundPercent}% already exists.");
+            }
+
             model.Title = dto.Title;
             model.MinDaysBeforeTrip = dto.MinDaysBeforeTrip;
             model.RefundPercent = dto.RefundPercent;
@@ -84,6 +149,7 @@ namespace BE_Capstone_Project.Application.CancelConditions.Services
 
             return await _dao.UpdateCancelConditionAsync(model);
         }
+
 
         public async Task<bool> DeleteAsync(int id)
         {
