@@ -154,7 +154,7 @@
                             <div class="gallery-item">
                                 @{
                                     var image = images;
-                                    var imageUrl = $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(mainImage.Image!)}";
+                                    var imageUrl = $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(image.Image!)}";
                                 }
                                 <a href="@imageUrl" class="glightbox">
                                     <img src="@imageUrl" class="img-fluid" loading="lazy">
