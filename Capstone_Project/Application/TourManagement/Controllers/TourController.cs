@@ -397,15 +397,6 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
                 if (!result)
                     return BadRequest(new { success = false, message = "Failed to delete image" });
 
-                if (!string.IsNullOrEmpty(imageToDelete.Image))
-                {
-                    var imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", imageToDelete.Image.TrimStart('/'));
-                    if (System.IO.File.Exists(imagePath))
-                    {
-                        System.IO.File.Delete(imagePath);
-                    }
-                }
-
                 return Ok(new { success = true, message = "Image deleted successfully" });
             }
             catch (Exception ex)
