@@ -98,7 +98,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpPost("UpdateTour")]
-        [Authorize(Roles = "Admin,Staff")] 
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> UpdateTour([FromForm] TourDTO tour, [FromForm] List<IFormFile> images)
         {
             var tourToUpdate = await _tourService.GetTourById(tour.Id.Value);
@@ -121,27 +121,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
             var result = await _tourService.UpdateTour(tourToUpdate);
 
             if (!result) return BadRequest(new { message = "Failed to update tour" });
-
-            var existingTourImages = await _tourImageService.GetTourImagesByTourId(tour.Id.Value);
-
-            
-            if (images != null && images.Count > 0 && existingTourImages != null && existingTourImages.Count > 0)
-            {
-                await _tourImageService.DeleteTourImagesByTourId(tour.Id.Value);
-
-                foreach (var oldImage in existingTourImages)
-                {
-                    if (!string.IsNullOrEmpty(oldImage.Image))
-                    {
-                        var oldImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", oldImage.Image.TrimStart('/'));
-                        if (System.IO.File.Exists(oldImagePath))
-                        {
-                            System.IO.File.Delete(oldImagePath);
-                        }
-                    }
-                }
-            }
-
+           
             
             if (images != null && images.Count > 0)
             {
@@ -435,7 +415,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpPost("UploadTourImages")]
-        [Authorize(Roles = "Admin,Staff")] 
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> UploadTourImages(int tourId, List<IFormFile> images)
         {
             try
