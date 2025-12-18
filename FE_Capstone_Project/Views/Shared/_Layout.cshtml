@@ -50,7 +50,7 @@
 
     @await RenderSectionAsync("Styles", required: false)
     <!-- Chat Widget CSS (only for logged-in customers) -->
-    @if (!string.IsNullOrEmpty(Context.Session.GetString("JwtToken")) && Context.Session.GetInt32("UserRoleId") != 1)
+    @if (Context.Session.GetInt32("UserRoleId") != 1)
     {
         <link href="~/css/chat.css" rel="stylesheet" />
     }
@@ -150,7 +150,7 @@
         </header>
     }
     <div class="main-wrapper">
-        <main class="container pt-5">
+        <main class="container">
             @RenderBody()
         </main>
     </div>
@@ -201,10 +201,15 @@
     }
 
     <!-- Chat Widget - Hiển thị cho tất cả -->
-    @await Html.PartialAsync("_ChatWidget")
+    @if (Context.Session.GetInt32("UserRoleId") != 1)
+    {
+        <link href="~/css/chat.css" rel="stylesheet" />
+        @await Html.PartialAsync("_ChatWidget")
+    }
 
     @if (useSignalR)
     {
+        @await Html.PartialAsync("_ChatWidget")
         <!-- SignalR cho user đã đăng nhập -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
     }
