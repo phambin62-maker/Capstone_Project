@@ -356,10 +356,12 @@ namespace BE_Capstone_Project.DAO
                         query = query.OrderBy(t => t.Price);
                     else if (sort.ToLower() == "desc")
                         query = query.OrderByDescending(t => t.Price);
+                    else if (sort.ToLower() == "newest")
+                        query = query.OrderByDescending(t => t.Id);
                 }
                 else
                 {
-                    query = query.OrderBy(t => t.Id);
+                    query = query.OrderByDescending(t => t.Id);
                 }
 
                 var paginatedTours = await query

@@ -608,8 +608,33 @@ namespace FE_Capstone_Project.Controllers
         public async Task<IActionResult> Edit(TourEditModel model)
         {
             _logger.LogInformation($"Updating tour ID: {model.Id}");
-            if ((model.Images == null || model.Images.Count == 0) &&
-                (!model.ExistingImages?.Any() ?? true))
+
+            // Fetch current tour to get existing images count and for view reloading
+            var (success, result, tourError) = await CallApiAsync<TourDetailResponse>($"Tour/GetTourById/{model.Id}");
+            var existingImagesCount = 0;
+            List<TourImageViewModel> currentImagesList = new List<TourImageViewModel>();
+            if (success && result?.Tour != null && result.Tour.TourImages != null)
+            {
+                existingImagesCount = result.Tour.TourImages.Count;
+                currentImagesList = result.Tour.TourImages.Select(img => new TourImageViewModel
+                {
+                    Id = img.Id,
+                    Image = img.Image ?? string.Empty,
+                    TourId = img.TourId
+                }).ToList();
+            }
+
+            var newImagesCount = 0;
+            if (model is TourEditModel editModel && editModel.Images != null)
+            {
+                newImagesCount = editModel.Images.Count;
+            }
+            else if (model.Images != null)
+            {
+                newImagesCount = model.Images.Count;
+            }
+
+            if (newImagesCount == 0 && existingImagesCount == 0)
             {
                 ModelState.AddModelError("Images", "Tour must have at least 1 image");
             }
@@ -621,6 +646,8 @@ namespace FE_Capstone_Project.Controllers
                 }
 
                 await ReloadViewBagData();
+                ViewBag.CurrentTourImages = currentImagesList;
+                ViewBag.CurrentTourImagesCount = currentImagesList.Count;
                 return View(model);
             }
 
@@ -646,7 +673,36 @@ namespace FE_Capstone_Project.Controllers
 
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["SuccessMessage"] = "Tour updated successfully!";
+                    // Check if anything actually changed to decide whether to show success message
+                    bool hasChanged = false;
+                    if (result?.Tour != null)
+                    {
+                        var t = result.Tour;
+                        hasChanged = model.Name != t.Name ||
+                                     model.Description != t.Description ||
+                                     model.Price != t.Price ||
+                                     model.Duration != t.Duration ||
+                                     model.StartLocationId != t.StartLocationId ||
+                                     model.EndLocationId != t.EndLocationId ||
+                                     model.CategoryId != t.CategoryId ||
+                                     model.CancelConditionId != t.CancelConditionId ||
+                                     model.ChildDiscount != (t.ChildDiscount ?? 0) ||
+                                     model.GroupDiscount != (t.GroupDiscount ?? 0) ||
+                                     model.GroupNumber != (t.GroupNumber ?? 5) ||
+                                     model.MinSeats != (t.MinSeats ?? 10) ||
+                                     model.MaxSeats != (t.MaxSeats ?? 30) ||
+                                     newImagesCount > 0;
+                    }
+                    else
+                    {
+                        hasChanged = true; // Fallback if we couldn't get original tour
+                    }
+
+                    if (hasChanged)
+                    {
+                        TempData["SuccessMessage"] = "Tour updated successfully!";
+                    }
+
                     return RedirectToAction("Edit", new { id = model.Id });
                 }
                 else if (response.StatusCode == HttpStatusCode.Unauthorized)
@@ -897,15 +953,21 @@ namespace FE_Capstone_Project.Controllers
             formData.Add(new StringContent(model.GroupNumber.ToString()), "GroupNumber");
             formData.Add(new StringContent(model.MinSeats.ToString()), "MinSeats");
             formData.Add(new StringContent(model.MaxSeats.ToString()), "MaxSeats");
-
+            IEnumerable<IFormFile> images = model.Images;
             if (model is TourEditModel editModel)
             {
                 formData.Add(new StringContent(editModel.Id.ToString()), "Id");
             }
 
-            if (model.Images != null && model.Images.Count > 0)
+            IEnumerable<IFormFile>? imagesToUpload = model.Images;
+            if (model is TourEditModel editTourModel && editTourModel.Images != null)
             {
-                foreach (var image in model.Images.Where(img => img.Length > 0))
+                imagesToUpload = editTourModel.Images;
+            }
+
+            if (imagesToUpload != null && imagesToUpload.Any())
+            {
+                foreach (var image in imagesToUpload.Where(img => img.Length > 0))
                 {
                     var imageContent = new StreamContent(image.OpenReadStream());
                     imageContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(image.ContentType);
