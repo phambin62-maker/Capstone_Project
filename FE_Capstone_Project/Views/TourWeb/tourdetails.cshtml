@@ -78,7 +78,15 @@
                     <div class="row">
                         <div class="col-lg-12">
                             <h2>Tour Overview</h2>
-                            <p>@Model.Description</p>
+                            @{
+                                var desc = Model.Description ?? string.Empty;
+                                var paragraphs = desc.Split(new[] { "\r\n\r\n", "\n\n", "\r\r" }, StringSplitOptions.RemoveEmptyEntries);
+                            }
+                            @foreach (var para in paragraphs)
+                            {
+                                var encoded = System.Net.WebUtility.HtmlEncode(para.Trim());
+                                <p>@Html.Raw(encoded.Replace("\r\n", "<br/>").Replace("\n", "<br/>"))</p>
+                            }
                         </div>
                     </div>
                 </div>
