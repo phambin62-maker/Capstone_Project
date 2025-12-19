@@ -5,6 +5,34 @@ using System.Text.Json.Serialization;
 
 namespace FE_Capstone_Project.Models
 {
+    public class NotEqualToAttribute : ValidationAttribute
+    {
+        private readonly string _otherProperty;
+
+        public NotEqualToAttribute(string otherProperty)
+        {
+            _otherProperty = otherProperty;
+        }
+
+        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
+        {
+            var otherPropertyInfo = validationContext.ObjectType.GetProperty(_otherProperty);
+            if (otherPropertyInfo == null)
+            {
+                return new ValidationResult($"Property {_otherProperty} not found");
+            }
+
+            var otherPropertyValue = otherPropertyInfo.GetValue(validationContext.ObjectInstance, null);
+
+            if (value != null && value.Equals(otherPropertyValue))
+            {
+                return new ValidationResult(ErrorMessage ?? $"{validationContext.DisplayName} must be different from {_otherProperty}");
+            }
+
+            return ValidationResult.Success;
+        }
+    }
+
     // Tour View Models
     public class TourViewModel
     {
@@ -152,7 +180,7 @@ namespace FE_Capstone_Project.Models
         public string Description { get; set; } = "3 days 2 nights Hanoi Sapa tour";
 
         [Required(ErrorMessage = "Price is required")]
-        [Range(1000, 1000000000, ErrorMessage = "Price must be from 1,000 VND to 1,000,000,000 VND")]
+        [Range(100000, 1000000000, ErrorMessage = "The price should be in the range of 100,000 to 1,000,000,000.")]
         public decimal Price { get; set; } = 2500000;
 
         [Required(ErrorMessage = "Duration is required")]
@@ -164,6 +192,7 @@ namespace FE_Capstone_Project.Models
 
         [Required(ErrorMessage = "End location is required")]
         [Range(1, int.MaxValue, ErrorMessage = "Select end location")]
+        [NotEqualTo("StartLocationId", ErrorMessage = "End location must be different from start location")]
         public int EndLocationId { get; set; } = 2;
 
         [Required(ErrorMessage = "Category is required")]
