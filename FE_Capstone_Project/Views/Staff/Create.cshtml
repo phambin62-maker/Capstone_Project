@@ -281,9 +281,6 @@
                 <button type="button" class="btn btn-outline-secondary" id="nextImage">
                     Next <i class="bi bi-chevron-right"></i>
                 </button>
-                <button type="button" class="btn btn-primary" id="downloadImage">
-                    <i class="bi bi-download me-1"></i> Download
-                </button>
             </div>
         </div>
     </div>
@@ -420,6 +417,16 @@
             updateImageCount() {
                 elements.selectedImageCount.textContent = state.selectedFiles.length;
                 this.updateUploadInfo();
+
+                // Sync files to input for immediate validation
+                const dataTransfer = new DataTransfer();
+                state.selectedFiles.forEach(file => dataTransfer.items.add(file));
+                elements.imageInput.files = dataTransfer.files;
+
+                // Trigger jQuery validation if available
+                if ($(elements.imageInput).valid) {
+                    $(elements.imageInput).valid();
+                }
             },
 
             updateUploadInfo() {
@@ -483,48 +490,64 @@
             },
 
             showPreviews(files) {
-                files.forEach((file, index) => {
+                const newFilesCount = files.length;
+                let loadedCount = 0;
+                
+                // Pre-allocate slots in previewImages to maintain order
+                const startIndex = state.previewImages.length;
+                files.forEach((file, i) => {
                     const reader = new FileReader();
+                    const targetIndex = startIndex + i;
 
                     reader.onload = (e) => {
-                        const fileSize = (file.size / 1024 / 1024).toFixed(2);
-                        const previewIndex = state.previewImages.length;
-
-                        // Thêm vào danh sách preview images
-                        state.previewImages.push({
+                        state.previewImages[targetIndex] = {
                             src: e.target.result,
-                            index: previewIndex,
                             name: file.name,
+                            size: file.size,
                             type: 'new'
-                        });
-
-                        const previewHtml = `
-                            <div class="col-md-3 col-sm-4 col-6" data-file-index="${previewIndex}">
-                                <div class="preview-image-container position-relative">
-                                    <img src="${e.target.result}"
-                                         class="img-fluid rounded border preview-image"
-                                         style="height: 120px; width: 100%; object-fit: cover; cursor: zoom-in;"
-                                         alt="Preview ${file.name}">
-                                    <div class="position-absolute top-0 end-0 m-1">
-                                        <span class="badge bg-success image-badge">${previewIndex + 1}</span>
-                                    </div>
-                                    <div class="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-75 text-white text-center py-1">
-                                        <small class="d-block text-truncate px-1">${file.name}</small>
-                                        <small class="d-block">${fileSize} MB</small>
-                                    </div>
-                                    <div class="position-absolute top-0 start-0 m-1">
-                                        <button type="button" class="btn btn-warning btn-sm remove-preview-btn"
-                                                data-file-index="${previewIndex}">
-                                            <i class="bi bi-x"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        elements.imagePreview.insertAdjacentHTML('beforeend', previewHtml);
+                        };
+                        
+                        loadedCount++;
+                        // Only render when the one we are waiting for or all are loaded 
+                        // to avoid "jumping" or empty slots. 
+                        // But for better UX, we can render as they come if we handle empty slots.
+                        this.renderAllPreviews();
                     };
 
                     reader.readAsDataURL(file);
+                });
+            },
+
+            renderAllPreviews() {
+                elements.imagePreview.innerHTML = '';
+                state.previewImages.forEach((img, index) => {
+                    if (!img) return; // Skip empty slots during async loading
+                    
+                    const fileSize = (state.selectedFiles[index]?.size / 1024 / 1024).toFixed(2) || "0.00";
+                    const previewHtml = `
+                        <div class="col-md-3 col-sm-4 col-6" data-file-index="${index}">
+                            <div class="preview-image-container position-relative">
+                                <img src="${img.src}"
+                                     class="img-fluid rounded border preview-image"
+                                     style="height: 120px; width: 100%; object-fit: cover; cursor: zoom-in;"
+                                     alt="Preview ${img.name}">
+                                <div class="position-absolute top-0 end-0 m-1">
+                                    <span class="badge bg-success image-badge">${index + 1}</span>
+                                </div>
+                                <div class="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-75 text-white text-center py-1">
+                                    <small class="d-block text-truncate px-1">${img.name}</small>
+                                    <small class="d-block">${fileSize} MB</small>
+                                </div>
+                                <div class="position-absolute top-0 start-0 m-1">
+                                    <button type="button" class="btn btn-warning btn-sm remove-preview-btn"
+                                            data-file-index="${index}">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    elements.imagePreview.insertAdjacentHTML('beforeend', previewHtml);
                 });
             },
 
@@ -534,21 +557,8 @@
                 // Remove from preview images
                 state.previewImages.splice(index, 1);
 
-                // Remove from DOM
-                elements.imagePreview.querySelector(`[data-file-index="${index}"]`)?.remove();
-
-                // Reindex remaining previews
-                elements.imagePreview.querySelectorAll('[data-file-index]').forEach((element, newIndex) => {
-                    element.setAttribute('data-file-index', newIndex);
-                    const badge = element.querySelector('.image-badge');
-                    if (badge) badge.textContent = newIndex + 1;
-                });
-
-                // Reindex preview images
-                state.previewImages.forEach((img, newIndex) => {
-                    img.index = newIndex;
-                });
-
+                // Refresh all previews to ensure indices and DOM are in sync
+                this.renderAllPreviews();
                 this.updateImageCount();
             },
 
