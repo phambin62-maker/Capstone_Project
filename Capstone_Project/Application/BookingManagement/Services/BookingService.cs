@@ -4,15 +4,15 @@ using BE_Capstone_Project.DAO;
 using BE_Capstone_Project.Domain.Enums;
 using BE_Capstone_Project.Domain.Models;
 using DocumentFormat.OpenXml.Office2010.Excel;
-using BE_Capstone_Project.Application.Notifications.Services;
+using BE_Capstone_Project.Application.Notifications.Services.Interfaces; 
 using BE_Capstone_Project.Application.Notifications.DTOs;
-using System; 
-using System.Linq; 
+using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http.HttpResults;
 using BE_Capstone_Project.Infrastructure;
-using Microsoft.EntityFrameworkCore; 
+using Microsoft.EntityFrameworkCore;
 
 namespace BE_Capstone_Project.Application.BookingManagement.Services
 {
@@ -21,13 +21,12 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
         private readonly BookingDAO _bookingDAO;
         private readonly BookingCustomerDAO _bookingCustomerDAO;
         private readonly OtmsdbContext _context;
-
-        private readonly NotificationService _notificationService;
+        private readonly INotificationService _notificationService;
 
         public BookingService(BookingDAO bookingDAO,
                               BookingCustomerDAO bookingCustomerDAO,
-                              NotificationService notificationService,
-                              OtmsdbContext otmsdbContext) 
+                              INotificationService notificationService,
+                              OtmsdbContext otmsdbContext)
         {
             _bookingDAO = bookingDAO;
             _bookingCustomerDAO = bookingCustomerDAO;
@@ -106,7 +105,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                 try
                 {
                     var savedBooking = await _bookingDAO.GetBookingByIdAsync(newBookingId);
-                    if (savedBooking != null) 
+                    if (savedBooking != null)
                     {
                         var tourName = savedBooking.TourSchedule?.Tour?.Name ?? "Your Tour";
 
@@ -127,7 +126,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                 }
             }
 
-            return newBookingId; 
+            return newBookingId;
         }
 
 
@@ -275,7 +274,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
         {
             return await _bookingCustomerDAO.GetBookedSeatsByTourAsync(tourId);
         }
-        
+
         public async Task DeleteExpiredPendingBookingsAsync()
         {
             await _bookingDAO.DeleteExpiredPendingBookingsAsync();
@@ -421,12 +420,30 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                         Message = $"Your booking for '{tourName}' has been updated from {oldStatus} to {request.BookingStatus}. {request.Note}",
                         NotificationType = NotificationType.System
                     };
-
                     _ = _notificationService.CreateAsync(notificationDto);
+
+                    if (request.BookingStatus == BookingStatus.Cancelled)
+                    {
+                        var allStaff = await _context.Users
+                            .Where(u => u.RoleId == 2)
+                            .ToListAsync();
+
+                        foreach (var staff in allStaff)
+                        {
+                            var staffNoti = new CreateNotificationDTO
+                            {
+                                UserId = staff.Id,
+                                Title = "Booking Cancelled Alert",
+                                Message = $"Booking #{booking.Id} for tour '{tourName}' has been cancelled by Customer ({booking.FirstName} {booking.LastName}).",
+                                NotificationType = NotificationType.System
+                            };
+                            _ = _notificationService.CreateAsync(staffNoti);
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Failed to send status update notification: {ex.Message}");
+                    Console.WriteLine($"Failed to send notification: {ex.Message}");
                 }
             }
 
@@ -487,7 +504,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
         }
         public async Task<CancelValidationResult> ValidateCancelConditionAsync(int bookingId)
         {
-            
+
 
             var booking = await _bookingDAO.GetBookingByIdAsync(bookingId);
             if (booking == null)
@@ -502,11 +519,11 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
             if (booking.BookingStatus == BookingStatus.Completed)
             {
                 Console.WriteLine($"Booking {bookingId} is already completed");
-               
+
                 return new CancelValidationResult
                 {
                     CanCancel = false,
-                    Message = "The tour has been completed.",                 
+                    Message = "The tour has been completed.",
                 };
             }
             if (booking.BookingStatus == BookingStatus.Cancelled)
@@ -564,7 +581,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                     Message = "Tour schedule information is missing"
                 };
             }
-            
+
             var departureDate = tourSchedule.DepartureDate.Value;
             var currentDateOnly = DateOnly.FromDateTime(DateTime.Now);
 
@@ -593,7 +610,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                 };
             }
 
-            
+
 
             if (tour.CancelConditionId == null)
             {
@@ -658,16 +675,16 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
             string message = hasRefund
                 ? tourCancelCondition.Title
                 : $"{tourCancelCondition.Title} - No refund";
-           
+
             decimal? refundAmount = 0;
             int? refundPercent = tourCancelCondition.RefundPercent;
 
             if (hasRefund && booking.TotalPrice.HasValue && booking.TotalPrice.Value > 0)
             {
-                refundAmount = booking.TotalPrice.Value * (tourCancelCondition.RefundPercent / 100m); 
+                refundAmount = booking.TotalPrice.Value * (tourCancelCondition.RefundPercent / 100m);
                 refundAmount = Math.Round(refundAmount.Value, 2);
             }
-            
+
             return new CancelValidationResult
             {
                 CanCancel = true,
@@ -684,6 +701,6 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                 }
             };
         }
-       
+
     }
 }

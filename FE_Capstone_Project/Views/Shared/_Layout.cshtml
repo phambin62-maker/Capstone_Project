@@ -120,9 +120,6 @@
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notification-bell-trigger"
                                     id="notification-dropdown-list"
                                     style="min-width: 300px; max-height: 400px; overflow-y: auto;">
-
-                                    <li><div class="dropdown-item text-center">Loading...</div></li>
-
                                 </ul>
                             </li>
 
@@ -160,15 +157,10 @@
         <div class="container footer-top">
             <div class="row gy-4">
                 <div class="col-md-6 footer-about">
-                    <a href="index.html" class="d-flex align-items-center">
-                        <span class="sitename">Tour</span>
+                    <a class="d-flex align-items-center">
+                        <span class="sitename">Online Travel Management System</span>
                     </a>
-                    <div class="footer-contact pt-3">
-                        <p>A108 Adam Street</p>
-                        <p>New York, NY 535022</p>
-                        <p class="mt-3"><strong>Phone:</strong> <span>+1 5589 55488 55</span></p>
-                        <p><strong>Email:</strong> <span>info@example.com</span></p>
-                    </div>
+                    @await Component.InvokeAsync("SiteInfo")
                 </div>
 
                 <div class="col-md-6 footer-links">

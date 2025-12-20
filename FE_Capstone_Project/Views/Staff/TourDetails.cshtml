@@ -21,7 +21,7 @@
             <a href="@Url.Action("Edit", "Staff", new { id = Model.Id })" class="btn btn-warning me-2">
                 <i class="bi bi-pencil me-2"></i>Edit Tour
             </a>
-            <a href="@Url.Action("Tours")" class="btn btn-secondary">
+            <a href="javascript:void(0)" onclick="goBackToList('tours', '@Url.Action("Tours")')" class="btn btn-secondary">
                 <i class="bi bi-arrow-left me-2"></i>Back to List
             </a>
         </div>
@@ -208,64 +208,6 @@
                 </div>
             </div>
 
-            <!-- Reviews Section -->
-            @if (Model.Reviews != null && Model.Reviews.Any())
-            {
-                <div class="card mb-4">
-                    <div class="card-header bg-light">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="card-title mb-0">
-                                <i class="bi bi-star me-2"></i>Customer Reviews
-                                <span class="badge bg-primary ms-2">@Model.Reviews.Count</span>
-                            </h5>
-                            @{
-                                var averageRating = Model.Reviews.Average(r => r.Stars);
-                                var ratingPercent = (averageRating / 5) * 100;
-                            }
-                            <div class="text-warning">
-                                <div class="star-rating">
-                                    <div class="stars-outer">
-                                        <div class="stars-inner" style="width: @(ratingPercent)%"></div>
-                                    </div>
-                                    <small class="text-muted ms-2">@(averageRating?.ToString("0.0") ?? "0.0")</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-3">
-                            @foreach (var review in Model.Reviews.Take(3))
-                            {
-                                <div class="col-12">
-                                    <div class="border rounded p-3">
-                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                            <div>
-                                                <strong class="text-dark">@review.User?.Username</strong>
-                                                <div class="text-warning small">
-                                                    @for (int i = 1; i <= 5; i++)
-                                                    {
-                                                        <i class="bi @(i <= review.Stars ? "bi-star-fill" : "bi-star")"></i>
-                                                    }
-                                                </div>
-                                            </div>
-                                            <small class="text-muted">@review.CreatedDate?.ToString("MMM dd, yyyy")</small>
-                                        </div>
-                                        <p class="mb-0 text-dark">@review.Comment</p>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                        @if (Model.Reviews.Count > 3)
-                        {
-                            <div class="text-center mt-3">
-                                <a href="#" class="btn btn-outline-primary btn-sm">
-                                    View All @Model.Reviews.Count Reviews
-                                </a>
-                            </div>
-                        }
-                    </div>
-                </div>
-            }
         </div>
 
         <!-- Right Column - Sidebar -->
@@ -289,7 +231,7 @@
                                 @(Model.TourStatus ? "Hide Tour" : "Show Tour")
                             </button>
                         </form>
-                        <a href="@Url.Action("Tours")" class="btn btn-outline-primary">
+                        <a href="javascript:void(0)" onclick="goBackToList('tours', '@Url.Action("Tours")')" class="btn btn-outline-primary">
                             <i class="bi bi-list-ul me-2"></i>Back to List
                         </a>
                     </div>
@@ -408,6 +350,66 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Reviews Section -->
+            @if (Model.Reviews != null && Model.Reviews.Any())
+            {
+                <div class="card mt-4">
+                    <div class="card-header bg-light">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-star me-2"></i>Customer Reviews
+                                <span class="badge bg-primary ms-2">@Model.Reviews.Count</span>
+                            </h5>
+                            @{
+                                var averageRating = Model.Reviews.Average(r => r.Stars);
+                                var ratingPercent = (averageRating / 5) * 100;
+                            }
+                            <div class="text-warning">
+                                <div class="star-rating">
+                                    <div class="stars-outer">
+                                        <div class="stars-inner" style="width: @(ratingPercent)%"></div>
+                                    </div>
+                                    <small class="text-muted ms-2">@(averageRating?.ToString("0.0") ?? "0.0")</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3" id="reviewsContainer">
+                            @for (int i = 0; i < Model.Reviews.Count; i++)
+                            {
+                                var review = Model.Reviews[i];
+                                <div class="col-12 review-item" @(i >= 5 ? "style=display:none" : "")>
+                                    <div class="border rounded p-3">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <strong class="text-dark">@review.User?.Username</strong>
+                                                <div class="text-warning small">
+                                                    @for (int j = 1; j <= 5; j++)
+                                                    {
+                                                        <i class="bi @(j <= review.Stars ? "bi-star-fill" : "bi-star")"></i>
+                                                    }
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">@review.CreatedDate?.ToString("MMM dd, yyyy")</small>
+                                        </div>
+                                        <p class="mb-0 text-dark">@review.Comment</p>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        @if (Model.Reviews.Count > 5)
+                        {
+                            <div class="text-center mt-3">
+                                <button type="button" id="btnViewMoreReviews" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-plus-circle me-1"></i>View More Reviews (@(Model.Reviews.Count - 5) more)
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
         </div>
     </div>
 </div>
@@ -496,3 +498,25 @@
         transition: transform 0.3s ease;
     }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const btnViewMore = document.getElementById('btnViewMoreReviews');
+        if (btnViewMore) {
+            btnViewMore.addEventListener('click', function () {
+                const hiddenReviews = document.querySelectorAll('.review-item');
+                hiddenReviews.forEach(item => {
+                    item.style.display = 'block';
+                });
+                this.parentElement.style.display = 'none';
+            });
+        }
+    });
+
+    function changeMainImage(url, index) {
+        const mainImg = document.getElementById('mainImage');
+        if (mainImg) mainImg.src = url;
+        const currentIdx = document.getElementById('currentImageIndex');
+        if (currentIdx) currentIdx.textContent = index + 1;
+    }
+</script>

@@ -75,6 +75,7 @@ namespace BE_Capstone_Project.DAO
                  User = new User { Username = r.User.Username },
                  Tour = new Tour { Name = r.Tour.Name }
              })
+             .OrderByDescending(r => r.CreatedDate)
              .ToListAsync();
         }
     
@@ -110,7 +111,8 @@ namespace BE_Capstone_Project.DAO
                         User = new User { Username = r.User.Username },
                         Tour = new Tour { Name = r.Tour.Name }
                     })
-     .ToListAsync();
+                    .OrderByDescending(r => r.CreatedDate)
+                    .ToListAsync();
             }
             catch (Exception ex)
             {
@@ -125,6 +127,7 @@ namespace BE_Capstone_Project.DAO
             {
                 return await _context.Reviews
                     .Where(r => r.UserId == userId)
+                    .OrderByDescending(r => r.CreatedDate)
                     .ToListAsync();
             }
             catch (Exception ex)
@@ -140,6 +143,7 @@ namespace BE_Capstone_Project.DAO
             {
                 return await _context.Reviews
                     .Where(r => r.BookingId == bookingId)
+                    .OrderByDescending(r => r.CreatedDate)
                     .ToListAsync();
             }
             catch (Exception ex)

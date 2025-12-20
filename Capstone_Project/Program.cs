@@ -10,7 +10,9 @@ using BE_Capstone_Project.Application.Categories.Services.Interfaces;
 using BE_Capstone_Project.Application.Locations.Services;
 using BE_Capstone_Project.Application.Locations.Services.Interfaces;
 using BE_Capstone_Project.Application.Newses.Services;
+using BE_Capstone_Project.Application.Newses.Services.Interfaces;
 using BE_Capstone_Project.Application.Notifications.Services;
+using BE_Capstone_Project.Application.Notifications.Services.Interfaces;
 using BE_Capstone_Project.Application.Payment.VnPayService;
 using BE_Capstone_Project.Application.Payment.VnPayService.Interfaces;
 using BE_Capstone_Project.Application.Report.Services;
@@ -38,18 +40,19 @@ using System.Text.Json.Serialization;
 using BE_Capstone_Project.Domain.Enums;
 
 var builder = WebApplication.CreateBuilder(args);
+
 builder.Services.AddDbContext<OtmsdbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-// Add services to the container.
+
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ITourService, TourService>();
 builder.Services.AddScoped<ITourImageService, TourImageService>();
 builder.Services.AddScoped<ITourScheduleService, TourScheduleService>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
-builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<TourPriceHistoryService>();
-builder.Services.AddScoped<NewsService>();
+builder.Services.AddScoped<INewsService, NewsService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
@@ -61,7 +64,8 @@ builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<ICompanyService, CompanyService>();
 builder.Services.AddScoped<IFeatureService, FeatureService>();
 builder.Services.AddScoped<IChatService, ChatService>();
-//DAO
+
+// 3. DAO Registration
 builder.Services.AddScoped<BookingCustomerDAO>();
 builder.Services.AddScoped<BookingDAO>();
 builder.Services.AddScoped<CancelConditionDAO>();
@@ -81,8 +85,10 @@ builder.Services.AddScoped<WishlistDAO>();
 builder.Services.AddScoped<CompanyDAO>();
 builder.Services.AddScoped<FeatureDAO>();
 
+
 builder.Services.AddHostedService<BookingCleanupService>();
 
+// 5. Authentication & JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -99,8 +105,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 Encoding.UTF8.GetBytes(jwtSettings["Key"]))
         };
 
-        // Cấu hình JWT cho SignalR
-        options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+        // SignalR Token Support
+        options.Events = new JwtBearerEvents
         {
             OnMessageReceived = context =>
             {
@@ -114,9 +120,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             }
         };
     });
+
 builder.Services.AddAuthorization(options =>
 {
-    // Cấu hình role-based authorization
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
     options.AddPolicy("AdminOrStaff", policy => policy.RequireRole("Admin", "Staff"));
     options.AddPolicy("Authenticated", policy => policy.RequireAuthenticatedUser());
@@ -127,9 +133,12 @@ builder.Services.AddControllers()
     {
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         options.JsonSerializerOptions.WriteIndented = true;
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
@@ -138,54 +147,43 @@ builder.Services.AddCors(options =>
             policy.WithOrigins("https://localhost:5137")
                   .AllowAnyHeader()
                   .AllowAnyMethod()
-                  .AllowCredentials(); // Cần cho SignalR
+                  .AllowCredentials();
         });
 });
 
-// Đăng ký SignalR
 builder.Services.AddSignalR();
-
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
 builder.Services.AddHttpContextAccessor();
+
 var app = builder.Build();
+
 app.UseCors("AllowAll");
+
 app.Use(async (context, next) =>
 {
     if (context.Request.Path.StartsWithSegments("/api/payment/payment-callback"))
     {
-        // Enable buffering for request body
         context.Request.EnableBuffering();
-
-        // Log raw request data
         using var reader = new StreamReader(context.Request.Body, leaveOpen: true);
         var bodyStr = await reader.ReadToEndAsync();
-        context.Request.Body.Position = 0; // Reset position
-
+        context.Request.Body.Position = 0;
         var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
         logger.LogInformation("Payment callback raw data: {Data}", bodyStr);
     }
-
     await next();
 });
+
 if (app.Environment.IsDevelopment())
 {
-
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 app.UseStaticFiles();
 
-// Configure the HTTP request pipeline.
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-// Map SignalR Hub
-app.MapHub<BE_Capstone_Project.Application.ChatManagement.Hubs.ChatHub>("/chathub");
+app.MapHub<ChatHub>("/chathub");
 
 app.Run();

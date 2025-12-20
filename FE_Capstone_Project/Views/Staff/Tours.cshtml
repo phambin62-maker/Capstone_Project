@@ -116,23 +116,31 @@
                                 <i class="bi bi-search"></i>
                             </button>
                         </div>                        
-                        <!-- Sort by Price -->
-                        <select class="form-select form-select-sm" style="width: 180px;" id="sortByPrice">
-                            <option value="">Sort by Price</option>
+                        <!-- Sort by -->
+                        <select class="form-select form-select-sm" style="width: 180px;" id="sortBy">
+                            <option value="">Sort by: Newest</option>
                             @if (currentSort == "asc")
                             {
                                 <option value="asc" selected>Price: Low to High</option>
                                 <option value="desc">Price: High to Low</option>
+
                             }
                             else if (currentSort == "desc")
                             {
                                 <option value="asc">Price: Low to High</option>
                                 <option value="desc" selected>Price: High to Low</option>
                             }
+                            else if (currentSort == "newest")
+                            {
+                                <option value="asc">Price: Low to High</option>
+                                <option value="desc">Price: High to Low</option>
+                                <option value="newest" selected>Newest First</option>
+                            }
                             else
                             {
                                 <option value="asc">Price: Low to High</option>
                                 <option value="desc">Price: High to Low</option>
+
                             }
                         </select>
                     </div>
@@ -276,12 +284,6 @@
                                         <div class="d-flex align-items-start">
                                             <div class="me-3">
                                                 <strong class="text-dark d-block">@tour.Name</strong>
-                                                @if (!string.IsNullOrEmpty(tour.Description))
-                                                {
-                                                    <small class="text-muted">
-                                                        @(tour.Description.Length > 100 ? tour.Description.Substring(0, 100) + "..." : tour.Description)
-                                                    </small>
-                                                }
                                             </div>
                                         </div>
                                     </td>
@@ -513,7 +515,7 @@
                 applyFiltersAndRedirect();
             });
 
-            $('#sortByPrice').on('change', function () {
+            $('#sortBy').on('change', function () {
                 applyFiltersAndRedirect();
             });
 
@@ -528,7 +530,7 @@
                 var categoryFilter = $('#categoryFilter').val();
                 var minPrice = $('#minPrice').val();
                 var maxPrice = $('#maxPrice').val();
-                var sortByPrice = $('#sortByPrice').val();
+                var sortBy = $('#sortBy').val();
                 var searchValue = $('#searchInput').val();
 
                 var url = '@Url.Action("Tours", new { page = 1 })';
@@ -551,13 +553,18 @@
                 if (maxPrice) {
                     url += '&maxPrice=' + encodeURIComponent(maxPrice);
                 }
-                if (sortByPrice) {
-                    url += '&sort=' + encodeURIComponent(sortByPrice);
+                if (sortBy) {
+                    url += '&sort=' + encodeURIComponent(sortBy);
                 }
                 if (searchValue) {
                     url += '&search=' + encodeURIComponent(searchValue);
                 }
                 window.location.href = url;
+            }
+
+            // Save list state for "Back to List" functionality
+            if (typeof saveListState === 'function') {
+                saveListState('tours');
             }
 
             setTimeout(function() {

@@ -64,7 +64,8 @@
                                                 <div class="mb-3">
                                                     <label asp-for="Price" class="form-label required">Price (VND)</label>
                                                     <div class="input-group">
-                                                        <input asp-for="Price" type="number" class="form-control" placeholder="0" />
+                                                        <input type="hidden" asp-for="Price" id="rawPrice" asp-format="{0:0}" />
+                                                        <input type="text" class="form-control" id="formattedPrice" placeholder="0" />
                                                         <span class="input-group-text">VND</span>
                                                     </div>
                                                     <span asp-validation-for="Price" class="text-danger small"></span>
@@ -261,6 +262,25 @@
                                             {
                                                 var image = currentImages[i];
                                                 var imageUrl = Url.Action("GetTourEditImage", "Staff", new { tourId = Model.Id, imageIndex = i });
+                                                // Extract original filename from path (remove GUID prefix if present)
+                                                var originalFileName = image.Image;
+                                                if (!string.IsNullOrEmpty(originalFileName))
+                                                {
+                                                     // First get the filename from the path
+                                                     var fileNameOnly = System.IO.Path.GetFileName(originalFileName);
+                                                     
+                                                     // Then try to remove GUID prefix
+                                                     var parts = fileNameOnly.Split('_');
+                                                     if (parts.Length > 1 && Guid.TryParse(parts[0], out _))
+                                                     {
+                                                         originalFileName = string.Join("_", parts.Skip(1));
+                                                     }
+                                                     else 
+                                                     {
+                                                         originalFileName = fileNameOnly;
+                                                     }
+                                                }
+
 
                                                 <div class="col-md-3 col-sm-4 col-6">
                                                     <div class="current-image-container position-relative">
@@ -271,6 +291,7 @@
                                                              data-image-src="@imageUrl"
                                                              data-image-index="@i"
                                                              data-image-name="Image @(i + 1)"
+                                                             data-original-filename="@originalFileName"
                                                              onerror="this.src='@Url.Action("GetDefaultImage", "Staff")'">
                                                         <div class="position-absolute top-0 end-0 m-1">
                                                             <span class="badge bg-dark bg-opacity-75" style="font-size: 0.6rem;">
@@ -318,6 +339,9 @@
                                         <small class="text-muted">or click to browse</small>
                                     </div>
                                     <span asp-validation-for="Images" class="text-danger small"></span>
+                                    <div id="imageUploadError" class="alert alert-danger mt-2" style="display: none;">
+                                        <i class="bi bi-exclamation-triangle-fill me-2"></i><span id="imageUploadErrorMessage"></span>
+                                    </div>
                                     <div id="imagePreview" class="row g-2 mt-3" style="display: none;">
                                     </div>
                                 </div>
@@ -330,7 +354,7 @@
                                 <a href="@Url.Action("TourDetails", new { id = Model.Id })" class="btn btn-outline-secondary me-2">
                                     <i class="bi bi-eye me-2"></i>View Details
                                 </a>
-                                <a href="@Url.Action("Tours")" class="btn btn-outline-secondary">
+                                <a href="javascript:void(0)" onclick="goBackToList('tours', '@Url.Action("Tours")')" class="btn btn-outline-secondary">
                                     <i class="bi bi-x-circle me-2"></i>Cancel
                                 </a>
                             </div>
@@ -382,7 +406,8 @@
         // Biến cho chức năng preview ảnh
         let currentPreviewIndex = 0;
         let previewImages = [];
-        let newPreviewImages = []; // Ảnh mới upload
+        let newPreviewImages = []; // Ảnh mới upload (previews)
+        let newSelectedFiles = []; // Các đối tượng File thực tế
 
         $(document).ready(function () {
             // Auto-select current values in dropdowns
@@ -421,7 +446,85 @@
 
             // Khởi tạo chức năng preview ảnh
             initializeImagePreview();
+
+            // Custom validation for identical locations
+            if ($.validator) {
+                // Configure jQuery validation to not ignore our hidden price field
+                $.validator.setDefaults({ ignore: ":hidden:not(#rawPrice)" });
+
+                $.validator.addMethod("notEqualTo", function (value, element, param) {
+                    return this.optional(element) || value !== $(param).val();
+                }, "End location must be different from start location");
+
+                $('#EndLocationId').rules("add", {
+                    notEqualTo: "#StartLocationId"
+                });
+            }
+
+            // Location change events
+            $('#StartLocationId').on('change', function () {
+                if ($('#EndLocationId').val()) {
+                    $('#EndLocationId').valid();
+                }
+            });
+            $('#EndLocationId').on('change', function () {
+                if ($('#StartLocationId').val()) {
+                    $('#StartLocationId').valid();
+                }
+            });
+
+            // Pricing formatting
+            initializePriceFormatting();
         });
+
+        // Pricing formatting logic
+        function initializePriceFormatting() {
+            const rawPrice = document.getElementById('rawPrice');
+            const formattedPrice = document.getElementById('formattedPrice');
+
+            if (!rawPrice || !formattedPrice) return;
+
+            // Configure jQuery validation to not ignore our hidden price field
+            if ($.validator) {
+                $.validator.setDefaults({ ignore: ":hidden:not(#rawPrice)" });
+            }
+
+            // Utility functions
+            const formatPrice = (value) => {
+                if (!value && value !== 0) return '';
+                // Get only integer part (strip .00 etc)
+                let stringValue = value.toString().split('.')[0];
+                return stringValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            };
+
+            // Initial format and validation sync
+            if (rawPrice.value) {
+                formattedPrice.value = formatPrice(rawPrice.value);
+                
+                // Trigger initial validation sync
+                setTimeout(() => {
+                    if ($('#tourForm').data('validator')) {
+                        $(rawPrice).valid();
+                    }
+                }, 100);
+            }
+
+            formattedPrice.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/[^0-9]/g, '');
+                rawPrice.value = value;
+                e.target.value = formatPrice(value);
+
+                // Trigger validation on hidden field and sync style
+                if ($('#tourForm').data('validator')) {
+                    const isValid = $(rawPrice).valid();
+                    if (!isValid) {
+                        formattedPrice.classList.add('is-invalid');
+                    } else {
+                        formattedPrice.classList.remove('is-invalid');
+                    }
+                }
+            });
+        }
 
         // Khởi tạo chức năng preview ảnh
         function initializeImagePreview() {
@@ -593,6 +696,27 @@
                 $('#imageInput').prop('disabled', false);
                 $('.drop-message').show();
             }
+            
+            // Clear the "Will be..." message when just updating count normally
+            $('#willBeMessage').remove(); 
+        }
+
+        // Cập nhật thông tin tổng số ảnh dự kiến
+        function updateTotalAfterUpload(total) {
+            // First ensure standard state
+            $('#currentImageCount').text(currentImageCount);
+            
+            // Then add the projection message
+            if (total !== currentImageCount) {
+                 // Check if message already exists
+                 if ($('#willBeMessage').length === 0) {
+                     $('#imageCountInfo').append(`<br><span class="text-primary small" id="willBeMessage">Will be ${total} after upload</span>`);
+                 } else {
+                     $('#willBeMessage').text(`Will be ${total} after upload`);
+                 }
+            } else {
+                $('#willBeMessage').remove();
+            }
         }
 
                 $(document).on('click', '.delete-image-btn', function() {
@@ -670,20 +794,36 @@
             }
 
             // Kiểm tra tổng số ảnh
-            const totalAfterUpload = currentImageCount + files.length;
+            const totalAfterUpload = currentImageCount + newSelectedFiles.length + files.length;
             if (totalAfterUpload > MAX_TOTAL_IMAGES) {
-                alert(`Cannot upload ${files.length} images. You currently have ${currentImageCount} images. Maximum total is ${MAX_TOTAL_IMAGES} images.`);
+                alert(`Cannot upload ${files.length} images. You currently have ${currentImageCount + newSelectedFiles.length} images. Maximum total is ${MAX_TOTAL_IMAGES} images.`);
                 e.target.value = '';
-                updateSelectedFilesCount(null); // Reset count
+                updateSelectedFilesCount(newSelectedFiles); // Show existing count
                 return;
             }
 
             let validFiles = true;
             let errorMessage = '';
 
-            // Validate all files
+            // Collect existing filenames for duplicate check
+            const existingFilenames = new Set();
+            $('.current-image-container .preview-image').each(function() {
+                const name = $(this).data('original-filename');
+                if (name) existingFilenames.add(name.toLowerCase());
+            });
+
+            // Validate and filter files
+            const dt = new DataTransfer();
+            const filesToProcess = [];
+
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
+
+                // Check for duplicates - Silent Skip
+                if (existingFilenames.has(file.name.toLowerCase())) {
+                    console.log(`Skipping duplicate file: ${file.name}`);
+                    continue;
+                }
 
                 // Check file size (5MB limit)
                 if (file.size > 5 * 1024 * 1024) {
@@ -698,18 +838,35 @@
                     validFiles = false;
                     break;
                 }
+                
+                dt.items.add(file);
+                filesToProcess.push(file);
             }
 
             if (!validFiles) {
-                alert(errorMessage);
+                // Show error in the container
+                $('#imageUploadErrorMessage').text(errorMessage);
+                $('#imageUploadError').fadeIn();
+                
+                // Auto hide after 5 seconds
+                setTimeout(function() {
+                    $('#imageUploadError').fadeOut();
+                }, 5000);
+
                 e.target.value = '';
                 updateSelectedFilesCount(null); // Reset count
                 return;
+            } else {
+                $('#imageUploadError').hide();
             }
+            
+            // Update internal file list
+            newSelectedFiles = [...newSelectedFiles, ...filesToProcess];
+            updateSelectedFilesCount(newSelectedFiles);
 
-            // Show preview for all valid files
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
+            // Show preview for filtered files
+            for (let i = 0; i < filesToProcess.length; i++) {
+                const file = filesToProcess[i];
                 const reader = new FileReader();
 
                 reader.onload = function(e) {
@@ -722,7 +879,7 @@
                         index: previewImages.length + previewIndex,
                         name: file.name,
                         type: 'new',
-                        fileIndex: i, // Lưu index gốc của file
+                        fileIndex: i, // Lưu index gốc của file (Note: indices might shift if multiple batches, but simplistic here)
                         previewIndex: previewIndex // Thêm previewIndex
                     });
 
@@ -758,7 +915,8 @@
             }
 
             // Cập nhật thông tin tổng số ảnh sau khi upload
-            updateTotalAfterUpload(totalAfterUpload);
+            const realTotalAfterUpload = currentImageCount + newSelectedFiles.length;
+            updateTotalAfterUpload(realTotalAfterUpload);
             updateTotalImagesCount();
         }
 
@@ -787,16 +945,9 @@
             // Xóa khỏi danh sách ảnh mới
             newPreviewImages = newPreviewImages.filter(img => img.previewIndex !== previewIndex);
 
-            // Tạo new FileList không bao gồm file bị xóa
-            const dt = new DataTransfer();
-            for (let i = 0; i < input.files.length; i++) {
-                if (i !== fileIndex) {
-                    dt.items.add(input.files[i]);
-                }
-            }
-
-            // Cập nhật file input
-            input.files = dt.files;
+            // Cập nhật FileList nếu cần thiết (nhưng chúng ta sẽ sync lúc submit)
+            // Tuy nhiên, xóa khỏi newSelectedFiles là quan trọng nhất
+            newSelectedFiles.splice(previewIndex, 1);
 
             // Xóa preview khỏi DOM
             const previewElement = $(`[data-preview-index="${previewIndex}"]`);
@@ -832,7 +983,7 @@
                 $('#totalAfterUpload').remove();
             } else {
                 // Cập nhật thông tin tổng số ảnh sau khi upload
-                const totalAfterUpload = currentImageCount + input.files.length;
+                const totalAfterUpload = currentImageCount + newSelectedFiles.length;
                 updateTotalAfterUpload(totalAfterUpload);
             }
         });
@@ -849,7 +1000,7 @@
 
         // Form validation before submit
         $('#tourForm').on('submit', function(e) {
-            const files = $('#imageInput')[0].files;
+            const files = newSelectedFiles;
             const totalAfterUpload = currentImageCount + files.length;
 
             // Kiểm tra tổng số ảnh
@@ -873,8 +1024,12 @@
                 // Reset state
                 newPreviewImages = [];
                 $('#imagePreview').empty().hide();
-                $('#totalAfterUpload').remove();
             }
+
+            // Sync newSelectedFiles back to the input element before submitting
+            const dt = new DataTransfer();
+            newSelectedFiles.forEach(file => dt.items.add(file));
+            $('#imageInput')[0].files = dt.files;
 
             // Show loading state
             $('button[type="submit"]').html(`

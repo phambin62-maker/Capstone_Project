@@ -1,5 +1,5 @@
 ﻿using BE_Capstone_Project.Application.Newses.DTOs;
-using BE_Capstone_Project.Application.Newses.Services;
+using BE_Capstone_Project.Application.Newses.Services.Interfaces;
 using BE_Capstone_Project.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,7 +13,7 @@ using BE_Capstone_Project.Infrastructure;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
-using System.Text; 
+using System.Text;
 
 namespace BE_Capstone_Project.API.Controllers
 {
@@ -21,19 +21,18 @@ namespace BE_Capstone_Project.API.Controllers
     [ApiController]
     public class NewsController : ControllerBase
     {
-        private readonly NewsService _newsService;
+        private readonly INewsService _newsService;
         private readonly IWebHostEnvironment _environment;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly OtmsdbContext _context;
 
-        public NewsController(NewsService newsService, IWebHostEnvironment environment, IHttpContextAccessor httpContextAccessor, OtmsdbContext context)
+        public NewsController(INewsService newsService, IWebHostEnvironment environment, IHttpContextAccessor httpContextAccessor, OtmsdbContext context)
         {
             _newsService = newsService;
             _environment = environment;
             _httpContextAccessor = httpContextAccessor;
             _context = context;
         }
-
 
         private int GetCurrentUserId()
         {
@@ -56,7 +55,7 @@ namespace BE_Capstone_Project.API.Controllers
         {
             if (string.IsNullOrEmpty(statusString))
             {
-                return NewsStatus.Draft; // Mặc định
+                return NewsStatus.Draft;
             }
             if (Enum.TryParse<NewsStatus>(statusString, true, out var statusEnum))
             {
@@ -64,7 +63,6 @@ namespace BE_Capstone_Project.API.Controllers
             }
             return NewsStatus.Draft;
         }
-
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
@@ -138,7 +136,7 @@ namespace BE_Capstone_Project.API.Controllers
                 Title = formDto.Title,
                 Content = formDto.Content,
                 Image = imageUrl,
-                NewsStatus = formDto.NewsStatus 
+                NewsStatus = formDto.NewsStatus
             };
 
             var newId = await _newsService.CreateAsync(createNewsDto);
