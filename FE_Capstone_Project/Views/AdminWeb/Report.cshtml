@@ -42,14 +42,14 @@
         canvas {
             max-width: 100% !important;
         }
+    }
 
-    /* === NEW: CSS FOR CLICKABLE ROW === */
     #monthlyRevenueTable tbody tr.clickable-row {
         cursor: pointer;
     }
 
         #monthlyRevenueTable tbody tr.clickable-row:hover {
-            background-color: #f8f9fa; /* Light hover color */
+            background-color: #f8f9fa; 
         }
 </style>
 
@@ -112,7 +112,7 @@
                         <i class="bi bi-currency-dollar"></i>
                     </div>
                 </div>
-                <h3 class="mb-1" id="statTotalRevenue">0 VNĐ</h3>
+                <h3 class="mb-1" id="statTotalRevenue">0 VND</h3>
                 <small class="text-muted" id="statRevenueChange">
                     (Data in selected range)
                 </small>
@@ -170,7 +170,6 @@
 </div>
 
 <div class="row mb-4" id="chartsBlock">
-
     <div class="col-md-8" id="revenueChartBlock">
         <div class="admin-card">
             <div class="card-header">
@@ -199,7 +198,6 @@
 </div>
 
 <div class="row mb-4" id="tablesBlock">
-
     <div class="col-md-6" id="monthlyRevenueTableBlock">
         <div class="admin-card">
             <div class="card-header">
@@ -302,24 +300,21 @@
         </div>
     </div>
 </div>
+
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // === KHAI BÁO BIẾN TOÀN CỤC ===
         let revenueChartInstance;
         let tourChartInstance;
-        let bookingDetailModal; // Biến cho modal
+        let bookingDetailModal; 
 
-        // === LẤY DỮ LIỆU TỪ CONTROLLER (RAZOR) ===
         const API_BASE_URL = '@ViewBag.ApiBaseUrl';
         const JWT_TOKEN = '@ViewBag.JwtToken';
 
-        // === HÀM HELPER ===
-
         function getAuthHeader() {
             if (!JWT_TOKEN) {
-                console.error('Không tìm thấy token!');
-                alert('Phiên đăng nhập hết hạn. Đang chuyển về trang đăng nhập.');
+                console.error('Token not found!');
+                alert('Session expired. Please login again.');
                 window.location.href = '/AuthWeb/Login';
                 return {};
             }
@@ -329,7 +324,7 @@
             };
         }
         function formatCurrencyVND(value) {
-            if (value === null || value === undefined) return "0 VNĐ";
+            if (value === null || value === undefined) return "0 VND";
             return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
         }
         function formatPercentage(value) {
@@ -341,30 +336,28 @@
             return new Intl.NumberFormat('vi-VN').format(value);
         }
 
-        // === HÀM FORMAT NGÀY CHO MODAL ===
         function formatBookingDate(dateString) {
             if (!dateString) return "N/A";
             const date = new Date(dateString);
-            return date.toLocaleDateString('vi-VN', {
+            return date.toLocaleDateString('en-GB', { 
                 day: '2-digit',
                 month: '2-digit',
                 year: 'numeric'
             });
         }
 
-        // === HÀM TẢI CHI TIẾT BOOKING ===
         async function loadBookingDetails(year, month) {
             const modalBody = document.getElementById('bookingDetailModalBody');
             const modalTitle = document.getElementById('modalMonthYearTitle');
 
-            const monthNames = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"];
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             modalTitle.textContent = `${monthNames[month - 1]} / ${year}`;
             modalBody.innerHTML = `
-                        <div class="d-flex justify-content-center my-5">
-                            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                        </div>`;
+                                <div class="d-flex justify-content-center my-5">
+                                    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>`;
 
             try {
                 const headers = getAuthHeader();
@@ -373,29 +366,29 @@
                 const response = await fetch(apiUrl, { headers });
                 if (!response.ok) {
                     const errorText = await response.text();
-                    throw new Error(`Lỗi API: ${response.status} - ${errorText}`);
+                    throw new Error(`API Error: ${response.status} - ${errorText}`);
                 }
                 const bookings = await response.json();
 
                 if (!bookings || bookings.length === 0) {
-                    modalBody.innerHTML = '<p class="text-center my-4">Không tìm thấy booking nào cho tháng này.</p>';
+                    modalBody.innerHTML = '<p class="text-center my-4">No bookings found for this month.</p>';
                     return;
                 }
 
                 let tableHtml = `
-                            <div class="table-responsive">
-                                <table class="table table-sm table-striped table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Tên Tour</th>
-                                            <th>Khách hàng</th>
-                                            <th>Ngày đặt</th>
-                                            <th>Trạng thái</th>
-                                            <th class="text-end">Tổng tiền</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>`;
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-striped table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>ID</th>
+                                                    <th>Tour Name</th>
+                                                    <th>Customer</th>
+                                                    <th>Booking Date</th>
+                                                    <th>Status</th>
+                                                    <th class="text-end">Total Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>`;
 
                 for (const b of bookings) {
                     let statusBadge = '';
@@ -413,28 +406,26 @@
                     }
 
                     tableHtml += `
-                                <tr>
-                                    <td>${b.bookingId}</td>
-                                    <td>${b.tourName}</td>
-                                    <td>${b.customerName}</td>
-                                    <td>${formatBookingDate(b.bookingDate)}</td>
-                                    <td>${statusBadge}</td>
-                                    <td class="text-end">${formatCurrencyVND(b.totalPrice)}</td>
-                                </tr>`;
+                                        <tr>
+                                            <td>${b.bookingId}</td>
+                                            <td>${b.tourName}</td>
+                                            <td>${b.customerName}</td>
+                                            <td>${formatBookingDate(b.bookingDate)}</td>
+                                            <td>${statusBadge}</td>
+                                            <td class="text-end">${formatCurrencyVND(b.totalPrice)}</td>
+                                        </tr>`;
                 }
 
                 tableHtml += '</tbody></table></div>';
                 modalBody.innerHTML = tableHtml;
 
             } catch (error) {
-                console.error('Lỗi khi tải chi tiết booking:', error);
-                modalBody.innerHTML = `<p class="text-center text-danger my-4">Đã xảy ra lỗi khi tải dữ liệu: ${error.message}</p>`;
+                console.error('Error loading booking details:', error);
+                modalBody.innerHTML = `<p class="text-center text-danger my-4">An error occurred while loading data: ${error.message}</p>`;
             }
         }
 
-        // === HÀM ẨN/HIỆN CÁC KHỐI BÁO CÁO ===
         function toggleReportBlocks(reportType) {
-            // (Code này giữ nguyên)
             const overviewBlock = document.getElementById('overviewBlock');
             const chartsBlock = document.getElementById('chartsBlock');
             const tablesBlock = document.getElementById('tablesBlock');
@@ -443,6 +434,7 @@
             const tourChartBlock = document.getElementById('tourChartBlock');
             const monthlyRevenueTableBlock = document.getElementById('monthlyRevenueTableBlock');
             const topToursTableBlock = document.getElementById('topToursTableBlock');
+
             overviewBlock.classList.add('d-none');
             chartsBlock.classList.add('d-none');
             tablesBlock.classList.add('d-none');
@@ -451,7 +443,9 @@
             tourChartBlock.classList.add('d-none');
             monthlyRevenueTableBlock.classList.add('d-none');
             topToursTableBlock.classList.add('d-none');
+
             overviewBlock.classList.remove('d-none');
+
             if (reportType === 'all') {
                 chartsBlock.classList.remove('d-none');
                 tablesBlock.classList.remove('d-none');
@@ -476,16 +470,14 @@
         }
 
 
-        // === CÁC HÀM CẬP NHẬT UI ===
+        // === UI UPDATES ===
         function updateOverviewCards(data) {
-            // (Code này giữ nguyên)
             document.getElementById('statTotalRevenue').textContent = formatCurrencyVND(data.totalRevenue);
             document.getElementById('statTotalBookings').textContent = formatNumber(data.totalBookings);
             document.getElementById('statAvgRating').textContent = (data.averageRating || 0).toFixed(1) + '/5.0';
         }
 
         function updateCustomerAnalysis(data) {
-            // (Code này giữ nguyên)
             document.getElementById('statTotalCustomersAllTime').textContent = formatNumber(data.totalCustomers);
             document.getElementById('statLoyalCustomers').textContent = formatNumber(data.loyalCustomers);
             document.getElementById('statNewCustomersMonth').textContent = formatNumber(data.newCustomersInRange);
@@ -494,59 +486,57 @@
         }
 
         function updateTopToursTable(data) {
-            // (Code này giữ nguyên)
             const tableBody = document.querySelector("#topToursTable tbody");
             if (!tableBody) return;
             tableBody.innerHTML = '';
             if (!data || data.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="4" class="text-center">Không có dữ liệu.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No data available.</td></tr>';
                 return;
             }
             let rank = 1;
             for (const tour of data) {
                 const row = `
-                                        <tr>
-                                            <td>
-                                                <span class="badge ${rank == 1 ? 'bg-warning text-dark' : (rank == 2 ? 'bg-secondary' : (rank == 3 ? 'bg-danger' : 'bg-info'))}">
-                                                    <i class="bi ${rank <= 3 ? 'bi-trophy-fill' : 'bi-bookmark-star'}"></i> ${rank++}
-                                                </span>
-                                            </td>
-                                            <td>${tour.tourName}</td>
-                                            <td class="text-center">${formatNumber(tour.bookingsCount)}</td>
-                                            <td class="text-end">${formatCurrencyVND(tour.revenue)}</td>
-                                        </tr>
-                                    `;
+                                            <tr>
+                                                <td>
+                                                    <span class="badge ${rank == 1 ? 'bg-warning text-dark' : (rank == 2 ? 'bg-secondary' : (rank == 3 ? 'bg-danger' : 'bg-info'))}">
+                                                        <i class="bi ${rank <= 3 ? 'bi-trophy-fill' : 'bi-bookmark-star'}"></i> ${rank++}
+                                                    </span>
+                                                </td>
+                                                <td>${tour.tourName}</td>
+                                                <td class="text-center">${formatNumber(tour.bookingsCount)}</td>
+                                                <td class="text-end">${formatCurrencyVND(tour.revenue)}</td>
+                                            </tr>
+                                        `;
                 tableBody.insertAdjacentHTML('beforeend', row);
             }
         }
 
         function updateMonthlyRevenueTable(data) {
-            // (Code này giữ nguyên)
             const tableBody = document.querySelector("#monthlyRevenueTable tbody");
             if (!tableBody) return;
             tableBody.innerHTML = '';
             if (!data || data.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="3" class="text-center">Không có dữ liệu cho năm này.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="3" class="text-center">No data for this year.</td></tr>';
                 return;
             }
-            const monthNames = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"];
+
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             data.sort((a, b) => b.month - a.month);
             for (const monthData of data) {
                 const row = `
-                            <tr class="clickable-row" data-year="${monthData.year}" data-month="${monthData.month}">
-                                <td>${monthNames[monthData.month - 1]} / ${monthData.year}</td>
-                                <td class="text-center">${formatNumber(monthData.bookingsCount)}</td>
-                                <td class="text-end">${formatCurrencyVND(monthData.totalRevenue)}</td>
-                            </tr>
-                        `;
+                                    <tr class="clickable-row" data-year="${monthData.year}" data-month="${monthData.month}">
+                                        <td>${monthNames[monthData.month - 1]} / ${monthData.year}</td>
+                                        <td class="text-center">${formatNumber(monthData.bookingsCount)}</td>
+                                        <td class="text-end">${formatCurrencyVND(monthData.totalRevenue)}</td>
+                                    </tr>
+                                `;
                 tableBody.insertAdjacentHTML('beforeend', row);
             }
         }
 
         function updateRevenueChart(data) {
-            // (Code này giữ nguyên)
             const ctx = document.getElementById('revenueChart').getContext('2d');
-            const labels = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'];
+            const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             const monthlyData = new Array(12).fill(0);
             for (const month of data) {
                 monthlyData[month.month - 1] = month.totalRevenue / 1000000;
@@ -554,7 +544,7 @@
             const chartData = {
                 labels: labels,
                 datasets: [{
-                    label: 'Doanh thu (triệu VNĐ)',
+                    label: 'Revenue (million VND)',
                     data: monthlyData,
                     borderColor: 'rgb(75, 192, 192)',
                     backgroundColor: 'rgba(75, 192, 192, 0.1)',
@@ -571,7 +561,6 @@
         }
 
         function updateTourChart(data) {
-            // (Code này giữ nguyên)
             const ctx = document.getElementById('tourChart').getContext('2d');
             const labels = data.map(t => t.tourName);
             const bookings = data.map(t => t.bookingsCount);
@@ -596,14 +585,13 @@
             }
         }
 
-        // === HÀM TẢI DỮ LIỆU CHÍNH ===
+        // === MAIN LOAD FUNCTION ===
         async function loadDashboardData() {
-            // (Code này giữ nguyên)
             const from = document.getElementById('fromDate').value;
             const to = document.getElementById('toDate').value;
             const reportType = document.getElementById('reportTypeSelect').value;
             if (!from || !to) {
-                alert('Vui lòng chọn Từ ngày và Đến ngày');
+                alert('Please select From Date and To Date'); 
                 return;
             }
             const year = new Date(from).getFullYear();
@@ -612,7 +600,7 @@
             toggleReportBlocks(reportType);
             try {
                 searchButton.disabled = true;
-                searchButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang tải...';
+                searchButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...'; 
                 let overviewPromise = null;
                 let topToursPromise = null;
                 let monthlyPromise = null;
@@ -640,27 +628,26 @@
                     updateRevenueChart(monthlyData);
                 }
             } catch (error) {
-                console.error('Lỗi khi tải dashboard:', error);
-                alert(error.message || 'Đã xảy ra lỗi không xác định.');
+                console.error('Error loading dashboard:', error);
+                alert(error.message || 'An unknown error occurred.'); 
             } finally {
                 searchButton.disabled = false;
-                searchButton.innerHTML = '<i class="bi bi-search me-2"></i>Tìm kiếm';
+                searchButton.innerHTML = '<i class="bi bi-search me-2"></i>Search'; 
             }
         }
 
-        // === HÀM XUẤT EXCEL ===
+        // === EXPORT EXCEL FUNCTION ===
         async function exportToExcel() {
-            // (Code này giữ nguyên)
             const from = document.getElementById('fromDate').value;
             const to = document.getElementById('toDate').value;
-            if (!from || !to) { alert('Vui lòng chọn Từ ngày và Đến ngày'); return; }
+            if (!from || !to) { alert('Please select From Date and To Date'); return; } 
             const headers = getAuthHeader();
             const button = document.getElementById('exportButton');
             try {
                 button.disabled = true;
-                button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xuất...';
+                button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Exporting...'; 
                 const response = await fetch(`${API_BASE_URL}/api/reports/export?from=${from}&to=${to}`, { headers });
-                if (!response.ok) throw new Error('Lỗi khi xuất file Excel.');
+                if (!response.ok) throw new Error('Error exporting Excel file.'); 
                 const blob = await response.blob();
                 const contentDisposition = response.headers.get('content-disposition');
                 let fileName = `Revenue_Overview_${from}_${to}.xlsx`;
@@ -674,30 +661,29 @@
                 document.body.appendChild(a); a.click();
                 window.URL.revokeObjectURL(url); a.remove();
             } catch (error) {
-                console.error('Lỗi khi xuất Excel:', error);
-                alert(error.message || 'Đã xảy ra lỗi không xác định.');
+                console.error('Error exporting Excel:', error);
+                alert(error.message || 'An unknown error occurred.'); 
             } finally {
                 button.disabled = false;
-                button.innerHTML = '<i class="bi bi-file-earmark-excel me-2"></i>Xuất Excel';
+                button.innerHTML = '<i class="bi bi-file-earmark-excel me-2"></i>Export Excel'; 
             }
         }
 
-        // === HÀM IN ẤN ===
+        // === PRINT FUNCTION ===
         function printReport() {
             window.print();
         }
 
-        // === GẮN SỰ KIỆN ===
         document.addEventListener('DOMContentLoaded', () => {
             const today = new Date();
             const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
             document.getElementById('fromDate').value = firstDayOfMonth.toISOString().split('T')[0];
             document.getElementById('toDate').value = today.toISOString().split('T')[0];
 
-            // Khởi tạo đối tượng Modal
+            // Initialize Modal
             bookingDetailModal = new bootstrap.Modal(document.getElementById('bookingDetailModal'));
 
-            // Gắn sự kiện click
+            // Attach events
             document.getElementById('searchButton').addEventListener('click', loadDashboardData);
             document.getElementById('exportButton').addEventListener('click', exportToExcel);
             document.getElementById('printButton').addEventListener('click', printReport);
@@ -707,7 +693,6 @@
                 toggleReportBlocks(reportTypeSelect.value);
             });
 
-            // === GẮN SỰ KIỆN CLICK CHO BẢNG ===
             const monthlyTableBody = document.querySelector("#monthlyRevenueTable tbody");
             monthlyTableBody.addEventListener('click', function (event) {
                 const row = event.target.closest('tr.clickable-row');
@@ -718,14 +703,11 @@
 
                 if (year && month) {
 
-                    // === BẮT ĐẦU SỬA LỖI MÀU BẰNG JAVASCRIPT ===
-                    // 1. Đổi nền header sang đen
                     const modalHeader = document.querySelector('#bookingDetailModal .modal-header');
                     if (modalHeader) {
                         modalHeader.style.setProperty('background-color', '#000000', 'important');
                     }
 
-                    // 2. Đổi tiêu đề (icon + chữ) sang trắng
                     const modalTitleElement = document.getElementById('bookingDetailModalLabel');
                     if (modalTitleElement) {
                         modalTitleElement.style.setProperty('color', '#FFFFFF', 'important');
@@ -736,20 +718,16 @@
                         }
                     }
 
-                    // 3. Đổi nút 'X' sang màu trắng
                     const closeButton = document.querySelector('#bookingDetailModal .btn-close');
                     if (closeButton) {
                         closeButton.style.setProperty('filter', 'invert(1) grayscale(100%) brightness(200%)', 'important');
                     }
 
-                    // Hiển thị modal
                     bookingDetailModal.show();
-                    // Tải dữ liệu chi tiết
                     loadBookingDetails(year, month);
                 }
             });
 
-            // Tải dữ liệu lần đầu khi trang mở
             toggleReportBlocks(reportTypeSelect.value);
             loadDashboardData();
         });

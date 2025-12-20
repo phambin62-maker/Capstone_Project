@@ -1,0 +1,172 @@
+﻿@using System.Text.RegularExpressions
+@model IEnumerable<FE_Capstone_Project.Models.NotificationViewModel>
+@{
+    ViewData["Title"] = "Staff Notifications";
+    Layout = "~/Views/Shared/_StaffLayout.cshtml";
+}
+
+<div class="staff-notification-header py-4 mb-4 bg-light border-bottom">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="h3 fw-bold text-dark mb-1">
+                    <i class="bi bi-bell-fill text-primary me-2"></i>Staff Notifications
+                </h1>
+                <p class="text-muted mb-0">Manage alerts, booking updates, and system messages.</p>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <span class="badge bg-primary rounded-pill fs-6 px-3 py-2">
+                    Total: @(Model?.Count() ?? 0)
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container pb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-0">
+
+                    @if (Model != null && Model.Any())
+                    {
+                        <div class="d-flex justify-content-between align-items-center p-3 border-bottom bg-light bg-opacity-50">
+                            <div class="text-muted small">
+                                Showing all recent notifications
+                            </div>
+                            <div class="d-flex gap-2">
+                                @if (Model.Any(n => !n.IsRead))
+                                {
+                                    <form asp-controller="StaffNotificationWeb" asp-action="MarkAllAsRead" method="post">
+                                        <button type="submit" class="btn btn-sm btn-outline-primary bg-white">
+                                            <i class="bi bi-check2-all"></i> Mark all read
+                                        </button>
+                                    </form>
+                                }
+
+                                <form asp-controller="StaffNotificationWeb" asp-action="DeleteAll" method="post"
+                                      onsubmit="return confirm('Are you sure you want to clear ALL staff notifications?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger bg-white">
+                                        <i class="bi bi-trash3"></i> Clear All
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    }
+
+                    @if (Model == null || !Model.Any())
+                    {
+                        <div class="text-center py-5">
+                            <div class="mb-3">
+                                <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                    <i class="bi bi-inbox text-secondary fs-1"></i>
+                                </div>
+                            </div>
+                            <h5 class="text-dark fw-bold">All caught up!</h5>
+                            <p class="text-muted">You have no new notifications to review.</p>
+                            <a href="@Url.Action("Index", "Staff")" class="btn btn-primary btn-sm mt-2">
+                                Return to Dashboard
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var noti in Model.OrderByDescending(n => n.CreatedDate))
+                            {
+                                <div class="list-group-item list-group-item-action p-4 @(noti.IsRead ? "bg-white" : "bg-primary bg-opacity-10")" style="transition: background-color 0.2s;">
+                                    <div class="row g-3">
+
+                                        <div class="col-auto">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center @(noti.IsRead ? "bg-light text-secondary" : "bg-white text-primary shadow-sm")" style="width: 48px; height: 48px;">
+                                                @if (noti.Title.Contains("Booking", StringComparison.OrdinalIgnoreCase))
+                                                {
+                                                    <i class="bi bi-calendar-check fs-5"></i>
+                                                }
+                                                else if (noti.Title.Contains("Error", StringComparison.OrdinalIgnoreCase))
+                                                {
+                                                    <i class="bi bi-exclamation-triangle fs-5 text-danger"></i>
+                                                }
+                                                else
+                                                {
+                                                    <i class="bi bi-info-circle fs-5"></i>
+                                                }
+                                            </div>
+                                        </div>
+
+                                        <div class="col">
+                                            <div class="d-flex w-100 justify-content-between align-items-start mb-1">
+                                                <h6 class="mb-1 @(noti.IsRead ? "text-dark" : "text-primary fw-bold")">
+                                                    @noti.Title
+                                                    @if (!noti.IsRead)
+                                                    {
+                                                        <span class="badge bg-danger ms-2" style="font-size: 0.65rem; vertical-align: middle;">NEW</span>
+                                                    }
+                                                </h6>
+                                                <small class="text-muted text-nowrap ms-3">
+                                                    <i class="bi bi-clock me-1"></i>@noti.CreatedDate.ToString("HH:mm dd/MM/yyyy")
+                                                </small>
+                                            </div>
+
+                                            <p class="mb-2 text-secondary small" style="line-height: 1.5;">@noti.Message</p>
+
+                                            @{
+                                                
+                                                var match = Regex.Match(noti.Title + " " + noti.Message, @"Booking #(\d+)", RegexOptions.IgnoreCase);
+                                            }
+
+                                            @if (match.Success)
+                                            {
+                                                var bookingId = match.Groups[1].Value;
+                                                <a href="@Url.Action("Details", "StaffBooking", new { id = bookingId })" class="btn btn-link btn-sm p-0 text-decoration-none fw-bold mt-1">
+                                                    View Details <i class="bi bi-arrow-right"></i>
+                                                </a>
+                                            }
+                                            @* ----------------------------------- *@
+                                        </div>
+
+                                        <div class="col-auto align-self-center">
+                                            <form asp-controller="StaffNotificationWeb" asp-action="DeleteSingle" method="post">
+                                                <input type="hidden" name="notificationId" value="@noti.Id" />
+                                                <button type="submit" class="btn btn-icon btn-sm text-muted hover-danger" title="Delete notification" style="border: none; background: transparent;">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                @if (Model != null && Model.Count() > 10)
+                {
+                    <div class="card-footer bg-white text-center py-3">
+                        <small class="text-muted">Showing recent 20 notifications</small>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .hover-danger:hover {
+            color: #dc3545 !important;
+            background-color: #f8d7da !important;
+            border-radius: 50%;
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+    </style>
+}

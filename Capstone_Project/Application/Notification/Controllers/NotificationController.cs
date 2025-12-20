@@ -1,7 +1,7 @@
 ﻿using BE_Capstone_Project.Application.Notifications.DTOs;
-using BE_Capstone_Project.Application.Notifications.Services;
+using BE_Capstone_Project.Application.Notifications.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks; // <-- Thêm using
+using System.Threading.Tasks;
 
 namespace BE_Capstone_Project.Application.Notifications.Controllers
 {
@@ -9,9 +9,9 @@ namespace BE_Capstone_Project.Application.Notifications.Controllers
     [ApiController]
     public class NotificationController : ControllerBase
     {
-        private readonly NotificationService _service;
+        private readonly INotificationService _service;
 
-        public NotificationController(NotificationService service)
+        public NotificationController(INotificationService service)
         {
             _service = service;
         }
@@ -68,7 +68,6 @@ namespace BE_Capstone_Project.Application.Notifications.Controllers
             return NoContent();
         }
 
-        // (API này đã tồn tại, dùng cho "Delete Single")
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -77,7 +76,6 @@ namespace BE_Capstone_Project.Application.Notifications.Controllers
             return NoContent();
         }
 
-        // === THÊM MỚI: API "DELETE ALL" ===
         [HttpDelete("user/{userId}")]
         public async Task<IActionResult> DeleteAllByUserId(int userId)
         {
@@ -85,7 +83,6 @@ namespace BE_Capstone_Project.Application.Notifications.Controllers
             if (!success) return BadRequest("Could not delete notifications.");
             return Ok(new { success = true });
         }
-        // === KẾT THÚC THÊM MỚI ===
 
         [HttpPost("mark-read-single/{notificationId}/{userId}")]
         public async Task<IActionResult> MarkSingleAsRead(int notificationId, int userId)

@@ -1020,6 +1020,7 @@ namespace FE_Capstone_Project.Controllers
                 }
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
+                // ... (Phần lấy Stats giữ nguyên) ...
                 var statsResponse = await _httpClient.GetAsync("News/stats");
                 if (statsResponse.IsSuccessStatusCode)
                 {
@@ -1046,6 +1047,8 @@ namespace FE_Capstone_Project.Controllers
                 }) ?? new List<NewsViewModel>();
 
                 IEnumerable<NewsViewModel> filteredNews = newsList;
+
+                // === PHẦN SỬA ĐỔI: LOGIC TÌM KIẾM CHO STAFF ===
                 if (!string.IsNullOrWhiteSpace(search))
                 {
                     string normalizedSearch = NormalizeString(search);
@@ -1053,12 +1056,14 @@ namespace FE_Capstone_Project.Controllers
                     {
                         string normalizedTitle = NormalizeString(n.Title);
                         string normalizedAuthor = NormalizeString(n.AuthorName);
-                        string normalizedContent = NormalizeString(n.Content);
+
+                        // Staff chỉ tìm theo Title hoặc Author
                         return normalizedTitle.Contains(normalizedSearch) ||
-                               normalizedAuthor.Contains(normalizedSearch) ||
-                               normalizedContent.Contains(normalizedSearch);
+                               normalizedAuthor.Contains(normalizedSearch);
                     }).ToList();
                 }
+                // ===============================================
+
                 if (fromDate.HasValue) { filteredNews = filteredNews.Where(n => n.CreatedDate?.Date >= fromDate.Value.Date); }
                 if (toDate.HasValue) { filteredNews = filteredNews.Where(n => n.CreatedDate?.Date <= toDate.Value.Date); }
                 if (!string.IsNullOrWhiteSpace(status))
@@ -1068,7 +1073,7 @@ namespace FE_Capstone_Project.Controllers
                 }
 
                 var sortedNews = filteredNews
-             .OrderByDescending(n => n.UpdatedDate ?? n.CreatedDate);
+                    .OrderByDescending(n => n.UpdatedDate ?? n.CreatedDate);
 
                 var finalNewsList = sortedNews.ToList();
                 int totalItems = finalNewsList.Count;

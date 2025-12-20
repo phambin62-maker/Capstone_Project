@@ -1,15 +1,16 @@
 ﻿using BE_Capstone_Project.Application.Notifications.DTOs;
+using BE_Capstone_Project.Application.Notifications.Services.Interfaces;
 using BE_Capstone_Project.DAO;
 using BE_Capstone_Project.Domain.Enums;
 using BE_Capstone_Project.Domain.Models;
-using System; // Thêm
-using System.Collections.Generic; // Thêm
-using System.Linq; // Thêm
-using System.Threading.Tasks; // Thêm
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace BE_Capstone_Project.Application.Notifications.Services
 {
-    public class NotificationService
+    public class NotificationService : INotificationService
     {
         private readonly NotificationDAO _notificationDAO;
 
@@ -95,20 +96,17 @@ namespace BE_Capstone_Project.Application.Notifications.Services
             return await _notificationDAO.MarkAllAsReadAsync(userId);
         }
 
-        // === HÀM MỚI (Sửa lỗi hiệu năng) ===
         public async Task<IEnumerable<NotificationDTO>> GetRecentAsync(int userId)
         {
-            // Gọi hàm DAO mới (chỉ lấy 5 cái)
             var list = await _notificationDAO.GetRecentNotificationsAsync(userId, 5);
             return list.Select(MapToDto);
         }
 
-        // === HÀM MỚI (Sửa lỗi "Click để đọc") ===
         public async Task<bool> MarkAsReadAsync(int notificationId, int userId)
         {
-            // Chúng ta chuyển cả 2 ID cho DAO để bảo mật
             return await _notificationDAO.MarkAsReadAsync(notificationId, userId);
         }
+
         public async Task<bool> DeleteAllByUserIdAsync(int userId)
         {
             return await _notificationDAO.DeleteAllByUserIdAsync(userId);
