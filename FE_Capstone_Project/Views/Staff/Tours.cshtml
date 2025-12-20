@@ -562,6 +562,11 @@
                 window.location.href = url;
             }
 
+            // Save list state for "Back to List" functionality
+            if (typeof saveListState === 'function') {
+                saveListState('tours');
+            }
+
             setTimeout(function() {
                 $('.alert').alert('close');
             }, 5000);

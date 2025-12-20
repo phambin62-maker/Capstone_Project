@@ -151,7 +151,7 @@ namespace FE_Capstone_Project.Controllers
         public async Task<IActionResult> Schedules(
             int? tourId = null,
             int page = 1,
-            int pageSize = 3,
+            int pageSize = 5,
             string tourName = null,
             string location = null,
             string category = null,
