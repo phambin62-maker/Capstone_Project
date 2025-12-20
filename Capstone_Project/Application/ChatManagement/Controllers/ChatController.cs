@@ -443,6 +443,42 @@ namespace BE_Capstone_Project.Application.ChatManagement.Controllers
         }
 
         /// <summary>
+        /// Lấy danh sách tất cả customers để staff chọn chat
+        /// </summary>
+        [HttpGet("customer-list")]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> GetCustomerList()
+        {
+            try
+            {
+                const int CUSTOMER_ROLE_ID = 3;
+                var customerUsers = await _userDAO.GetUsersByRoleId(CUSTOMER_ROLE_ID);
+                
+                var customerList = customerUsers
+                    .Where(u => u.UserStatus == null || u.UserStatus == Domain.Enums.UserStatus.Active)
+                    .Select(u => new
+                    {
+                        id = u.Id,
+                        firstName = u.FirstName,
+                        lastName = u.LastName,
+                        email = u.Email,
+                        fullName = $"{u.FirstName} {u.LastName}".Trim(),
+                        username = u.Username
+                    })
+                    .OrderBy(c => c.fullName)
+                    .ToList();
+
+                _logger.LogInformation("Retrieved {Count} customers", customerList.Count);
+                return Ok(customerList);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting customer list");
+                return StatusCode(500, new { message = "Internal server error" });
+            }
+        }
+
+        /// <summary>
         /// Helper: Lấy thông tin user
         /// </summary>
         private async Task<UserInfo?> GetUserInfoAsync(int userId)

@@ -368,7 +368,7 @@
         const timeText = document.createElement('div');
         timeText.className = 'message-time';
         const sentDate = message.sentDate ? new Date(message.sentDate) : new Date();
-        timeText.textContent = sentDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        timeText.textContent = sentDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
 
         bubbleDiv.appendChild(messageText);
         bubbleDiv.appendChild(timeText);

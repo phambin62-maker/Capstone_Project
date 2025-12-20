@@ -12,15 +12,16 @@
         <div class="staff-card" style="height: calc(100vh - 100px); padding: 0; overflow: hidden;">
             <div id="staffChatContainer" class="staff-chat-container" style="height: 100%; border-radius: 0; box-shadow: none;">
 
-                <!-- Sidebar: Conversation List -->
+                <!-- Sidebar: Customer List -->
                 <div class="chat-sidebar">
                     <div class="sidebar-header">
-                        <h5>Conversations</h5>
+                        <h5>Customers</h5>
                     </div>
                     <div id="conversationList" class="conversation-list">
                         <!-- Items will be loaded here -->
                         <div class="text-center p-3">
                             <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                            <p class="text-muted mt-2 small">Loading conversations...</p>
                         </div>
                     </div>
                 </div>
@@ -62,5 +63,5 @@
 
 @section Scripts {
     <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
-    <script src="~/js/chat-widget.js"></script>
+    <script src="~/js/staff-chat.js"></script>
 }
