@@ -34,7 +34,6 @@ namespace FE_Capstone_Project.Controllers
             return normalized.ToLowerInvariant().Trim();
         }
 
-
         [HttpGet]
         public async Task<IActionResult> Index(string? search, DateTime? fromDate, DateTime? toDate, int page = 1, int pageSize = 6)
         {
@@ -43,7 +42,7 @@ namespace FE_Capstone_Project.Controllers
                 var response = await _httpClient.GetAsync($"{_apiBaseUrl}");
                 if (!response.IsSuccessStatusCode)
                 {
-                    ViewBag.ErrorMessage = "Không thể tải danh sách bài viết.";
+                    ViewBag.ErrorMessage = "Unable to load news list.";
                     return View(new NewsListViewModel { NewsList = new List<NewsViewModel>() });
                 }
 
@@ -96,7 +95,7 @@ namespace FE_Capstone_Project.Controllers
             }
             catch (Exception ex)
             {
-                ViewBag.ErrorMessage = "Đã xảy ra lỗi khi tải dữ liệu: " + ex.Message;
+                ViewBag.ErrorMessage = "Error loading data: " + ex.Message;
                 return View(new NewsListViewModel { NewsList = new List<NewsViewModel>() });
             }
         }
@@ -110,7 +109,7 @@ namespace FE_Capstone_Project.Controllers
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    TempData["ErrorMessage"] = "Không thể tải bài viết.";
+                    TempData["ErrorMessage"] = "Unable to load news article.";
                     return RedirectToAction("Index");
                 }
 
@@ -122,7 +121,7 @@ namespace FE_Capstone_Project.Controllers
 
                 if (model == null)
                 {
-                    TempData["ErrorMessage"] = "Bài viết không tồn tại.";
+                    TempData["ErrorMessage"] = "News article does not exist.";
                     return RedirectToAction("Index");
                 }
 
@@ -130,7 +129,7 @@ namespace FE_Capstone_Project.Controllers
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Lỗi khi tải bài viết: " + ex.Message;
+                TempData["ErrorMessage"] = "Error loading news article: " + ex.Message;
                 return RedirectToAction("Index");
             }
         }

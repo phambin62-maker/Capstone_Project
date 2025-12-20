@@ -4,11 +4,13 @@ using BE_Capstone_Project.DAO;
 using BE_Capstone_Project.Domain.Models;
 using BE_Capstone_Project.Infrastructure;
 using Microsoft.EntityFrameworkCore;
-using BE_Capstone_Project.Application.Notifications.Services;
+using BE_Capstone_Project.Application.Notifications.Services.Interfaces; 
 using BE_Capstone_Project.Application.Notifications.DTOs;
 using BE_Capstone_Project.Domain.Enums;
 using System;
 using System.Linq;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace BE_Capstone_Project.Application.WishlistManagement.Services
 {
@@ -16,9 +18,9 @@ namespace BE_Capstone_Project.Application.WishlistManagement.Services
     {
         private readonly WishlistDAO _wishlistDAO;
         private readonly OtmsdbContext _context;
-        private readonly NotificationService _notificationService;
+        private readonly INotificationService _notificationService;
 
-        public WishlistService(WishlistDAO wishlistDAO, OtmsdbContext context, NotificationService notificationService)
+        public WishlistService(WishlistDAO wishlistDAO, OtmsdbContext context, INotificationService notificationService)
         {
             _wishlistDAO = wishlistDAO;
             _context = context;

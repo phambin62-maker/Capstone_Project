@@ -22,6 +22,80 @@
     <link href="~/assets/css/main.css" rel="stylesheet">
     <link href="~/css/staff.css" rel="stylesheet">
 
+    <style>
+        .staff-notification-icon {
+            position: relative;
+            cursor: pointer;
+            margin-right: 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+        }
+
+            .staff-notification-icon i {
+                font-size: 1.5rem;
+            }
+
+        .staff-notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -8px;
+            padding: 3px 6px;
+            font-size: 0.7rem;
+            border-radius: 50%;
+            background-color: #dc3545;
+            color: white;
+            font-weight: bold;
+        }
+
+        .staff-noti-dropdown {
+            width: 350px;
+            max-height: 450px;
+            overflow-y: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            background-color: white;
+            display: none;
+        }
+
+        .staff-noti-item {
+            white-space: normal;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+            .staff-noti-item:hover {
+                background-color: #f8f9fa;
+            }
+
+            .staff-noti-item.unread {
+                background-color: #e8f4ff;
+            }
+
+        /* Ẩn khung khi danh sách rỗng */
+        .staff-noti-dropdown:empty {
+            display: none !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        /* Tắt tính năng hover để chỉ hiện khi click */
+        .navmenu .dropdown:hover > .staff-noti-dropdown:not(.show) {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+        }
+
+        .staff-noti-dropdown.show {
+            display: block !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+    </style>
+
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="staff-body">
@@ -38,6 +112,18 @@
                     <nav id="user-nav" class="navmenu">
                         <ul>
                             <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+
+                            @* --- [SỬA] Đã thêm ID staffNotiTrigger để file JS bắt sự kiện --- *@
+                            <li class="dropdown">
+                                <a href="#" class="staff-notification-icon" id="staffNotiTrigger" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-bell-fill"></i>
+                                    <span class="staff-notification-badge d-none" id="staffNotiBadge">0</span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end staff-noti-dropdown" id="staffNotiList">
+                                </ul>
+                            </li>
+                            @* ---------------------------------------- *@
+
                             <li class="dropdown">
                                 <a style="color: white;">
                                     <span style="color: white;">Welcome, @firstname</span>
@@ -156,15 +242,21 @@
     }
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>     
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/assets/vendor/aos/aos.js"></script>
     <script src="~/assets/vendor/swiper/swiper-bundle.min.js"></script>
     <script src="~/assets/vendor/glightbox/js/glightbox.min.js"></script>
     <script src="~/assets/js/main.js"></script>
+
+    @* Giữ lại staff.js nếu có logic khác, nếu không có thể xóa *@
     <script src="~/js/staff.js"></script>
 
+    @* --- [THÊM MỚI] LINK TỚI FILE JS GỘP CHUNG (notification.js) --- *@
+    <script src="~/js/notification.js?v=2" asp-append-version="true"></script>
+
+    @* Script xử lý Active Menu Sidebar *@
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const currentPath = window.location.pathname;
             const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
 

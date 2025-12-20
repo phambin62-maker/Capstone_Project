@@ -3,7 +3,6 @@
 @{
     ViewData["Title"] = "News Management";
     Layout = "~/Views/Shared/_StaffLayout.cshtml";
-    // Đã bao gồm TimeZoneInfo (GMT+7)
     TimeZoneInfo vietnamZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
 }
 
@@ -135,7 +134,6 @@
                         <tbody>
                             @foreach (var news in Model.NewsList)
                             {
-                                // THÊM: Logic chuyển đổi thời gian (UTC -> GMT+7)
                                 DateTime createdDateLocal = news.CreatedDate.HasValue ? TimeZoneInfo.ConvertTimeFromUtc(news.CreatedDate.Value, vietnamZone) : DateTime.MinValue;
                                 DateTime? updatedDateLocal = news.UpdatedDate.HasValue ? TimeZoneInfo.ConvertTimeFromUtc(news.UpdatedDate.Value, vietnamZone) : (DateTime?)null;
 
@@ -156,7 +154,7 @@
                                     <td class="fw-semibold text-truncate-custom" style="max-width: 150px;">
                                         @{
                                             string fullTitle = news.Title ?? "";
-                                            string displayTitle = fullTitle.Length > 20 ? fullTitle.Substring(0, 20) + "..." : fullTitle;
+                                            string displayTitle = fullTitle.Length > 40 ? fullTitle.Substring(0, 40) + "..." : fullTitle;
                                         }
                                         <span title="@fullTitle" data-bs-toggle="tooltip">@displayTitle</span>
                                     </td>
@@ -275,7 +273,6 @@
 
 @section Scripts {
     <script>
-        // Kích hoạt Bootstrap Tooltips
         document.addEventListener('DOMContentLoaded', function () {
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
             var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -283,7 +280,6 @@
             })
         });
 
-        // Đảm bảo Spinner hoạt động
         const form = document.querySelector(".card-body form");
         const spinner = document.getElementById("loadingSpinner");
         const table = document.querySelector(".table-responsive");
