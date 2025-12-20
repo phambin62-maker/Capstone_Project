@@ -20,7 +20,6 @@
                 <div class="col-lg-7">
                     <div class="hero-text" data-aos="fade-up" data-aos-delay="100">
                         <h1 class="hero-title">Discover Your Perfect Journey</h1>
-                        <p class="hero-subtitle">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.</p>
                         <div class="hero-buttons">
                             <a asp-action="Tours" asp-controller="TourWeb" class="btn btn-primary me-3">Start Exploring</a>
                         </div>
@@ -251,16 +250,6 @@
                                                 <i class="bi bi-star-fill"></i>
                                                 <span>@featuredTour.AverageRating.ToString("F1") (@featuredTour.ReviewCount)</span>
                                             </div>
-                                        </div>
-                                        <p class="text-muted mb-0">@tourDescription</p>
-                                        <div class="d-flex justify-content-between align-items-center pt-2">
-                                            <span class="text-secondary small">
-                                                <i class="bi bi-geo-alt-fill me-1"></i>@(tour.StartLocation?.LocationName)
-                                            </span>
-                                            <!-- Sử dụng class quick-link giống Featured Destinations -->
-                                            <a class="quick-link" href="/TourWeb/TourDetails?tourId=@tour.Id">
-                                                View Details <i class="bi bi-chevron-right"></i>
-                                            </a>
                                         </div>
                                         <!-- Class explore-btn được định nghĩa sẵn trong CSS -->
                                         <a href="/TourWeb/TourDetails?tourId=@featuredTour.TourId" class="explore-btn">
