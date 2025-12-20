@@ -252,9 +252,15 @@
                                                 <span>@featuredTour.AverageRating.ToString("F1") (@featuredTour.ReviewCount)</span>
                                             </div>
                                         </div>
-                                        <div class="price-info">
-                                            <span class="starting-from">Starting from</span>
-                                            <span class="amount">@featuredTour.Price.ToString("N0") VND</span>
+                                        <p class="text-muted mb-0">@tourDescription</p>
+                                        <div class="d-flex justify-content-between align-items-center pt-2">
+                                            <span class="text-secondary small">
+                                                <i class="bi bi-geo-alt-fill me-1"></i>@(tour.StartLocation?.LocationName)
+                                            </span>
+                                            <!-- Sử dụng class quick-link giống Featured Destinations -->
+                                            <a class="quick-link" href="/TourWeb/TourDetails?tourId=@tour.Id">
+                                                View Details <i class="bi bi-chevron-right"></i>
+                                            </a>
                                         </div>
                                         <!-- Class explore-btn được định nghĩa sẵn trong CSS -->
                                         <a href="/TourWeb/TourDetails?tourId=@featuredTour.TourId" class="explore-btn">
@@ -360,7 +366,9 @@
                         }
                     </script>
                     <div class="swiper-wrapper">
-                        @foreach (var review in Model.Reviews)
+                        @foreach (var review in Model.Reviews
+                                                .OrderByDescending(r => r.Stars)
+                                                .Take(5))
                         {
                             <div class="swiper-slide">
                                 <div class="testimonial-item">

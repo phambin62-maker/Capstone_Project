@@ -162,7 +162,7 @@
                 console.error('Backend error:', errorData);
 
                 // Hiển thị lỗi chi tiết từ backend
-                let errorMsg = "❌ Lỗi khi thêm tài khoản:\n\n";
+                let errorMsg = " Lỗi khi thêm tài khoản:\n\n";
                 if (errorData.errors) {
                     for (let field in errorData.errors) {
                         errorMsg += `• ${field}: ${errorData.errors[field].join(', ')}\n`;
@@ -189,7 +189,7 @@
 
         } catch (error) {
             console.error("Error:", error);
-            alert("⚠️ Không thể kết nối tới máy chủ backend!");
+            alert("⚠ Không thể kết nối tới máy chủ backend!");
         }
     };
 
@@ -210,7 +210,7 @@
         const accountId = form.dataset.accountId || data.Id || document.getElementById("editAccountId")?.value;
 
         if (!accountId) {
-            alert('❌ Không tìm thấy ID tài khoản!');
+            alert(' Không tìm thấy ID tài khoản!');
             return;
         }
 
@@ -229,7 +229,7 @@
         if (resetPasswordCheckbox && resetPasswordCheckbox.checked) {
             const password = data.Password || document.getElementById("editPassword")?.value;
             if (!password) {
-                alert('❌ Vui lòng nhập mật khẩu mới!');
+                alert(' Vui lòng nhập mật khẩu mới!');
                 return;
             }
             payload.Password = password;
@@ -267,7 +267,7 @@
 
         } catch (error) {
             console.error("Error:", error);
-            alert("⚠️ Không thể kết nối tới máy chủ backend!");
+            alert("cant access");
         }
     };
 
@@ -276,7 +276,7 @@
         const isActive = checkbox.checked;
         const label = checkbox.nextElementSibling;
 
-        if (!confirm(`Bạn có chắc muốn ${isActive ? 'kích hoạt' : 'khóa'} tài khoản này?`)) {
+        if (!confirm(`Are you sure want ${isActive ? 'active' : 'inactive'} this account?`)) {
             checkbox.checked = !isActive;
             return;
         }
@@ -302,18 +302,18 @@
             if (isActive) {
                 label.classList.remove('text-danger');
                 label.classList.add('text-success');
-                label.querySelector('small').textContent = 'Hoạt động';
+                label.querySelector('small').textContent = 'Active';
             } else {
                 label.classList.remove('text-success');
                 label.classList.add('text-danger');
-                label.querySelector('small').textContent = 'Bị khóa';
+                label.querySelector('small').textContent = 'Locked';
             }
 
-            alert('✅ Cập nhật trạng thái thành công!');
+            alert(' Update status successfully!');
 
         } catch (error) {
             console.error("Error:", error);
-            alert("⚠️ Không thể kết nối tới máy chủ backend!");
+            alert(" Không thể kết nối tới máy chủ backend!");
             checkbox.checked = !isActive;
         }
     };

@@ -308,6 +308,20 @@
 
                     <span class="error-message" id="passwordError"></span>
                 </div>
+                
+                <!-- Security Question -->
+                <div class="form-group">
+                    <input asp-for="SecurityQuestion" type="text" id="securityQuestion" name="securityQuestion" required placeholder="" class="form-control" />
+                    <label for="securityQuestion">Security Question (e.g. Pet's Name)</label>
+                    <span class="error-message"></span>
+                </div>
+
+                <!-- Security Answer -->
+                <div class="form-group">
+                    <input asp-for="SecurityAnswer" type="text" id="securityAnswer" name="securityAnswer" required placeholder="" class="form-control" />
+                    <label for="securityAnswer">Security Answer</label>
+                    <span class="error-message"></span>
+                </div>
 
                 <!-- Submit -->
                 <button type="submit" class="login-btn">

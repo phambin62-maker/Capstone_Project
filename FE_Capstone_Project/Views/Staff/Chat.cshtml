@@ -1,0 +1,66 @@
+﻿@{
+    ViewData["Title"] = "Staff Chat";
+    Layout = "~/Views/Shared/_StaffLayout.cshtml";
+    var userId = Context.Session.GetInt32("UserId");
+    var jwtToken = Context.Session.GetString("JwtToken");
+}
+
+<link rel="stylesheet" href="~/css/staff-chat.css" />
+
+<div class="row">
+    <div class="col-12">
+        <div class="staff-card" style="height: calc(100vh - 100px); padding: 0; overflow: hidden;">
+            <div id="staffChatContainer" class="staff-chat-container" style="height: 100%; border-radius: 0; box-shadow: none;">
+
+                <!-- Sidebar: Conversation List -->
+                <div class="chat-sidebar">
+                    <div class="sidebar-header">
+                        <h5>Conversations</h5>
+                    </div>
+                    <div id="conversationList" class="conversation-list">
+                        <!-- Items will be loaded here -->
+                        <div class="text-center p-3">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Chat Area -->
+                <div class="chat-main">
+                    <!-- Empty State -->
+                    <div id="emptyState" class="empty-state">
+                        <i class="bi bi-chat-square-text"></i>
+                        <h5>Select a conversation to start chatting</h5>
+                    </div>
+
+                    <!-- Active Chat Content (Hidden by default) -->
+                    <div id="chatMainContent" style="display: none; flex-direction: column; height: 100%;">
+                        <div class="chat-header">
+                            <h6 id="chatHeaderTitle">Chat</h6>
+                        </div>
+
+                        <div id="chatMessages" class="chat-messages">
+                            <!-- Messages will be loaded here -->
+                        </div>
+
+                        <div id="chatInputArea" class="chat-input-area">
+                            <input type="text" id="messageInput" class="form-control" placeholder="Type a message..." maxlength="500">
+                            <button id="sendMessageBtn" class="btn btn-primary">
+                                <i class="bi bi-send-fill"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="currentUserId" value="@(userId ?? 0)">
+<input type="hidden" id="jwtToken" value="@jwtToken">
+
+@section Scripts {
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/chat-widget.js"></script>
+}

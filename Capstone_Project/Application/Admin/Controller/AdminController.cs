@@ -51,7 +51,7 @@ namespace BE_Capstone_Project.Application.Admin.Controller
         [HttpGet("get-all-accounts")]
         public async Task<IActionResult> GetAllAccounts()
         {
-            _logger.LogInformation("➡️ [GetAllAccounts] Request received");
+            _logger.LogInformation("[GetAllAccounts] Request received");
 
             try
             {
@@ -59,16 +59,16 @@ namespace BE_Capstone_Project.Application.Admin.Controller
 
                 if (users == null)
                 {
-                    _logger.LogWarning("⚠️ [GetAllAccounts] Service returned null (possible DAO/context issue)");
+                    _logger.LogWarning("[GetAllAccounts] Service returned null (possible DAO/context issue)");
                     return NotFound("No users found or service returned null");
                 }
 
-                _logger.LogInformation("✅ [GetAllAccounts] Retrieved {Count} users", users.Count);
+                _logger.LogInformation("[GetAllAccounts] Retrieved {Count} users", users.Count);
                 return Ok(users);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ [GetAllAccounts] Failed to retrieve users");
+                _logger.LogError(ex, "[GetAllAccounts] Failed to retrieve users");
                 return StatusCode(500, "Internal Server Error");
             }
         }
@@ -95,7 +95,7 @@ namespace BE_Capstone_Project.Application.Admin.Controller
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ [GetAccountStatistics] Failed to retrieve statistics");
+                _logger.LogError(ex, "[GetAccountStatistics] Failed to retrieve statistics");
                 return StatusCode(500, "Internal Server Error");
             }
         }
@@ -116,7 +116,7 @@ namespace BE_Capstone_Project.Application.Admin.Controller
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ [GetFilteredAccounts] Failed to retrieve accounts");
+                _logger.LogError(ex, "[GetFilteredAccounts] Failed to retrieve accounts");
                 return StatusCode(500, "Internal Server Error");
             }
         }
@@ -150,7 +150,7 @@ namespace BE_Capstone_Project.Application.Admin.Controller
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ [GetAccountById] Failed to retrieve account");
+                _logger.LogError(ex, "[GetAccountById] Failed to retrieve account");
                 return StatusCode(500, "Internal Server Error");
             }
         }
@@ -172,7 +172,7 @@ namespace BE_Capstone_Project.Application.Admin.Controller
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ [UpdateAccount] Failed to update account");
+                _logger.LogError(ex, "[UpdateAccount] Failed to update account");
                 return StatusCode(500, "Internal Server Error");
             }
         }
@@ -191,7 +191,7 @@ namespace BE_Capstone_Project.Application.Admin.Controller
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ [DeleteAccount] Failed to delete account");
+                _logger.LogError(ex, "[DeleteAccount] Failed to delete account");
                 return StatusCode(500, "Internal Server Error");
             }
         }
@@ -210,7 +210,7 @@ namespace BE_Capstone_Project.Application.Admin.Controller
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ [SetAccountStatus] Failed to update account status");
+                _logger.LogError(ex, "[SetAccountStatus] Failed to update account status");
                 return StatusCode(500, "Internal Server Error");
             }
         }

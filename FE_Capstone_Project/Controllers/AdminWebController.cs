@@ -75,10 +75,6 @@ namespace FE_Capstone_Project.Controllers
                 // 2. Đẩy token lên View (giống hệt action Account)
                 ViewBag.JwtToken = token;
 
-                // 3. Đẩy URL gốc của API lên View cho JavaScript
-                // (Vì _baseUrl của bạn là ".../api/admin",
-                // JavaScript cần URL gốc là "https://localhost:7160"
-                // để gọi /api/reports)
                 var apiBaseUrl = _baseUrl.Replace("/api/admin", "");
                 ViewBag.ApiBaseUrl = apiBaseUrl;
 

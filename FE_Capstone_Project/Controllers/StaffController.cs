@@ -131,6 +131,11 @@ namespace FE_Capstone_Project.Controllers
             ViewData["Title"] = "Staff Dashboard";
             return View();
         }
+        public IActionResult Chat()
+        {
+            ViewData["Title"] = "Staff Dashboard";
+            return View();
+        }
 
         public async Task<List<TourViewModel>> LoadToursWithDetails(List<TourViewModel> tours)
         {

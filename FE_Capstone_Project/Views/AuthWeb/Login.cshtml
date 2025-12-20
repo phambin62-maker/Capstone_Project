@@ -52,16 +52,7 @@
 
                 <!-- Options -->
                 <div class="form-options">
-                    @* <label class="checkbox-wrapper">
-                        <input type="checkbox" id="remember" name="remember" />
-                        <span class="checkmark">
-                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                                <path d="M2 6l2.5 2.5L10 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            </svg>
-                        </span>
-                        Keep me signed in
-                    </label> *@
-                    @* <a href="#" class="forgot-link">Forgot password?</a> *@
+                    <a href="@Url.Action("ForgotPassword", "AuthWeb")" class="forgot-link">Forgot password?</a>
                 </div>
 
                 <!-- Submit -->
@@ -70,6 +61,10 @@
                 </button>
 
                 <!-- Message -->
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <p id="successMessage" style="margin-top: 10px; text-align:center; color:green;">@TempData["SuccessMessage"]</p>
+                }
                 @if (!string.IsNullOrEmpty(Model.Message))
                 {
                     <p id="loginMessage" style="margin-top: 10px; text-align:center; color:red;">@Model.Message</p>
