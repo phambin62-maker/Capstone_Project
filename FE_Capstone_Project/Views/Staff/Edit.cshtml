@@ -354,7 +354,7 @@
                                 <a href="@Url.Action("TourDetails", new { id = Model.Id })" class="btn btn-outline-secondary me-2">
                                     <i class="bi bi-eye me-2"></i>View Details
                                 </a>
-                                <a href="@Url.Action("Tours")" class="btn btn-outline-secondary">
+                                <a href="javascript:void(0)" onclick="goBackToList('tours', '@Url.Action("Tours")')" class="btn btn-outline-secondary">
                                     <i class="bi bi-x-circle me-2"></i>Cancel
                                 </a>
                             </div>

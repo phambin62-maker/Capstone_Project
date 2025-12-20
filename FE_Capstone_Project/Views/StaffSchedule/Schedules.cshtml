@@ -505,6 +505,11 @@
                 window.location.href = url;
             }
 
+            // Save list state for "Back to List" functionality
+            if (typeof saveListState === 'function') {
+                saveListState('schedules');
+            }
+
             // Auto hide alerts after 5 seconds
             setTimeout(function() {
                 $('.alert').alert('close');
