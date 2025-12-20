@@ -203,6 +203,13 @@
                             <i class="bi bi-newspaper me-2"></i>News
                         </a>
                     </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Chat" && ViewContext.RouteData.Values["controller"]?.ToString() == "Staff" ? "active" : "")"
+                           href="/Staff/Chat">
+                            <i class="bi bi-chat-dots me-2"></i>Chat
+                        </a>
+                    </li>
                 </ul>
             </nav>
         </div>

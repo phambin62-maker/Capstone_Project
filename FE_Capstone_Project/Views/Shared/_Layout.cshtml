@@ -47,14 +47,7 @@
             flex: 1;
         }
     </style>
-
     @await RenderSectionAsync("Styles", required: false)
-    <!-- Chat Widget CSS (only for logged-in customers) -->
-    @if (Context.Session.GetInt32("UserRoleId") != 1)
-    {
-        
-    }
-    <link href="~/css/chat.css" rel="stylesheet" />
 </head>
 <body>
     @{
@@ -185,24 +178,14 @@
     @{
         var isLoggedIn = !string.IsNullOrEmpty(Context.Session.GetString("JwtToken"));
         var userRoleId = Context.Session.GetInt32("UserRoleId");
-
-        // Hiển thị chat widget cho tất cả user
-        var showChatWidget = true;
-
         // Chỉ load SignalR nếu user đã đăng nhập và là Customer hoặc Staff
         var useSignalR = isLoggedIn && (userRoleId == 2 || userRoleId == 3);
     }
-
-    <!-- Chat Widget - Hiển thị cho tất cả -->
-    @if (Context.Session.GetInt32("UserRoleId") != 1)
-    {
         <link href="~/css/chat.css" rel="stylesheet" />
         @await Html.PartialAsync("_ChatWidget")
-    }
-
     @if (useSignalR)
     {
-        @await Html.PartialAsync("_ChatWidget")
+        
         <!-- SignalR cho user đã đăng nhập -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
     }
@@ -217,7 +200,6 @@
             userRoleId: @Json.Serialize(userRoleId ?? 0)
         };
     </script>
-
     @RenderSection("Scripts", required: false)
 </body>
 </html>

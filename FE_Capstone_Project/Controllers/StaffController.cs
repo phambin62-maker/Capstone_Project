@@ -133,7 +133,7 @@ namespace FE_Capstone_Project.Controllers
         }
         public IActionResult Chat()
         {
-            ViewData["Title"] = "Staff Dashboard";
+            ViewData["Title"] = "Staff Chat";
             return View();
         }
 
