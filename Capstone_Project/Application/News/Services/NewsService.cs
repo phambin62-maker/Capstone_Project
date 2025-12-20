@@ -1,4 +1,5 @@
 ﻿using BE_Capstone_Project.Application.Newses.DTOs;
+using BE_Capstone_Project.Application.Newses.Services.Interfaces;
 using BE_Capstone_Project.DAO;
 using BE_Capstone_Project.Domain.Enums;
 using BE_Capstone_Project.Domain.Models;
@@ -13,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BE_Capstone_Project.Application.Newses.Services
 {
-    public class NewsService
+    public class NewsService : INewsService
     {
         private readonly NewsDAO _newsDAO;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -38,12 +39,11 @@ namespace BE_Capstone_Project.Application.Newses.Services
             return $"{baseUrl}{relativePath.Replace("~/", "/")}";
         }
 
-        // Helper: Chuyển đổi string sang Enum (An toàn)
         private NewsStatus ParseNewsStatus(string? statusString)
         {
             if (string.IsNullOrEmpty(statusString))
             {
-                return NewsStatus.Draft; // Mặc định
+                return NewsStatus.Draft;
             }
 
             if (Enum.TryParse<NewsStatus>(statusString, true, out var statusEnum))
@@ -51,7 +51,7 @@ namespace BE_Capstone_Project.Application.Newses.Services
                 return statusEnum;
             }
 
-            return NewsStatus.Draft; // Mặc định nếu không parse được
+            return NewsStatus.Draft;
         }
 
         private int GetCurrentUserId()
@@ -103,7 +103,7 @@ namespace BE_Capstone_Project.Application.Newses.Services
 
         public async Task<IEnumerable<NewsDTO>> GetByStatusAsync(string statusString)
         {
-            var statusEnum = ParseNewsStatus(statusString); // Chuyển đổi
+            var statusEnum = ParseNewsStatus(statusString);
             var newsList = await _newsDAO.GetNewsByStatusAsync(statusEnum);
             return newsList.Select(MapToDto);
         }
@@ -128,17 +128,15 @@ namespace BE_Capstone_Project.Application.Newses.Services
                 Content = dto.Content,
                 Image = dto.Image,
                 CreatedDate = DateTime.UtcNow,
-                NewsStatus = ParseNewsStatus(dto.NewsStatus) // Sửa: Chuyển đổi string
+                NewsStatus = ParseNewsStatus(dto.NewsStatus)
             };
             return await _newsDAO.AddNewsAsync(news);
         }
 
-        // SỬA: UpdateAsync(News) để khớp với Controller
         public async Task<bool> UpdateAsync(News newsEntity)
         {
             try
             {
-                // Logic cập nhật Author/Date đã được chuyển vào Controller
                 await _newsDAO.SaveChangesAsync();
                 return true;
             }
@@ -153,6 +151,7 @@ namespace BE_Capstone_Project.Application.Newses.Services
         {
             return await _newsDAO.DeleteNewsAsync(newsEntity);
         }
+
         public async Task<News?> GetNewsEntityByIdAsync(int id)
         {
             return await _newsDAO.GetNewsEntityByIdAsync(id);
