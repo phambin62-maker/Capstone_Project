@@ -52,7 +52,7 @@ namespace FE_Capstone_Project.Controllers
 
             if (!response.IsSuccessStatusCode)
             {
-                model.Message = "Sai thông tin đăng nhập hoặc tài khoản không tồn tại.";
+                model.Message = "Invalid login credentials or account does not exist.";
                 return View(model);
             }
 
@@ -64,7 +64,7 @@ namespace FE_Capstone_Project.Controllers
 
             if (loginResult == null || string.IsNullOrEmpty(loginResult.Token))
             {
-                model.Message = "Không nhận được token từ server.";
+                model.Message = "Failed to receive token from server.";
                 return View(model);
             }
             var handler = new JwtSecurityTokenHandler();
@@ -113,7 +113,7 @@ namespace FE_Capstone_Project.Controllers
 
             if (email == null)
             {
-                _logger.LogWarning("Google login không có email, chuyển hướng về trang Login");
+                _logger.LogWarning("Google login missing email, redirecting to Login page");
                 return RedirectToAction("Login", "AuthWeb");
             }
 
@@ -164,18 +164,18 @@ namespace FE_Capstone_Project.Controllers
                     HttpContext.Session.SetInt32("UserId", userId);
 
 
-                    _logger.LogInformation($"Lưu token vào session thành công cho {email}, username: {username}");
+                    _logger.LogInformation($"Successfully saved token to session for {email}, username: {username}");
                 }
                 else
                 {
-                    _logger.LogWarning($"BE không trả về token cho {email}. Message: {message}");
+                    _logger.LogWarning($"Backend did not return token for {email}. Message: {message}");
                 }
                 return RedirectToAction("Index", "Home");
             }
             else
             {
                 var err = await response.Content.ReadAsStringAsync();
-                _logger.LogError($"Không thể đồng bộ user Google: {err}");
+                _logger.LogError($"Unable to sync Google user: {err}");
                 return RedirectToAction("Login", "AuthWeb");
             }
         }
@@ -199,7 +199,7 @@ namespace FE_Capstone_Project.Controllers
             ViewData["HideHeader"] = true;
             if (!ModelState.IsValid)
             {
-                ViewBag.Error = "Vui lòng nhập đầy đủ thông tin.";
+                ViewBag.Error = "Please fill in all required information.";
                 return View(model);
             }
 
@@ -213,7 +213,7 @@ namespace FE_Capstone_Project.Controllers
 
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["SuccessMessage"] = "🎉 Đăng ký thành công! Vui lòng đăng nhập.";
+                    TempData["SuccessMessage"] = "Registration successful. Please login.";
                     return RedirectToAction("Login");
                 }
                 else
@@ -225,7 +225,7 @@ namespace FE_Capstone_Project.Controllers
             }
             catch (Exception ex)
             {
-                ViewBag.Error = "⚠️ Không thể kết nối đến máy chủ: " + ex.Message;
+                ViewBag.Error = "Unable to connect to server: " + ex.Message;
                 return View(model);
             }
         }
@@ -340,6 +340,216 @@ namespace FE_Capstone_Project.Controllers
         public IActionResult Users()
         {
             return View();
+        }
+
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            ViewData["HideHeader"] = true;
+            return View(new ResetPasswordViewModel());
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ForgotPassword(ResetPasswordViewModel model)
+        {
+            ViewData["HideHeader"] = true;
+            
+            if (string.IsNullOrWhiteSpace(model.Email))
+            {
+                model.Error = "Please enter your email address.";
+                return View(model);
+            }
+
+            try
+            {
+                var requestDto = new { Email = model.Email };
+                var json = JsonSerializer.Serialize(requestDto);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                
+                var response = await _httpClient.PostAsync($"{_baseUrl}/get-security-question", content);
+                var responseString = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    string errorMessage = "Account not found or security question not set up.";
+                    
+                    try
+                    {
+                        var errorResponse = JsonSerializer.Deserialize<Dictionary<string, string>>(responseString, new JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true
+                        });
+                        
+                        if (errorResponse?.ContainsKey("message") == true)
+                        {
+                            errorMessage = errorResponse["message"];
+                        }
+                        else if (!string.IsNullOrWhiteSpace(responseString) && !responseString.StartsWith("{"))
+                        {
+                            // Handle plain string error messages
+                            errorMessage = responseString.Trim('"');
+                        }
+                    }
+                    catch
+                    {
+                        // If JSON parsing fails, use the raw response string
+                        if (!string.IsNullOrWhiteSpace(responseString))
+                        {
+                            errorMessage = responseString.Trim('"');
+                        }
+                    }
+                    
+                    model.Error = errorMessage;
+                    return View(model);
+                }
+
+                var result = JsonSerializer.Deserialize<Dictionary<string, string>>(responseString, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                if (result != null && result.ContainsKey("question"))
+                {
+                    model.SecurityQuestion = result["question"];
+                    return RedirectToAction("ResetPassword", new { email = model.Email, securityQuestion = model.SecurityQuestion });
+                }
+
+                model.Error = "Unable to retrieve security question.";
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving security question");
+                model.Error = "An error occurred while processing your request. Please try again.";
+                return View(model);
+            }
+        }
+
+        [HttpGet]
+        public IActionResult ResetPassword(string email, string securityQuestion)
+        {
+            ViewData["HideHeader"] = true;
+            
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(securityQuestion))
+            {
+                TempData["Error"] = "Invalid information. Please try again from the beginning.";
+                return RedirectToAction("ForgotPassword");
+            }
+
+            var model = new ResetPasswordViewModel
+            {
+                Email = email,
+                SecurityQuestion = securityQuestion
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        {
+            ViewData["HideHeader"] = true;
+
+            if (string.IsNullOrWhiteSpace(model.Email))
+            {
+                TempData["Error"] = "Invalid email. Please try again from the beginning.";
+                return RedirectToAction("ForgotPassword");
+            }
+
+            if (string.IsNullOrWhiteSpace(model.SecurityAnswer))
+            {
+                model.Error = "Please enter your security answer.";
+                return View(model);
+            }
+
+            if (string.IsNullOrWhiteSpace(model.NewPassword))
+            {
+                model.Error = "Please enter a new password.";
+                return View(model);
+            }
+
+            if (model.NewPassword != model.ConfirmPassword)
+            {
+                model.Error = "Passwords do not match.";
+                return View(model);
+            }
+
+            if (model.NewPassword.Length < 6)
+            {
+                model.Error = "Password must be at least 6 characters long.";
+                return View(model);
+            }
+
+            try
+            {
+                var requestDto = new
+                {
+                    Email = model.Email,
+                    SecurityAnswer = model.SecurityAnswer,
+                    NewPassword = model.NewPassword,
+                    ConfirmPassword = model.ConfirmPassword
+                };
+
+                var json = JsonSerializer.Serialize(requestDto);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                
+                var response = await _httpClient.PostAsync($"{_baseUrl}/reset-password", content);
+                var responseString = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    string errorMessage = "Unable to reset password. Please check your information.";
+                    
+                    try
+                    {
+                        var errorResponse = JsonSerializer.Deserialize<Dictionary<string, string>>(responseString, new JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true
+                        });
+                        
+                        if (errorResponse?.ContainsKey("message") == true)
+                        {
+                            errorMessage = errorResponse["message"];
+                        }
+                        else if (!string.IsNullOrWhiteSpace(responseString) && !responseString.StartsWith("{"))
+                        {
+                            // Handle plain string error messages
+                            errorMessage = responseString.Trim('"');
+                        }
+                    }
+                    catch
+                    {
+                        // If JSON parsing fails, use the raw response string
+                        if (!string.IsNullOrWhiteSpace(responseString))
+                        {
+                            errorMessage = responseString.Trim('"');
+                        }
+                    }
+                    
+                    model.Error = errorMessage;
+                    return View(model);
+                }
+
+                var result = JsonSerializer.Deserialize<Dictionary<string, string>>(responseString, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                if (result != null && result.ContainsKey("message"))
+                {
+                    TempData["SuccessMessage"] = "Password reset successful. Please login with your new password.";
+                    return RedirectToAction("Login");
+                }
+
+                model.Error = "An unknown error occurred.";
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error resetting password");
+                model.Error = "An error occurred while processing your request. Please try again.";
+                return View(model);
+            }
         }
 
     }

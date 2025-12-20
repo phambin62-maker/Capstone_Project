@@ -228,6 +228,7 @@ namespace BE_Capstone_Project.DAO
             {
                 var paginatedTours = await _context.Tours
                     .Include(t => t.TourImages)
+                    .Include(t => t.EndLocation)
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
                     .ToListAsync();

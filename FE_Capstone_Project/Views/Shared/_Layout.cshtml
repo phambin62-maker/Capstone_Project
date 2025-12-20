@@ -52,8 +52,9 @@
     <!-- Chat Widget CSS (only for logged-in customers) -->
     @if (Context.Session.GetInt32("UserRoleId") != 1)
     {
-        <link href="~/css/chat.css" rel="stylesheet" />
+        
     }
+    <link href="~/css/chat.css" rel="stylesheet" />
 </head>
 <body>
     @{
