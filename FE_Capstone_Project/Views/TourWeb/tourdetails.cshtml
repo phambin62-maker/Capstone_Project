@@ -48,7 +48,7 @@
                                 <div class="hero-meta">
                                     <span class="duration"><i class="bi bi-calendar"></i> @Model.Duration Day@(Model.Duration == 1 ? "" : "s")</span>
                                     <span class="destination"><i class="bi bi-geo-alt"></i> @Model.EndLocation.LocationName</span>
-                                    <span class="rating"><i class="bi bi-star-fill"></i> @avgRatingText (@Model.Reviews!.Count reviews)</span>
+                                    <span class="rating"><i class="bi bi-star-fill"></i> @avgRatingText (@Model.Reviews!.Count review@(Model.Reviews!.Count == 1 ? "" : "s"))</span>
                                     <span class="rating"><i class="bi bi-people-fill"></i> @Model.MaxSeats seats per booking</span>
                                 </div>
                                 <a asp-controller="@(isLoggedIn ? "BookingWeb" : "AuthWeb")"
@@ -78,7 +78,15 @@
                     <div class="row">
                         <div class="col-lg-12">
                             <h2>Tour Overview</h2>
-                            <p>@Model.Description</p>
+                            @{
+                                var desc = Model.Description ?? string.Empty;
+                                var paragraphs = desc.Split(new[] { "\r\n\r\n", "\n\n", "\r\r" }, StringSplitOptions.RemoveEmptyEntries);
+                            }
+                            @foreach (var para in paragraphs)
+                            {
+                                var encoded = System.Net.WebUtility.HtmlEncode(para.Trim());
+                                <p>@Html.Raw(encoded.Replace("\r\n", "<br/>").Replace("\n", "<br/>"))</p>
+                            }
                         </div>
                     </div>
                 </div>
@@ -166,6 +174,60 @@
             </div>
 
         </section><!-- /Travel Tour Details Section -->
+        <!-- Blog Comment Form Section -->
+        <section id="blog-comment-form" class="blog-comment-form section position-relative">
+
+            @* ✅ Blur Overlay if user is not logged in *@
+            @if (!ViewBag.CanComment)
+            {
+                <div id="login-overlay" class="login-overlay">
+                    <div class="overlay-content">
+                        <p>
+                            You can only leave a review after booking this tour.
+                            @if (isLoggedIn)
+                            {
+                                <a asp-controller="BookingWeb" asp-action="Index" asp-route-tourId="@Model.Id"> Book Now</a>
+                            }
+                            else
+                            {
+                                <a asp-controller="AuthWeb" asp-action="Login">Log In to Book</a>
+                            }
+                        </p>
+                    </div>
+                </div>
+            }
+
+            <div class="container" data-aos="fade-up" data-aos-delay="100">
+                <form asp-action="PostComment" asp-controller="Review" method="post" role="form">
+                    <input type="hidden" name="TourId" value="@Model.Id" />
+                    <div class="section-header">
+                        <h3>Share Your Thoughts</h3>
+                    </div>
+
+                    <!-- ⭐ Star Rating -->
+                    <div class="star-rating mb-3 text-center">
+                        <input type="radio" id="star5" name="Rating" value="5" /><label for="star5" title="5 stars">★</label>
+                        <input type="radio" id="star4" name="Rating" value="4" /><label for="star4" title="4 stars">★</label>
+                        <input type="radio" id="star3" name="Rating" value="3" /><label for="star3" title="3 stars">★</label>
+                        <input type="radio" id="star2" name="Rating" value="2" /><label for="star2" title="2 stars">★</label>
+                        <input type="radio" id="star1" name="Rating" value="1" /><label for="star1" title="1 star">★</label>
+                    </div>
+
+                    <div class="row gy-3">
+                        <div class="col-12 form-group">
+                            <label for="comment">Your Comment *</label>
+                            <textarea class="form-control" name="Comment" id="comment" rows="5"
+                                      placeholder="Write your thoughts here..." required></textarea>
+                        </div>
+
+                        <div class="col-12 text-center">
+                            <button type="submit" class="btn-submit" @(isLoggedIn ? "" : "disabled")>Post Comment</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </section>
+
         <!-- Blog Comments Section -->
         <section id="blog-comments" class="blog-comments section">
 
@@ -181,7 +243,10 @@
                     </div>
 
                     <div class="comments-container">
-                        @foreach (var comment in Model.Reviews)
+                    @{
+                        var sortedReviews = Model.Reviews.OrderByDescending(r => r.CreatedDate).ToList();
+                    }
+                        @foreach (var comment in sortedReviews)
                         {
                             <div class="comment-thread">
                                 <div class="comment-box">
@@ -247,66 +312,10 @@
                                 </div>
                             </div>
                         }
-
-
                     </div>
                 </div>
             </div>
         </section><!-- /Blog Comments Section -->
-        <!-- Blog Comment Form Section -->
-        <section id="blog-comment-form" class="blog-comment-form section position-relative">
-
-            @* ✅ Blur Overlay if user is not logged in *@
-            @if (!ViewBag.CanComment)
-            {
-                <div id="login-overlay" class="login-overlay">
-                    <div class="overlay-content">
-                        <p>
-                            You can only leave a review after booking this tour.
-                            @if(isLoggedIn)
-                            {
-                                <a asp-controller="BookingWeb" asp-action="Index" asp-route-tourId="@Model.Id"> Book Now</a>
-                            }
-                            else
-                            {
-                                <a asp-controller="AuthWeb" asp-action="Login">Log In to Book</a>
-                            }
-                        </p>
-                    </div>
-                </div>
-            }
-
-            <div class="container" data-aos="fade-up" data-aos-delay="100">
-                <form asp-action="PostComment" asp-controller="Review" method="post" role="form">
-                    <input type="hidden" name="TourId" value="@Model.Id" />
-                    <div class="section-header">
-                        <h3>Share Your Thoughts</h3>
-                    </div>
-
-                    <!-- ⭐ Star Rating -->
-                    <div class="star-rating mb-3 text-center">
-                        <input type="radio" id="star5" name="Rating" value="5" /><label for="star5" title="5 stars">★</label>
-                        <input type="radio" id="star4" name="Rating" value="4" /><label for="star4" title="4 stars">★</label>
-                        <input type="radio" id="star3" name="Rating" value="3" /><label for="star3" title="3 stars">★</label>
-                        <input type="radio" id="star2" name="Rating" value="2" /><label for="star2" title="2 stars">★</label>
-                        <input type="radio" id="star1" name="Rating" value="1" /><label for="star1" title="1 star">★</label>
-                    </div>
-
-                    <div class="row gy-3">
-                        <div class="col-12 form-group">
-                            <label for="comment">Your Comment *</label>
-                            <textarea class="form-control" name="Comment" id="comment" rows="5"
-                                      placeholder="Write your thoughts here..." required></textarea>
-                        </div>
-
-                        <div class="col-12 text-center">
-                            <button type="submit" class="btn-submit" @(isLoggedIn ? "" : "disabled")>Post Comment</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </section>
-
     </main>
 
     <!-- Scroll Top -->

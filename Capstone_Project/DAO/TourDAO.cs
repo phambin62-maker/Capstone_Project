@@ -228,6 +228,7 @@ namespace BE_Capstone_Project.DAO
             {
                 var paginatedTours = await _context.Tours
                     .Include(t => t.TourImages)
+                    .Include(t => t.EndLocation)
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
                     .ToListAsync();
@@ -356,10 +357,12 @@ namespace BE_Capstone_Project.DAO
                         query = query.OrderBy(t => t.Price);
                     else if (sort.ToLower() == "desc")
                         query = query.OrderByDescending(t => t.Price);
+                    else if (sort.ToLower() == "newest")
+                        query = query.OrderByDescending(t => t.Id);
                 }
                 else
                 {
-                    query = query.OrderBy(t => t.Id);
+                    query = query.OrderByDescending(t => t.Id);
                 }
 
                 var paginatedTours = await query

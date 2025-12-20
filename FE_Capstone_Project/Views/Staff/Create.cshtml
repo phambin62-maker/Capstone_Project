@@ -1,4 +1,4 @@
-﻿@model TourCreateModel
+﻿  @model TourCreateModel
 @{
     ViewData["Title"] = "Add New Tour";
     Layout = "~/Views/Shared/_StaffLayout.cshtml";
@@ -55,7 +55,8 @@
                                                 <div class="mb-3">
                                                     <label asp-for="Price" class="form-label required">Price (VND)</label>
                                                     <div class="input-group">
-                                                        <input asp-for="Price" type="number" class="form-control" placeholder="0" min="0" step="1000" />
+                                                        <input type="hidden" asp-for="Price" id="rawPrice" asp-format="{0:0}" />
+                                                        <input type="text" class="form-control" id="formattedPrice" placeholder="0" />
                                                         <span class="input-group-text">VND</span>
                                                     </div>
                                                     <span asp-validation-for="Price" class="text-danger small"></span>
@@ -280,9 +281,6 @@
                 <button type="button" class="btn btn-outline-secondary" id="nextImage">
                     Next <i class="bi bi-chevron-right"></i>
                 </button>
-                <button type="button" class="btn btn-primary" id="downloadImage">
-                    <i class="bi bi-download me-1"></i> Download
-                </button>
             </div>
         </div>
     </div>
@@ -318,7 +316,11 @@
             wordCount: document.getElementById('wordCount'),
             submitButton: document.getElementById('submitButton'),
             formAlertContainer: document.getElementById('formAlertContainer'),
-            descriptionTextarea: document.querySelector('#Description')
+            descriptionTextarea: document.querySelector('#Description'),
+            rawPrice: document.getElementById('rawPrice'),
+            formattedPrice: document.getElementById('formattedPrice'),
+            startLocation: document.getElementById('StartLocationId'),
+            endLocation: document.getElementById('EndLocationId')
         };
 
         // Utility Functions
@@ -396,6 +398,17 @@
                 } else {
                     elements.charCount.classList.add('high');
                 }
+            },
+
+            formatPrice(value) {
+                if (!value && value !== 0) return '';
+                // Get only integer part (strip .00 etc)
+                let stringValue = value.toString().split('.')[0];
+                return stringValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            },
+
+            unformatPrice(value) {
+                return value.replace(/\./g, '');
             }
         };
 
@@ -404,6 +417,16 @@
             updateImageCount() {
                 elements.selectedImageCount.textContent = state.selectedFiles.length;
                 this.updateUploadInfo();
+
+                // Sync files to input for immediate validation
+                const dataTransfer = new DataTransfer();
+                state.selectedFiles.forEach(file => dataTransfer.items.add(file));
+                elements.imageInput.files = dataTransfer.files;
+
+                // Trigger jQuery validation if available
+                if ($(elements.imageInput).valid) {
+                    $(elements.imageInput).valid();
+                }
             },
 
             updateUploadInfo() {
@@ -427,6 +450,17 @@
 
                 // Validate all files
                 Array.from(files).forEach(file => {
+                    // Check for duplicates in state.selectedFiles
+                    const isDuplicate = state.selectedFiles.some(existingFile => 
+                        existingFile.name === file.name && 
+                        existingFile.size === file.size && 
+                        existingFile.lastModified === file.lastModified
+                    );
+
+                    if (isDuplicate) {
+                        return;
+                    }
+
                     const fileErrors = utils.validateFile(file);
                     if (fileErrors.length > 0) {
                         errors.push(...fileErrors);
@@ -435,7 +469,7 @@
                     }
                 });
 
-                // Show errors if any
+                // Show other errors if any
                 if (errors.length > 0) {
                     utils.showAlert(errors.join('<br>'), 'danger');
                 }
@@ -456,48 +490,64 @@
             },
 
             showPreviews(files) {
-                files.forEach((file, index) => {
+                const newFilesCount = files.length;
+                let loadedCount = 0;
+                
+                // Pre-allocate slots in previewImages to maintain order
+                const startIndex = state.previewImages.length;
+                files.forEach((file, i) => {
                     const reader = new FileReader();
+                    const targetIndex = startIndex + i;
 
                     reader.onload = (e) => {
-                        const fileSize = (file.size / 1024 / 1024).toFixed(2);
-                        const previewIndex = state.previewImages.length;
-
-                        // Thêm vào danh sách preview images
-                        state.previewImages.push({
+                        state.previewImages[targetIndex] = {
                             src: e.target.result,
-                            index: previewIndex,
                             name: file.name,
+                            size: file.size,
                             type: 'new'
-                        });
-
-                        const previewHtml = `
-                            <div class="col-md-3 col-sm-4 col-6" data-file-index="${previewIndex}">
-                                <div class="preview-image-container position-relative">
-                                    <img src="${e.target.result}"
-                                         class="img-fluid rounded border preview-image"
-                                         style="height: 120px; width: 100%; object-fit: cover; cursor: zoom-in;"
-                                         alt="Preview ${file.name}">
-                                    <div class="position-absolute top-0 end-0 m-1">
-                                        <span class="badge bg-success image-badge">${previewIndex + 1}</span>
-                                    </div>
-                                    <div class="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-75 text-white text-center py-1">
-                                        <small class="d-block text-truncate px-1">${file.name}</small>
-                                        <small class="d-block">${fileSize} MB</small>
-                                    </div>
-                                    <div class="position-absolute top-0 start-0 m-1">
-                                        <button type="button" class="btn btn-warning btn-sm remove-preview-btn"
-                                                data-file-index="${previewIndex}">
-                                            <i class="bi bi-x"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        elements.imagePreview.insertAdjacentHTML('beforeend', previewHtml);
+                        };
+                        
+                        loadedCount++;
+                        // Only render when the one we are waiting for or all are loaded 
+                        // to avoid "jumping" or empty slots. 
+                        // But for better UX, we can render as they come if we handle empty slots.
+                        this.renderAllPreviews();
                     };
 
                     reader.readAsDataURL(file);
+                });
+            },
+
+            renderAllPreviews() {
+                elements.imagePreview.innerHTML = '';
+                state.previewImages.forEach((img, index) => {
+                    if (!img) return; // Skip empty slots during async loading
+                    
+                    const fileSize = (state.selectedFiles[index]?.size / 1024 / 1024).toFixed(2) || "0.00";
+                    const previewHtml = `
+                        <div class="col-md-3 col-sm-4 col-6" data-file-index="${index}">
+                            <div class="preview-image-container position-relative">
+                                <img src="${img.src}"
+                                     class="img-fluid rounded border preview-image"
+                                     style="height: 120px; width: 100%; object-fit: cover; cursor: zoom-in;"
+                                     alt="Preview ${img.name}">
+                                <div class="position-absolute top-0 end-0 m-1">
+                                    <span class="badge bg-success image-badge">${index + 1}</span>
+                                </div>
+                                <div class="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-75 text-white text-center py-1">
+                                    <small class="d-block text-truncate px-1">${img.name}</small>
+                                    <small class="d-block">${fileSize} MB</small>
+                                </div>
+                                <div class="position-absolute top-0 start-0 m-1">
+                                    <button type="button" class="btn btn-warning btn-sm remove-preview-btn"
+                                            data-file-index="${index}">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    elements.imagePreview.insertAdjacentHTML('beforeend', previewHtml);
                 });
             },
 
@@ -507,21 +557,8 @@
                 // Remove from preview images
                 state.previewImages.splice(index, 1);
 
-                // Remove from DOM
-                elements.imagePreview.querySelector(`[data-file-index="${index}"]`)?.remove();
-
-                // Reindex remaining previews
-                elements.imagePreview.querySelectorAll('[data-file-index]').forEach((element, newIndex) => {
-                    element.setAttribute('data-file-index', newIndex);
-                    const badge = element.querySelector('.image-badge');
-                    if (badge) badge.textContent = newIndex + 1;
-                });
-
-                // Reindex preview images
-                state.previewImages.forEach((img, newIndex) => {
-                    img.index = newIndex;
-                });
-
+                // Refresh all previews to ensure indices and DOM are in sync
+                this.renderAllPreviews();
                 this.updateImageCount();
             },
 
@@ -599,6 +636,37 @@
         // Event Handlers
         const eventHandlers = {
             init() {
+                // Configure jQuery validation to not ignore our hidden price field
+                if ($.validator) {
+                    $.validator.setDefaults({ ignore: ":hidden:not(#rawPrice)" });
+
+                    // Custom validation for identical locations
+                    $.validator.addMethod("notEqualTo", function (value, element, param) {
+                        return this.optional(element) || value !== $(param).val();
+                    }, "End location must be different from start location");
+                }
+
+                // Location change events
+                if (elements.startLocation && elements.endLocation) {
+                    elements.startLocation.addEventListener('change', () => {
+                        if ($(elements.endLocation).val()) {
+                            $(elements.endLocation).valid();
+                        }
+                    });
+                    elements.endLocation.addEventListener('change', () => {
+                        if ($(elements.startLocation).val()) {
+                            $(elements.startLocation).valid();
+                        }
+                    });
+
+                    // Add dynamic rules
+                    if ($.validator && $(elements.form).data('validator')) {
+                        $(elements.endLocation).rules("add", {
+                            notEqualTo: "#StartLocationId"
+                        });
+                    }
+                }
+
                 // File input events
                 elements.imageInput.addEventListener('change', (e) => {
                     imageManager.handleImageSelection(e.target.files);
@@ -637,6 +705,35 @@
                         previewModal.openImagePreview(imageSrc, imageName);
                     }
                 });
+
+                // Pricing events
+                if (elements.formattedPrice && elements.rawPrice) {
+                    // Initial format
+                    if (elements.rawPrice.value) {
+                        elements.formattedPrice.value = utils.formatPrice(elements.rawPrice.value);
+                    }
+
+                    elements.formattedPrice.addEventListener('input', (e) => {
+                        let value = e.target.value.replace(/[^0-9]/g, '');
+                        elements.rawPrice.value = value;
+                        e.target.value = utils.formatPrice(value);
+                        
+                        // Trigger validation on hidden field and sync style
+                        if ($(elements.form).data('validator')) {
+                            const isValid = $(elements.rawPrice).valid();
+                            if (!isValid) {
+                                elements.formattedPrice.classList.add('is-invalid');
+                            } else {
+                                elements.formattedPrice.classList.remove('is-invalid');
+                            }
+                        }
+                    });
+
+                    // Initial validation sync if there's an existing value
+                    if (elements.rawPrice.value && $(elements.form).data('validator')) {
+                        $(elements.rawPrice).valid();
+                    }
+                }
 
                 // Form events
                 elements.form.addEventListener('submit', this.handleFormSubmit);
@@ -687,6 +784,12 @@
                     return;
                 }
 
+                // Trigger jQuery validation
+                const isFormValid = $(elements.form).valid();
+                if (!isFormValid) {
+                    return; // Let jQuery validation show the errors
+                }
+
                 // Validate required images
                 if (state.selectedFiles.length === 0) {
                     e.preventDefault();
@@ -703,6 +806,11 @@
                         return;
                     }
                 }
+
+                // Sync state.selectedFiles back to the input element
+                const dataTransfer = new DataTransfer();
+                state.selectedFiles.forEach(file => dataTransfer.items.add(file));
+                elements.imageInput.files = dataTransfer.files;
 
                 // Show loading state
                 state.isSubmitting = true;

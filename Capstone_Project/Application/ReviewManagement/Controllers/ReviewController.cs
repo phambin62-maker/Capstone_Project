@@ -109,7 +109,8 @@ namespace BE_Capstone_Project.Application.ReviewManagement.Controllers
                 if (reviews == null || !reviews.Any())
                 {
                     _logger.LogWarning("[ReviewController] ⚠️ No reviews found.");
-                    return NotFound(new { message = "No reviews available." });
+                    return Ok(new List<Review>());
+                    //return NotFound(new { message = "No reviews available." });
                 }
 
                 return Ok(reviews);
