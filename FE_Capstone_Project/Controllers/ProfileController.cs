@@ -27,11 +27,8 @@ namespace FE_Capstone_Project.Controllers
         {
             _apiHelper = apiHelper;
         }
-
-        // === BẮT ĐẦU SỬA LỖI (ĐỌC INT THAY VÌ STRING) ===
         private int GetCurrentUserId()
         {
-            // Sửa: Đọc Int32 (số) để khớp với AuthWebController
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId.HasValue && userId.Value > 0)
             {
@@ -39,14 +36,11 @@ namespace FE_Capstone_Project.Controllers
             }
             return 0;
         }
-        // === KẾT THÚC SỬA LỖI ===
 
-        // === SỬA LỖI LOGIC (DÙNG UserName) ===
         public async Task<IActionResult> Wishlist(int page = 1)
         {
             try
             {
-                // Sửa: Dùng "UserName" (là tên) thay vì "UserEmail"
                 var username = HttpContext.Session.GetString("UserName");
                 if (string.IsNullOrEmpty(username))
                 {
@@ -86,14 +80,12 @@ namespace FE_Capstone_Project.Controllers
             }
         }
 
-        // === SỬA LỖI LOGIC (DÙNG UserName) ===
         public async Task<IActionResult> AddToWishlist(int tourId)
         {
             try
             {
-                // Sửa: Dùng "UserName" (là tên)
                 var username = HttpContext.Session.GetString("UserName");
-                var userId = GetCurrentUserId(); // Hàm này giờ đã đọc Int32 (đúng)
+                var userId = GetCurrentUserId();
 
                 if (userId == 0 || string.IsNullOrEmpty(username))
                 {
@@ -101,10 +93,8 @@ namespace FE_Capstone_Project.Controllers
                     return RedirectToAction("TourDetails", "TourWeb", new { tourId });
                 }
 
-                // Gửi "TourId" và "Username" (chữ hoa) để khớp với BE
                 var wishlistData = new { TourId = tourId, Username = username };
 
-                // API BE (Wishlist) này SẼ TỰ TẠO THÔNG BÁO
                 var response = await _apiHelper.PostAsync<object, WishlistData>($"Wishlist", wishlistData);
 
                 if (response == null || response.TourId <= 0)
@@ -121,14 +111,12 @@ namespace FE_Capstone_Project.Controllers
             }
         }
 
-        // === SỬA LỖI LOGIC (DÙNG UserName) ===
         public async Task<IActionResult> RemoveFromWishlist(int tourId, string tourName)
         {
             try
             {
-                // Sửa: Dùng "UserName" (là tên)
                 var username = HttpContext.Session.GetString("UserName");
-                var userId = GetCurrentUserId(); // Hàm này giờ đã đọc Int32 (đúng)
+                var userId = GetCurrentUserId();
 
                 if (userId == 0 || string.IsNullOrEmpty(username))
                 {
@@ -136,10 +124,8 @@ namespace FE_Capstone_Project.Controllers
                     return RedirectToAction("TourDetails", "TourWeb", new { tourId });
                 }
 
-                // API BE (Wishlist) này KHÔNG TẠO THÔNG BÁO
                 await _apiHelper.DeleteAsync($"Wishlist/tour/{tourId}?username={username}");
 
-                // VÌ VẬY, CHÚNG TA PHẢI TẠO NÓ Ở ĐÂY (FE)
                 try
                 {
                     var notificationDto = new

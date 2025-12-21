@@ -115,7 +115,7 @@
                                     <div class="price-type">
                                         <h4>Group Discount</h4>
                                         <div class="price">@string.Format("{0:N0}", Model.GroupDiscount)%</div>
-                                        <p>for 6+ people</p>
+                                        <p>for @Model.GroupNumber+ people</p>
                                     </div>
                                 </div>
                             </div>
@@ -123,19 +123,22 @@
                         <div class="available-dates">
                             <h3>@DateTime.Now.Year-@DateTime.Now.AddYears(1).Year Departure Dates</h3>
                             <div class="dates-grid">
-                                @if(ViewBag.TourSchedules != null && ViewBag.TourSchedules.Count > 0)
+                                @{
+                                    var schedules = ViewBag.TourSchedules as List<TourScheduleDTO>;
+                                }
+                                @if (schedules != null && schedules.Count > 0)
                                 {
-                                    @foreach (TourScheduleDTO schedule in ViewBag.TourSchedules)
+                                    @foreach (TourScheduleDTO schedule in schedules)
                                     {
                                         <div class="date-option">
                                             <div class="date">
                                                 @schedule.DepartureDate.Value.ToString("MMM dd", CultureInfo.InvariantCulture) -
-                                                @schedule.ArrivalDate.Value.ToString("dd", CultureInfo.InvariantCulture)
+                                                @schedule.ArrivalDate.Value.ToString("MMM dd", CultureInfo.InvariantCulture)
                                             </div>
                                             @{
                                                 var bookedSeatsList = ViewBag.BookedSeats as List<ScheduleBookedSeatsResponse> ?? new List<ScheduleBookedSeatsResponse>();
                                                 var bookedSeats = bookedSeatsList
-                                                .FirstOrDefault(b => b.TourScheduleId == schedule.Id)?.BookedSeats ?? 0;
+                                                        .FirstOrDefault(b => b.TourScheduleId == schedule.Id)?.BookedSeats ?? 0;
 
                                                 // Calculate available seats
                                                 var availableSeats = Model.MaxSeats - bookedSeats;
