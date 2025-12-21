@@ -80,7 +80,7 @@
                                     <td class="fw-bold text-muted" width="40%">Booking Date:</td>
                                     <td>
                                         <i class="fas fa-calendar text-info me-2"></i>
-                                        @Model.BookingDate?.ToString("dd/MM/yyyy HH:mm")
+                                        @Model.BookingDate?.AddHours(7).ToString("dd/MM/yyyy HH:mm")
                                     </td>
                                 </tr>
                                 <tr>
@@ -137,7 +137,7 @@
                                     <td class="fw-bold text-muted">Email:</td>
                                     <td>
                                         <i class="fas fa-envelope text-primary me-2"></i>
-                                        <a href="mailto:@Model.Email" class="text-decoration-none">@Model.Email</a>
+                                        <span>@Model.Email</span>
                                     </td>
                                 </tr>
                             </table>
@@ -148,7 +148,7 @@
                                     <td class="fw-bold text-muted" width="40%">Phone Number:</td>
                                     <td>
                                         <i class="fas fa-phone text-success me-2"></i>
-                                        <a href="tel:@Model.PhoneNumber" class="text-decoration-none">@Model.PhoneNumber</a>
+                                        <span>@Model.PhoneNumber</span>
                                     </td>
                                 </tr>
                                 <tr>

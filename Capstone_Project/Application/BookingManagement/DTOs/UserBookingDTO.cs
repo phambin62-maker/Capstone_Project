@@ -11,6 +11,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.DTOs
         public int Children { get; set; }
         public decimal TotalPrice { get; set; }
         public BookingStatus Status { get; set; }
+        public PaymentStatus PaymentStatus { get; set; }
         public CancelValidationResult? CancelCondition { get; set; }
         public bool CanCancel { get; set; }
         public string? CancelMessage { get; set; }

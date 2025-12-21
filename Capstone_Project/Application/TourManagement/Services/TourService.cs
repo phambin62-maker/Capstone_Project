@@ -85,7 +85,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
         public async Task<List<Tour>> GetFilteredTours(
         int page = 1,
         int pageSize = 10,
-        bool? status = null,  // Đổi từ string sang bool?
+        bool? status = null, 
         int? startLocation = null,
         int? endLocation = null,
         int? category = null,
@@ -100,7 +100,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
         }
 
         public async Task<int> GetFilteredTourCount(
-            bool? status = null,  // Đổi từ string sang bool?
+            bool? status = null,
             int? startLocation = null,
             int? endLocation = null,
             int? category = null,

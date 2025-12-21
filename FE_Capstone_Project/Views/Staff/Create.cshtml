@@ -175,7 +175,7 @@
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="mb-3">
-                                                    <label asp-for="GroupNumber" class="form-label">Group Size</label>
+                                                    <label asp-for="GroupNumber" class="form-label">Group Number</label>
                                                     <input asp-for="GroupNumber" type="number" class="form-control" value="5" min="1" max="100" />
                                                     <span asp-validation-for="GroupNumber" class="text-danger small"></span>
                                                 </div>
@@ -183,21 +183,14 @@
                                         </div>
 
                                         <div class="row">
-                                            @* <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label asp-for="MinSeats" class="form-label">Min Seats</label>
-                                                    <input asp-for="MinSeats" type="number" class="form-control" value="10" min="1" max="1000" />
-                                                    <span asp-validation-for="MinSeats" class="text-danger small"></span>
-                                                </div>
-                                            </div> *@
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label asp-for="MaxSeats" class="form-label">Max Seats</label>
-                                                    <input asp-for="MaxSeats" type="number" class="form-control" value="30" min="1" max="1000" />
-                                                    <span asp-validation-for="MaxSeats" class="text-danger small"></span>
-                                                </div>
-                                            </div>
-                                        </div>
+                                             <div class="col-md-12">
+                                                 <div class="mb-3">
+                                                     <label asp-for="MaxSeats" class="form-label">Max Seats</label>
+                                                     <input asp-for="MaxSeats" type="number" class="form-control" value="30" min="1" max="1000" />
+                                                     <span asp-validation-for="MaxSeats" class="text-danger small"></span>
+                                                 </div>
+                                             </div>
+                                         </div>
                                     </div>
                                 </div>
                             </div>
