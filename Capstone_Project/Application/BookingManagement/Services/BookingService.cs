@@ -7,6 +7,7 @@ using DocumentFormat.OpenXml.Office2010.Excel;
 using BE_Capstone_Project.Application.Notifications.Services.Interfaces; 
 using BE_Capstone_Project.Application.Notifications.DTOs;
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -611,7 +612,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
 
                         if (calculatedRefundAmount > 0)
                         {
-                            successMessage += $" Refund amount: ${calculatedRefundAmount:F2}";
+                            successMessage += $" Refund amount: {calculatedRefundAmount.Value.ToString("N0")} VND";
                         }
                     }
                 }

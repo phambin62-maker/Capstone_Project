@@ -67,7 +67,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
         }
 
         [HttpPost]
-        [Authorize] // Cần đăng nhập để tạo booking
+        [Authorize]
         public async Task<IActionResult> Create([FromBody] BookingRequest request, [FromQuery] string username)
         {
             try
