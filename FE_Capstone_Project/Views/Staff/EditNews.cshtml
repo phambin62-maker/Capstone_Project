@@ -21,13 +21,13 @@
                 <input type="hidden" asp-for="UserId" /> <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label asp-for="Title" class="form-label fw-bold">Title *</label>
+                            <label asp-for="Title" class="form-label fw-bold">Title <span class="text-danger">*</span></label>
                             <input asp-for="Title" class="form-control" />
                             <span asp-validation-for="Title" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="NewsStatus" class="form-label fw-bold">Status *</label>
+                            <label asp-for="NewsStatus" class="form-label fw-bold">Status <span class="text-danger">*</span></label>
                             <select asp-for="NewsStatus" class="form-select">
                                 <option value="Hidden">Hidden</option>
                                 <option value="Published">Published</option>
@@ -54,7 +54,7 @@
                         }
 
                         <div class="mb-3">
-                            <label asp-for="Content" class="form-label fw-bold">Content *</label>
+                            <label asp-for="Content" class="form-label fw-bold">Content <span class="text-danger">*</span></label>
                             <textarea asp-for="Content" class="form-control" rows="6"></textarea>
                             <span asp-validation-for="Content" class="text-danger"></span>
                         </div>

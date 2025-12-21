@@ -109,15 +109,48 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                     {
                         var tourName = savedBooking.TourSchedule?.Tour?.Name ?? "Your Tour";
 
+                        // --- LOGIC TẠO THÔNG BÁO CHO KHÁCH HÀNG ---
+
+                        // 1. Tạo nội dung cơ bản
+                        string userMessage = $"Your booking for tour '{tourName}' has been created.";
+
+                        // 2. [MỚI] Kiểm tra nếu chưa thanh toán thì thêm dòng nhắc nhở
+                        if (savedBooking.PaymentStatus == PaymentStatus.Pending)
+                        {
+                            userMessage += " Note: Your booking is Unpaid. Please complete the payment to secure your booking.";
+                        }
+
                         var notificationDto = new CreateNotificationDTO
                         {
                             UserId = savedBooking.UserId,
-                            Title = "Booking Successful",
-                            Message = $"Your booking for tour '{tourName}' has been confirmed.",
+                            Title = "Booking Created", // Đổi tiêu đề thành Created cho hợp lý hơn
+                            Message = userMessage,
                             NotificationType = NotificationType.System
                         };
 
-                        _ = _notificationService.CreateAsync(notificationDto);
+                        // Dùng await để đảm bảo lưu thành công
+                        await _notificationService.CreateAsync(notificationDto);
+
+                        // ---------------------------------------------------------
+
+                        // --- GỬI THÔNG BÁO CHO STAFF (Giữ nguyên logic cũ) ---
+                        var allStaff = await _context.Users
+                            .Where(u => u.RoleId == 2)
+                            .ToListAsync();
+
+                        foreach (var staff in allStaff)
+                        {
+                            var staffNoti = new CreateNotificationDTO
+                            {
+                                UserId = staff.Id,
+                                Title = "New Booking Alert",
+                                Message = $"New Booking #{newBookingId}: Customer {savedBooking.FirstName} {savedBooking.LastName} has booked tour '{tourName}'.",
+                                NotificationType = NotificationType.System
+                            };
+
+                            await _notificationService.CreateAsync(staffNoti);
+                        }
+                        // ---------------------------------------------------------
                     }
                 }
                 catch (Exception ex)
@@ -413,6 +446,8 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                 try
                 {
                     var tourName = booking.TourSchedule?.Tour?.Name ?? "Your Tour";
+
+                    // 1. Gửi thông báo cho KHÁCH HÀNG (Dùng await để đảm bảo lưu thành công)
                     var notificationDto = new CreateNotificationDTO
                     {
                         UserId = booking.UserId,
@@ -420,29 +455,38 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                         Message = $"Your booking for '{tourName}' has been updated from {oldStatus} to {request.BookingStatus}. {request.Note}",
                         NotificationType = NotificationType.System
                     };
-                    _ = _notificationService.CreateAsync(notificationDto);
+                    await _notificationService.CreateAsync(notificationDto); // <--- ĐÃ SỬA: Thêm await
 
+                    // 2. Gửi thông báo cho STAFF nếu đơn bị Hủy
                     if (request.BookingStatus == BookingStatus.Cancelled)
                     {
+                        // Lấy tất cả Staff (Role = 2)
                         var allStaff = await _context.Users
                             .Where(u => u.RoleId == 2)
                             .ToListAsync();
 
-                        foreach (var staff in allStaff)
+                        if (allStaff.Any())
                         {
-                            var staffNoti = new CreateNotificationDTO
+                            foreach (var staff in allStaff)
                             {
-                                UserId = staff.Id,
-                                Title = "Booking Cancelled Alert",
-                                Message = $"Booking #{booking.Id} for tour '{tourName}' has been cancelled by Customer ({booking.FirstName} {booking.LastName}).",
-                                NotificationType = NotificationType.System
-                            };
-                            _ = _notificationService.CreateAsync(staffNoti);
+                                var staffNoti = new CreateNotificationDTO
+                                {
+                                    UserId = staff.Id,
+                                    Title = "Booking Cancelled Alert",
+                                    // Nội dung chứa "Booking #ID" để khớp với Regex bên JS
+                                    Message = $"Customer {booking.FirstName} {booking.LastName} has cancelled Booking #{booking.Id} for tour '{tourName}'.",
+                                    NotificationType = NotificationType.System
+                                };
+
+                                // Dùng await để chắc chắn từng thông báo được lưu
+                                await _notificationService.CreateAsync(staffNoti); // <--- ĐÃ SỬA: Thêm await
+                            }
                         }
                     }
                 }
                 catch (Exception ex)
                 {
+                    // Ghi log lỗi nếu gửi thông báo thất bại (để debug)
                     Console.WriteLine($"Failed to send notification: {ex.Message}");
                 }
             }

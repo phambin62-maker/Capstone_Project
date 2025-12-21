@@ -37,6 +37,7 @@
     border-bottom: 1px solid #f0f0f0;
     cursor: pointer;
     transition: background-color 0.2s;
+    position: relative;
 }
 
 .conversation-item:hover {
@@ -48,10 +49,18 @@
     border-left: 4px solid #0d6efd;
 }
 
+.conversation-item.no-conversation .conversation-preview {
+    font-style: italic;
+    color: #999;
+}
+
 .conversation-name {
     font-weight: 600;
     color: #333;
     margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .conversation-preview {
@@ -60,6 +69,13 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    margin-top: 4px;
+}
+
+.conversation-item small {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.75rem;
 }
 
 .chat-main {
