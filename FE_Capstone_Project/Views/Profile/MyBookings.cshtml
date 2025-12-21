@@ -1,4 +1,4 @@
-﻿@model List<UserBookingResponse>
+@model List<UserBookingResponse>
 @using BE_Capstone_Project.Domain.Enums
 
 <h2>My Booked Tours</h2>
@@ -50,23 +50,30 @@ else
                         <td>@booking.Children</td>
                         <td>@booking.TotalPrice.ToString("N0") VND</td>
                         <td>
-                            @switch (booking.Status)
+                            @if (booking.PaymentStatus == PaymentStatus.Refunded)
                             {
-                                case BookingStatus.Cancelled:
-                                    <span class="badge bg-danger">Cancelled</span>
-                                    break;
-                                case BookingStatus.Completed:
-                                    <span class="badge bg-secondary">Completed</span>
-                                    break;
-                                case BookingStatus.Pending:
-                                    <span class="badge bg-warning text-dark">Pending</span>
-                                    break;
-                                case BookingStatus.Confirmed:
-                                    <span class="badge bg-success">Confirmed</span>
-                                    break;
-                                default:
-                                    <span class="badge bg-light text-dark">Unknown</span>
-                                    break;
+                                <span class="badge bg-info">Refunded</span>
+                            }
+                            else
+                            {
+                                @switch (booking.Status)
+                                {
+                                    case BookingStatus.Cancelled:
+                                        <span class="badge bg-danger">Cancelled</span>
+                                        break;
+                                    case BookingStatus.Completed:
+                                        <span class="badge bg-secondary">Completed</span>
+                                        break;
+                                    case BookingStatus.Pending:
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                        break;
+                                    case BookingStatus.Confirmed:
+                                        <span class="badge bg-success">Confirmed</span>
+                                        break;
+                                    default:
+                                        <span class="badge bg-light text-dark">Unknown</span>
+                                        break;
+                                }
                             }
                         </td>
                         <td>
@@ -119,7 +126,7 @@ else
                             }
                         </td>
                         <td>
-                            @if (booking.CanCancel && (booking.Status == BookingStatus.Confirmed || booking.Status == BookingStatus.Pending))
+                            @if (booking.CanCancel && booking.Status == BookingStatus.Confirmed && booking.PaymentStatus != PaymentStatus.Pending)
                             {
                                 var refundAmount = booking.CancelCondition?.RefundAmount?.ToString("N0") ?? "0";
                                 var refundPercent = booking.CancelCondition?.RefundPercent?.ToString() ?? "0";
@@ -137,12 +144,23 @@ else
                             }
                             else if (booking.Status == BookingStatus.Cancelled)
                             {
-                                <span class="text-muted">Cancelled</span>
+                                if (booking.PaymentStatus == PaymentStatus.Refunded)
+                                {
+                                    <span class="text-muted">Refunded</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Cancelled</span>
+                                }
                             }
-                            else if (!booking.CanCancel && (booking.Status == BookingStatus.Confirmed || booking.Status == BookingStatus.Pending))
+                            else if (booking.Status == BookingStatus.Confirmed || booking.Status == BookingStatus.Pending)
                             {
+                                string title = booking.CancelMessage ?? "Cancellation is restricted for this booking.";
+                                if (booking.Status == BookingStatus.Pending) title = "Pending bookings cannot be cancelled.";
+                                else if (booking.PaymentStatus == PaymentStatus.Pending) title = "Bookings with pending payment cannot be cancelled.";
+
                                 <button type="button" class="btn btn-outline-secondary btn-sm" disabled
-                                        title="@booking.CancelMessage">
+                                        title="@title">
                                     Cannot Cancel
                                 </button>
                             }
@@ -196,14 +214,12 @@ else
             var bookingId = button.getAttribute('data-booking-id');
             var tourName = button.getAttribute('data-booking-name');
 
-            // XỬ LÝ NULL AN TOÀN
             var refundAmount = button.getAttribute('data-refund-amount') || "0";
             var refundPercent = button.getAttribute('data-refund-percent') || "0";
 
             document.getElementById('tourName').textContent = tourName;
             document.getElementById('bookingIdInput').value = bookingId;
 
-            // Hiển thị thông tin hoàn tiền
             var refundDetails = document.getElementById('refundDetails');
             var refundInfo = document.getElementById('refundInfo');
 

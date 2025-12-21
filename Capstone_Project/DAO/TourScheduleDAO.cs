@@ -272,7 +272,9 @@ namespace BE_Capstone_Project.DAO
             if (maxSeats == 0) return false;
 
             var currentCustomers = await _context.BookingCustomers
-                .Where(bc => bc.Booking.TourScheduleId == tourScheduleId)
+                .Where(bc => bc.Booking.TourScheduleId == tourScheduleId &&
+                             !(bc.Booking.BookingStatus == BookingStatus.Cancelled &&
+                               bc.Booking.PaymentStatus == PaymentStatus.Refunded))
                 .CountAsync();
 
             return currentCustomers >= maxSeats;

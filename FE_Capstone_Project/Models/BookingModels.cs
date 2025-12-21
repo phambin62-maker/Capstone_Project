@@ -105,6 +105,7 @@ namespace FE_Capstone_Project.Models
         public int Children { get; set; }
         public decimal TotalPrice { get; set; }
         public BookingStatus Status { get; set; }
+        public PaymentStatus? PaymentStatus { get; set; }
         public CancelValidationResult? CancelCondition { get; set; }
         public bool CanCancel { get; set; }
         public string? CancelMessage { get; set; }

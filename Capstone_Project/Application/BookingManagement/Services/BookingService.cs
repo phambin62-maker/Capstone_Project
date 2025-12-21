@@ -254,6 +254,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                     Children = b.BookingCustomers.Count(bc => bc.CustomerType == CustomerType.Child),
                     TotalPrice = b.TotalPrice!.Value,
                     Status = b.BookingStatus!.Value,
+                    PaymentStatus = b.PaymentStatus!.Value,
                     CancelCondition = cancelValidation,
                     CanCancel = cancelValidation.CanCancel,
                     CancelMessage = cancelValidation.Message
@@ -295,7 +296,31 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
 
         public async Task<bool> UpdatePaymentStatus(PaymentDTO payment)
         {
-            return await _bookingDAO.UpdatePaymentStatusAsync(payment);
+            var success = await _bookingDAO.UpdatePaymentStatusAsync(payment);
+            if (success)
+            {
+                try
+                {
+                    var booking = await _bookingDAO.GetBookingByIdAsync(payment.BookingId);
+                    if (booking != null)
+                    {
+                        var tourName = booking.TourSchedule?.Tour?.Name ?? "Your Tour";
+                        var notificationDto = new CreateNotificationDTO
+                        {
+                            UserId = booking.UserId,
+                            Title = "Payment Successful",
+                            Message = $"Your payment for tour '{tourName}' has been successfully processed via {payment.PaymentMethod}.",
+                            NotificationType = NotificationType.System
+                        };
+                        await _notificationService.CreateAsync(notificationDto);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to send payment notification: {ex.Message}");
+                }
+            }
+            return success;
         }
 
         public async Task<int> GetCustomerCountByBooking(int bookingId)
@@ -447,7 +472,6 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                 {
                     var tourName = booking.TourSchedule?.Tour?.Name ?? "Your Tour";
 
-                    // 1. Gửi thông báo cho KHÁCH HÀNG (Dùng await để đảm bảo lưu thành công)
                     var notificationDto = new CreateNotificationDTO
                     {
                         UserId = booking.UserId,
@@ -455,12 +479,10 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                         Message = $"Your booking for '{tourName}' has been updated from {oldStatus} to {request.BookingStatus}. {request.Note}",
                         NotificationType = NotificationType.System
                     };
-                    await _notificationService.CreateAsync(notificationDto); // <--- ĐÃ SỬA: Thêm await
+                    await _notificationService.CreateAsync(notificationDto); 
 
-                    // 2. Gửi thông báo cho STAFF nếu đơn bị Hủy
                     if (request.BookingStatus == BookingStatus.Cancelled)
                     {
-                        // Lấy tất cả Staff (Role = 2)
                         var allStaff = await _context.Users
                             .Where(u => u.RoleId == 2)
                             .ToListAsync();
@@ -473,20 +495,17 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                                 {
                                     UserId = staff.Id,
                                     Title = "Booking Cancelled Alert",
-                                    // Nội dung chứa "Booking #ID" để khớp với Regex bên JS
                                     Message = $"Customer {booking.FirstName} {booking.LastName} has cancelled Booking #{booking.Id} for tour '{tourName}'.",
                                     NotificationType = NotificationType.System
                                 };
 
-                                // Dùng await để chắc chắn từng thông báo được lưu
-                                await _notificationService.CreateAsync(staffNoti); // <--- ĐÃ SỬA: Thêm await
+                                await _notificationService.CreateAsync(staffNoti); 
                             }
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    // Ghi log lỗi nếu gửi thông báo thất bại (để debug)
                     Console.WriteLine($"Failed to send notification: {ex.Message}");
                 }
             }
@@ -522,7 +541,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                         NotificationType = NotificationType.System
                     };
 
-                    _ = _notificationService.CreateAsync(notificationDto);
+                    await _notificationService.CreateAsync(notificationDto);
                 }
                 catch (Exception ex)
                 {
@@ -604,8 +623,27 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                     RefundAmount = calculatedRefundAmount
                 };
             }
-            if (booking.BookingStatus != BookingStatus.Confirmed &&
-                booking.BookingStatus != BookingStatus.Pending)
+            if (booking.BookingStatus == BookingStatus.Pending)
+            {
+                Console.WriteLine($"Booking {bookingId} is still pending");
+
+                return new CancelValidationResult
+                {
+                    CanCancel = false,
+                    Message = "Cannot cancel a booking that is still pending. Please wait for confirmation or contact support.",
+                };
+            }
+            if (booking.PaymentStatus == PaymentStatus.Pending)
+            {
+                Console.WriteLine($"Payment for booking {bookingId} is still pending");
+
+                return new CancelValidationResult
+                {
+                    CanCancel = false,
+                    Message = "Cannot cancel a booking with a pending payment.",
+                };
+            }
+            if (booking.BookingStatus != BookingStatus.Confirmed)
             {
                 Console.WriteLine($"Booking status invalid for cancellation: {booking.BookingStatus}");
                 return new CancelValidationResult

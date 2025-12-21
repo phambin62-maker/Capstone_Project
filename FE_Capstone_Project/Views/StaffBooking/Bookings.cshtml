@@ -108,7 +108,7 @@
                                         <small class="text-muted">@booking.PhoneNumber</small>
                                     </td>
                                     <td>@booking.TourName</td>
-                                    <td>@booking.BookingDate?.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>@booking.BookingDate?.AddHours(7).ToString("dd/MM/yyyy HH:mm")</td>
                                     <td class="fw-bold text-success">@booking.TotalPrice?.ToString("N0") ₫</td>
                                     <td>
                                         <span class="badge @GetBookingStatusBadge(booking.BookingStatus)">

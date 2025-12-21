@@ -1,6 +1,7 @@
 ﻿using BE_Capstone_Project.Application.BookingManagement.DTOs;
 using BE_Capstone_Project.Domain.Models;
 using BE_Capstone_Project.Infrastructure;
+using BE_Capstone_Project.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace BE_Capstone_Project.DAO
@@ -119,7 +120,9 @@ namespace BE_Capstone_Project.DAO
         public async Task<List<ScheduleBookedSeatsDTO>> GetBookedSeatsByTourAsync(int tourId)
         {
             return await _context.BookingCustomers
-                .Where(bc => bc.Booking.TourSchedule.TourId == tourId)
+                .Where(bc => bc.Booking.TourSchedule.TourId == tourId &&
+                             !(bc.Booking.BookingStatus == BookingStatus.Cancelled &&
+                               bc.Booking.PaymentStatus == PaymentStatus.Refunded))
                 .GroupBy(bc => bc.Booking.TourScheduleId)
                 .Select(g => new ScheduleBookedSeatsDTO
                 {
