@@ -57,9 +57,13 @@
     }
 </style>
 
-<header class="blog-hero-section py-5 text-center bg-light mb-4">
+@* <header class="blog-hero-section py-5 text-center bg-light mb-4">
     <h1 class="display-4 fw-bold text-dark">📰 NEWS</h1>
     <p class="lead text-muted">Explore the latest news and articles</p>
+</header> *@
+<header class="blog-hero-section py-5 text-center mb-4" style="background-color: black;">
+    <h1 class="display-4 fw-bold text-white">📰 NEWS</h1>
+    <p class="lead text-white-50">Explore the latest news and articles</p>
 </header>
 
 <div class="container pb-5">
@@ -133,8 +137,8 @@
                 }
             </div>
 
-            <nav class="mt-5">
-                <ul class="pagination justify-content-center pagination-lg">
+            <nav style="margin-top: 6rem;">
+                <ul class="pagination justify-content-center">
                     @{
                         string GetPageUrl(int pageNum)
                         {
