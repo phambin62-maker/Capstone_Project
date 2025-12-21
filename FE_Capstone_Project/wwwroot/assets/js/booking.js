@@ -169,9 +169,9 @@
 
             // Pricing calculations
             const childPrice = tour.price * (1 - tour.childDiscount / 100);
-            let totalPrice = (adults * tour.price) + ((children + infants) * childPrice);
+            let totalPrice = (adults * tour.price) + (children * childPrice);
             let groupDiscountAmount = 0;
-            const groupThreshold = adults + children + infants >= 6 ? 6 : Infinity;
+            const groupThreshold = adults + children + infants >= tour.groupNumber ? tour.groupNumber : Infinity;
 
             if (totalTravelers >= groupThreshold && tour.groupDiscount > 0) {
                 groupDiscountAmount = totalPrice * (tour.groupDiscount / 100);

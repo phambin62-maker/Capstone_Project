@@ -92,7 +92,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                 PaymentMethod = dto.PaymentMethod,
                 BookingStatus = dto.BookingStatus ?? BookingStatus.Pending,
                 BookingDate = DateTime.UtcNow,
-                ExpirationTime = DateTime.UtcNow.AddHours(1),
+                ExpirationTime = dto.ExpirationTime,
                 RefundAmount = dto.RefundAmount,
                 RefundDate = dto.RefundDate,
                 PaymentDate = dto.PaymentDate
@@ -251,7 +251,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                     TourName = b.TourSchedule!.Tour!.Name!,
                     DepartureDate = b.TourSchedule!.DepartureDate!.Value,
                     Adults = b.BookingCustomers.Count(bc => bc.CustomerType == CustomerType.Adult),
-                    Children = b.BookingCustomers.Count(bc => bc.CustomerType == CustomerType.Child),
+                    Children = b.BookingCustomers.Count(bc => bc.CustomerType == CustomerType.Child || bc.CustomerType == CustomerType.Infant),
                     TotalPrice = b.TotalPrice!.Value,
                     Status = b.BookingStatus!.Value,
                     CancelCondition = cancelValidation,

@@ -90,7 +90,7 @@ namespace FE_Capstone_Project.Controllers
                     return View(new TourViewModel());
                 }
 
-                ViewBag.TourSchedules = tourSchedules.Data ?? new List<TourScheduleDTO>();
+                ViewBag.TourSchedules = tourSchedules!.Data.Where(ts => ts.ScheduleStatus == ScheduleStatus.Scheduled).ToList();
                 ViewBag.CanComment = result.CanComment;
                 ViewBag.BookedSeats = bookedSeatsResponse;
                 ViewBag.IsInWishlist = isInWishlist;
