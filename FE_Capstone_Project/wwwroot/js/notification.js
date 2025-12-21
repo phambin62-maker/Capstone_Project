@@ -155,15 +155,25 @@ function initStaffNotification() {
                     const linkUrl = bookingId ? `/StaffBooking/Details/${bookingId}` : '#';
                     const linkClass = bookingId ? '' : 'text-decoration-none cursor-default';
 
+                    // --- LOGIC IN ĐẬM ---
+                    // Nếu chưa đọc (isRead == false), thêm class fw-bold và màu chữ đen
+                    // Nếu đã đọc, dùng class fw-normal và màu text-muted nhẹ hơn
+                    const titleStyle = !item.isRead ? 'fw-bold text-dark' : 'fw-normal text-secondary';
+                    const bgStyle = !item.isRead ? 'background-color: #f0f7ff;' : ''; // Thêm màu nền nhạt cho tin chưa đọc
+
                     const li = document.createElement('li');
                     li.innerHTML = `
                         <a class="dropdown-item py-2 ${linkClass}" href="${linkUrl}" 
                            data-notification-id="${item.id}" 
-                           data-is-read="false">
+                           data-is-read="${item.isRead}"
+                           style="${bgStyle}">
                             <div class="d-flex align-items-start">
-                                <div class="me-2 mt-1"><i class="bi bi-exclamation-circle-fill text-warning"></i></div>
+                                <div class="me-2 mt-1">
+                                    ${!item.isRead ? '<i class="bi bi-circle-fill text-primary" style="font-size: 8px;"></i>' : ''}
+                                    <i class="bi bi-exclamation-circle-fill text-warning"></i>
+                                </div>
                                 <div>
-                                    <div class="fw-bold small">${item.title}</div>
+                                    <div class="${titleStyle} small">${item.title}</div>
                                     <div class="small text-secondary" style="white-space: normal;">${item.message}</div>
                                     <div class="text-muted" style="font-size: 0.75rem;">${timeAgo}</div>
                                 </div>
@@ -192,6 +202,16 @@ function initStaffNotification() {
 
         try {
             await fetch(`/api/notificationweb/mark-read-single/${notiId}`, { method: 'POST' });
+
+            // Cập nhật giao diện ngay lập tức (bỏ in đậm)
+            const titleDiv = item.querySelector('.fw-bold');
+            if (titleDiv) {
+                titleDiv.classList.remove('fw-bold', 'text-dark');
+                titleDiv.classList.add('fw-normal', 'text-secondary');
+            }
+            item.style.backgroundColor = ''; // Xóa màu nền
+            item.dataset.isRead = "true";
+
             const currentCount = parseInt(BADGE.textContent || '0');
             const newCount = Math.max(0, currentCount - 1);
             BADGE.textContent = newCount;
