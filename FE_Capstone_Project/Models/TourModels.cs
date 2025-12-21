@@ -213,7 +213,7 @@ namespace FE_Capstone_Project.Models
         public byte GroupNumber { get; set; } = 8;
 
         [Range(1, 100, ErrorMessage = "Minimum seats must be 1-100")]
-        public short MinSeats { get; set; } = 10;
+        public short MinSeats { get; set; } = 1;
 
         [Range(1, 100, ErrorMessage = "Maximum seats must be 1-100")]
         public short MaxSeats { get; set; } = 30;

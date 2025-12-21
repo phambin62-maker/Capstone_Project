@@ -32,7 +32,7 @@ namespace FE_Capstone_Project.Controllers
             var bookedSeatsResponse = await _apiHelper.GetAsync<List<ScheduleBookedSeatsResponse>>($"Booking/tours/{tourId}/booked-seats");
 
             ViewBag.Tour = tourResponse!.Tour;
-            ViewBag.TourSchedules = tourSchedulesResponse!.Data;
+            ViewBag.TourSchedules = tourSchedulesResponse!.Data.Where(ts => ts.ScheduleStatus == ScheduleStatus.Scheduled);
             ViewBag.User = userResponse;
             ViewBag.DepartureLocations = locationsResponse!.Data;
             ViewBag.BookedSeats = bookedSeatsResponse;

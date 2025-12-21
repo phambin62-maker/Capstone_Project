@@ -19,8 +19,8 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
         private readonly ITourScheduleService _tourScheduleService;
 
         public BookingController(
-            IBookingService bookingService, 
-            IUserService userService, 
+            IBookingService bookingService,
+            IUserService userService,
             ITourService tourService,
             ITourScheduleService tourScheduleService)
         {
@@ -30,22 +30,22 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
             _tourScheduleService = tourScheduleService;
         }
 
-                [HttpGet]
-                [Authorize(Roles = "Admin,Staff")] 
-                public async Task<IActionResult> GetAll()
-                {
-                    var list = await _bookingService.GetAllAsync();
-                    return Ok(list);
-                }
+        [HttpGet]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> GetAll()
+        {
+            var list = await _bookingService.GetAllAsync();
+            return Ok(list);
+        }
 
-                [HttpGet("{id}")]
-                [Authorize] // Cần đăng nhập để xem booking
-                public async Task<IActionResult> GetById(int id)
-                {
-                    var booking = await _bookingService.GetByIdAsync(id);
-                    if (booking == null) return NotFound();
-                    return Ok(booking);
-                }
+        [HttpGet("{id}")]
+        [Authorize] // Cần đăng nhập để xem booking
+        public async Task<IActionResult> GetById(int id)
+        {
+            var booking = await _bookingService.GetByIdAsync(id);
+            if (booking == null) return NotFound();
+            return Ok(booking);
+        }
 
         //[HttpGet("user/{userId}")]
         //[Authorize] // Cần đăng nhập để xem booking của user
@@ -86,8 +86,8 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
                     Email = request.Email,
                     CertificateId = request.Certificate_Id,
 
-                            PaymentStatus = Domain.Enums.PaymentStatus.Pending,
-                            BookingStatus = Domain.Enums.BookingStatus.Pending,
+                    PaymentStatus = PaymentStatus.Pending,
+                    BookingStatus = BookingStatus.Pending,
 
                     RefundAmount = null,
                     RefundDate = null,
@@ -126,23 +126,23 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
         }
 
 
-                [HttpPut("{id}")]
-                [Authorize]
-                public async Task<IActionResult> Update(int id, [FromBody] CreateBookingDTO dto)
-                {
-                    var success = await _bookingService.UpdateAsync(id, dto);
-                    if (!success) return NotFound();
-                    return NoContent();
-                }
+        [HttpPut("{id}")]
+        [Authorize]
+        public async Task<IActionResult> Update(int id, [FromBody] CreateBookingDTO dto)
+        {
+            var success = await _bookingService.UpdateAsync(id, dto);
+            if (!success) return NotFound();
+            return NoContent();
+        }
 
-                [HttpDelete("{id}")]
-                [Authorize]
-                public async Task<IActionResult> Delete(int id)
-                {
-                    var success = await _bookingService.DeleteAsync(id);
-                    if (!success) return NotFound();
-                    return NoContent();
-                }
+        [HttpDelete("{id}")]
+        [Authorize]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var success = await _bookingService.DeleteAsync(id);
+            if (!success) return NotFound();
+            return NoContent();
+        }
 
         [HttpPost("payment-update")]
         public async Task<IActionResult> UpdatePaymentStatus(PaymentDTO payment)
@@ -156,7 +156,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
         public async Task<IActionResult> GetBookedSeats(int tourId)
         {
             var result = await _bookingService.GetBookedSeatsByTour(tourId);
-            if(result == null) return NotFound();
+            if (result == null) return NotFound();
             return Ok(result);
         }
         [HttpPut("user/{bookingId}/cancel")]
@@ -217,7 +217,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
             {
                 return BadRequest(new { message = ex.Message, success = false });
             }
-        }        
+        }
 
 
         [HttpGet("staff/bookings")]
@@ -318,23 +318,22 @@ namespace BE_Capstone_Project.Application.BookingManagement.Controllers
             if (tour.Price == null)
                 throw new Exception("Tour price is not set.");
 
-                    int totalPeople = request.Adults + request.Children + request.Infants;
+            int totalPeople = request.Adults + request.Children + request.Infants;
 
-                    decimal basePrice = tour.Price.Value;
-                    decimal childPrice = basePrice * (1 - (tour.ChildDiscount ?? 0) / 100);
+            decimal basePrice = tour.Price.Value;
+            decimal childPrice = basePrice * (1 - (tour.ChildDiscount ?? 0) / 100);
 
-                    decimal groupDiscount = 0;
-                    if (totalPeople >= 6 && tour.GroupDiscount.HasValue)
-                    {
-                        groupDiscount = tour.GroupDiscount.Value / 100;
-                    }
+            decimal groupDiscount = 0;
+            if (totalPeople >= 6 && tour.GroupDiscount.HasValue)
+            {
+                groupDiscount = tour.GroupDiscount.Value / 100;
+            }
 
             decimal totalPrice = (request.Adults * basePrice) + (request.Children * childPrice);
 
-                    totalPrice *= (1 - groupDiscount);
+            totalPrice *= (1 - groupDiscount);
 
-                    return totalPrice;
-                }
-            }
+            return totalPrice;
         }
-
+    }
+}
