@@ -66,31 +66,30 @@
                                 <span id="tourNameDisplay">No tour selected</span>
                             </div>
                         </div>
-
+                    </div>
+                    <div class="col-md-6">
                         <div class="mb-3">
-                            <label asp-for="DepartureDate" class="form-label">Departure Date *</label>
+                            <label asp-for="ScheduleStatus" class="form-label">Status</label>
+                            <input type="text" class="form-control" value="Scheduled" readonly />
+                            <input type="hidden" asp-for="ScheduleStatus" value="Scheduled" />
+                            <span asp-validation-for="ScheduleStatus" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="DepartureDate" class="form-label">Departure Date <span class="text-danger">*</span></label>
                             <input asp-for="DepartureDate" type="date" class="form-control"
                                    min="@DateTime.Now.ToString("yyyy-MM-dd")" />
-                            <span asp-validation-for="DepartureDate" class="text-danger"></span>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label asp-for="ArrivalDate" class="form-label">Arrival Date *</label>
+                            <label asp-for="ArrivalDate" class="form-label">Return Date <span class="text-danger">*</span></label>
                             <input asp-for="ArrivalDate" type="date" class="form-control"
                                    min="@DateTime.Now.AddDays(1).ToString("yyyy-MM-dd")" />
-                            <span asp-validation-for="ArrivalDate" class="text-danger"></span>
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="ScheduleStatus" class="form-label">Status *</label>
-                            <select asp-for="ScheduleStatus" class="form-select">
-                                <option value="Scheduled">Scheduled</option>
-                                <option value="Ongoing">Ongoing</option>
-                                <option value="Completed">Completed</option>
-                                <option value="Cancelled">Cancelled</option>
-                            </select>
-                            <span asp-validation-for="ScheduleStatus" class="text-danger"></span>
                         </div>
                     </div>
                 </div>

@@ -121,8 +121,7 @@ namespace BE_Capstone_Project.DAO
         {
             return await _context.BookingCustomers
                 .Where(bc => bc.Booking.TourSchedule.TourId == tourId &&
-                             !(bc.Booking.BookingStatus == BookingStatus.Cancelled &&
-                               bc.Booking.PaymentStatus == PaymentStatus.Refunded))
+                             !(bc.Booking.BookingStatus == BookingStatus.Cancelled))
                 .GroupBy(bc => bc.Booking.TourScheduleId)
                 .Select(g => new ScheduleBookedSeatsDTO
                 {
