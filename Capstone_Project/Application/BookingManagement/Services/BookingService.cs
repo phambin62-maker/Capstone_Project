@@ -110,12 +110,8 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                     {
                         var tourName = savedBooking.TourSchedule?.Tour?.Name ?? "Your Tour";
 
-                        // --- LOGIC TẠO THÔNG BÁO CHO KHÁCH HÀNG ---
-
-                        // 1. Tạo nội dung cơ bản
                         string userMessage = $"Your booking for tour '{tourName}' has been created.";
 
-                        // 2. [MỚI] Kiểm tra nếu chưa thanh toán thì thêm dòng nhắc nhở
                         if (savedBooking.PaymentStatus == PaymentStatus.Pending)
                         {
                             userMessage += " Note: Your booking is Unpaid. Please complete the payment to secure your booking.";
@@ -124,17 +120,12 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                         var notificationDto = new CreateNotificationDTO
                         {
                             UserId = savedBooking.UserId,
-                            Title = "Booking Created", // Đổi tiêu đề thành Created cho hợp lý hơn
+                            Title = "Booking Created", 
                             Message = userMessage,
                             NotificationType = NotificationType.System
                         };
 
-                        // Dùng await để đảm bảo lưu thành công
                         await _notificationService.CreateAsync(notificationDto);
-
-                        // ---------------------------------------------------------
-
-                        // --- GỬI THÔNG BÁO CHO STAFF (Giữ nguyên logic cũ) ---
                         var allStaff = await _context.Users
                             .Where(u => u.RoleId == 2)
                             .ToListAsync();
@@ -195,11 +186,11 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                     {
                         UserId = existing.UserId,
                         Title = "Booking Cancelled",
-                        Message = $"Your booking for tour '{tourName}' has been successfully cancelled.",
+                        Message = $"Booking #{existing.Id}: Your booking for tour '{tourName}' has been successfully cancelled.",
                         NotificationType = NotificationType.System
                     };
 
-                    _ = _notificationService.CreateAsync(notificationDto);
+                    await _notificationService.CreateAsync(notificationDto);
                 }
                 catch (Exception ex)
                 {
@@ -477,10 +468,10 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                     {
                         UserId = booking.UserId,
                         Title = "Booking Status Updated",
-                        Message = $"Your booking for '{tourName}' has been updated from {oldStatus} to {request.BookingStatus}. {request.Note}",
+                        Message = $"Booking #{booking.Id}: Your booking for '{tourName}' has been updated from {oldStatus} to {request.BookingStatus}. {request.Note}",
                         NotificationType = NotificationType.System
                     };
-                    await _notificationService.CreateAsync(notificationDto); 
+                    await _notificationService.CreateAsync(notificationDto);
 
                     if (request.BookingStatus == BookingStatus.Cancelled)
                     {
@@ -499,8 +490,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                                     Message = $"Customer {booking.FirstName} {booking.LastName} has cancelled Booking #{booking.Id} for tour '{tourName}'.",
                                     NotificationType = NotificationType.System
                                 };
-
-                                await _notificationService.CreateAsync(staffNoti); 
+                                await _notificationService.CreateAsync(staffNoti);
                             }
                         }
                     }
@@ -542,7 +532,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                     {
                         UserId = booking.UserId,
                         Title = "Payment Status Updated",
-                        Message = $"Payment status for your booking '{tourName}' has been updated from  {oldStatus} to {request.PaymentStatus}. {request.Note}",
+                        Message = $"Booking #{booking.Id}: Payment status for your booking '{tourName}' has been updated from {oldStatus} to {request.PaymentStatus}. {request.Note}",
                         NotificationType = NotificationType.System
                     };
 
