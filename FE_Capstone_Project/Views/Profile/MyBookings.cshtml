@@ -42,7 +42,8 @@ else
             <tbody>
                 @foreach (var booking in Model)
                 {
-                    <tr>
+                    @* [S?A] Thêm id ?? t?o ?i?m neo cho link t? thông báo *@
+                    <tr id="booking-@booking.BookingId">
                         <td>#@booking.BookingId</td>
                         <td>@booking.TourName</td>
                         <td>@booking.DepartureDateTime.ToString("MMMM dd, yyyy")</td>
@@ -82,10 +83,9 @@ else
                                 @if (booking.Status == BookingStatus.Completed)
                                 {
                                     <div class="text-success">
-
                                         <small>
                                             <i class="fas fa-check-circle"></i>
-                                            <strong>@booking.CancelCondition.Message</strong>                                           
+                                            <strong>@booking.CancelCondition.Message</strong>
                                         </small>
                                     </div>
                                 }
@@ -176,7 +176,6 @@ else
     </div>
 }
 
-<!-- Cancel Confirmation Modal -->
 <div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -206,8 +205,8 @@ else
     </div>
 </div>
 
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
         var cancelModal = document.getElementById('cancelModal');
         cancelModal.addEventListener('show.bs.modal', function (event) {
             var button = event.relatedTarget;

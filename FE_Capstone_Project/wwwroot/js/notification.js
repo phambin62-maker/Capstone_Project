@@ -57,14 +57,30 @@ function initCustomerNotification() {
                 LIST.innerHTML = '<li><div class="dropdown-item text-muted text-center p-3">No new notifications.</div></li>';
             } else {
                 LIST.innerHTML += `<li><h6 class="dropdown-header">Recent Notifications</h6></li><li><hr class="dropdown-divider"></li>`;
+
                 notifications.forEach(noti => {
                     const timeAgo = formatVietnamTime(noti.createdDate);
                     const iconHtml = noti.isRead ? '<i class="bi bi-check2-circle text-muted fs-4"></i>' : '<i class="bi bi-bell-fill text-primary fs-4"></i>';
                     const titleClass = noti.isRead ? '' : 'fw-bold';
+
+                    // --- [MỚI] Tách ID Booking từ tin nhắn ---
+                    let bookingId = null;
+                    const combinedText = (noti.title + " " + noti.message);
+                    const match = combinedText.match(/Booking #(\d+)/i);
+                    if (match && match[1]) bookingId = match[1];
+
+                    // --- [MỚI] Tạo Link đến trang My Bookings ---
+                    // Thay '/BookingWeb/MyBookings' bằng URL thật của bạn nếu khác
+                    const linkUrl = bookingId ? `/Profile/MyBookings#booking-${bookingId}` : '#';
+                    const linkClass = bookingId ? '' : 'text-decoration-none cursor-default';
+
                     const li = document.createElement('li');
+                    // Sử dụng thẻ <a> thay vì <div> để có thể click chuyển trang
                     li.innerHTML = `
-                        <div class="dropdown-item" style="white-space: normal; cursor: pointer;" 
-                             data-notification-id="${noti.id}" data-is-read="${noti.isRead}">
+                        <a class="dropdown-item ${linkClass}" href="${linkUrl}" 
+                             data-notification-id="${noti.id}" 
+                             data-is-read="${noti.isRead}"
+                             style="white-space: normal; cursor: pointer;">
                             <div class="row g-2 align-items-center">
                                 <div class="col-auto">${iconHtml}</div>
                                 <div class="col">
@@ -73,10 +89,11 @@ function initCustomerNotification() {
                                     <small class="text-muted" style="font-size: 0.75rem;">${timeAgo}</small>
                                 </div>
                             </div>
-                        </div>`;
+                        </a>`;
                     LIST.appendChild(li);
                     LIST.appendChild(document.createElement('li')).innerHTML = '<hr class="dropdown-divider">';
                 });
+
                 LIST.innerHTML += '<li><a class="dropdown-item text-center small text-primary" href="/NotificationWeb/Index">View all notifications</a></li>';
             }
         } catch (e) {
@@ -85,17 +102,35 @@ function initCustomerNotification() {
     }
 
     LIST.addEventListener('click', async (e) => {
-        const item = e.target.closest('.dropdown-item');
-        if (!item || !item.dataset.notificationId || item.dataset.isRead === 'true') return;
+        // [SỬA] Tìm thẻ 'a' thay vì 'div'
+        const item = e.target.closest('a.dropdown-item');
+        if (!item || !item.dataset.notificationId) return;
+
+        const notiId = item.dataset.notificationId;
+        const targetUrl = item.getAttribute('href');
+        const shouldRedirect = (targetUrl && targetUrl !== '#' && targetUrl !== '');
+
+        // Chặn chuyển trang ngay để gọi API đánh dấu đã đọc trước
+        if (shouldRedirect) e.preventDefault();
+
         try {
-            await fetch(`/api/notificationweb/mark-read-single/${item.dataset.notificationId}`, { method: 'POST' });
-            item.querySelector('strong')?.classList.remove('fw-bold');
-            item.dataset.isRead = 'true';
-            item.querySelector('.col-auto').innerHTML = '<i class="bi bi-check2-circle text-muted fs-4"></i>';
-            const newCount = Math.max(0, parseInt(BADGE.textContent || '0') - 1);
-            BADGE.textContent = newCount;
-            if (newCount === 0) BADGE.classList.add('d-none');
+            if (item.dataset.isRead !== 'true') {
+                await fetch(`/api/notificationweb/mark-read-single/${notiId}`, { method: 'POST' });
+
+                // Cập nhật giao diện (bỏ in đậm)
+                item.querySelector('strong')?.classList.remove('fw-bold');
+                item.dataset.isRead = 'true';
+                item.querySelector('.col-auto').innerHTML = '<i class="bi bi-check2-circle text-muted fs-4"></i>';
+
+                const newCount = Math.max(0, parseInt(BADGE.textContent || '0') - 1);
+                BADGE.textContent = newCount;
+                if (newCount === 0) BADGE.classList.add('d-none');
+            }
         } catch (e) { }
+        finally {
+            // Chuyển trang sau khi xử lý xong
+            if (shouldRedirect) window.location.href = targetUrl;
+        }
     });
 
     loadCount();
@@ -155,11 +190,8 @@ function initStaffNotification() {
                     const linkUrl = bookingId ? `/StaffBooking/Details/${bookingId}` : '#';
                     const linkClass = bookingId ? '' : 'text-decoration-none cursor-default';
 
-                    // --- LOGIC IN ĐẬM ---
-                    // Nếu chưa đọc (isRead == false), thêm class fw-bold và màu chữ đen
-                    // Nếu đã đọc, dùng class fw-normal và màu text-muted nhẹ hơn
                     const titleStyle = !item.isRead ? 'fw-bold text-dark' : 'fw-normal text-secondary';
-                    const bgStyle = !item.isRead ? 'background-color: #f0f7ff;' : ''; // Thêm màu nền nhạt cho tin chưa đọc
+                    const bgStyle = !item.isRead ? 'background-color: #f0f7ff;' : ''; 
 
                     const li = document.createElement('li');
                     li.innerHTML = `
@@ -203,13 +235,12 @@ function initStaffNotification() {
         try {
             await fetch(`/api/notificationweb/mark-read-single/${notiId}`, { method: 'POST' });
 
-            // Cập nhật giao diện ngay lập tức (bỏ in đậm)
             const titleDiv = item.querySelector('.fw-bold');
             if (titleDiv) {
                 titleDiv.classList.remove('fw-bold', 'text-dark');
                 titleDiv.classList.add('fw-normal', 'text-secondary');
             }
-            item.style.backgroundColor = ''; // Xóa màu nền
+            item.style.backgroundColor = ''; 
             item.dataset.isRead = "true";
 
             const currentCount = parseInt(BADGE.textContent || '0');
