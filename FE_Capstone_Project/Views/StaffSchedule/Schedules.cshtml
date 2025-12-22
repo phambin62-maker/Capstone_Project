@@ -174,12 +174,42 @@
                                placeholder="Tour name..." id="tourNameFilter" value="@ViewBag.CurrentTourName">
 
                         <!-- Location filter -->
-                        <input type="text" class="form-control form-control-sm" style="width: 180px;" 
-                               placeholder="Location..." id="locationFilter" value="@ViewBag.CurrentLocation">
+                        <select class="form-select form-select-sm" style="width: 180px;" id="locationFilter">
+                            <option value="">All Locations</option>
+                            @if (ViewBag.Locations != null)
+                            {
+                                foreach (var loc in ViewBag.Locations)
+                                {
+                                    if (ViewBag.CurrentLocation == loc.LocationName)
+                                    {
+                                        <option value="@loc.LocationName" selected>@loc.LocationName</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@loc.LocationName">@loc.LocationName</option>
+                                    }
+                                }
+                            }
+                        </select>
 
                         <!-- Category filter -->
-                        <input type="text" class="form-control form-control-sm" style="width: 180px;" 
-                               placeholder="Category..." id="categoryFilter" value="@ViewBag.CurrentCategory">
+                        <select class="form-select form-select-sm" style="width: 180px;" id="categoryFilter">
+                            <option value="">All Categories</option>
+                            @if (ViewBag.Categories != null)
+                            {
+                                foreach (var cat in ViewBag.Categories)
+                                {
+                                    if (ViewBag.CurrentCategory == cat.CategoryName)
+                                    {
+                                        <option value="@cat.CategoryName" selected>@cat.CategoryName</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@cat.CategoryName">@cat.CategoryName</option>
+                                    }
+                                }
+                            }
+                        </select>
 
                         <!-- Date range -->
                         <div class="input-group input-group-sm" style="width: 300px;">

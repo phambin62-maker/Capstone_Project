@@ -34,7 +34,8 @@ else
                     <th>Adults</th>
                     <th>Children & Infants</th>
                     <th>Total Price</th>
-                    <th>Status</th>
+                    <th>Booking Status</th>
+                    <th>Payment Status</th>
                     <th>Cancellation Info</th>
                     <th>Actions</th>
                 </tr>
@@ -50,30 +51,41 @@ else
                         <td>@booking.Children</td>
                         <td>@booking.TotalPrice.ToString("N0") VND</td>
                         <td>
-                            @if (booking.PaymentStatus == PaymentStatus.Refunded)
+                            @switch (booking.Status)
+                            {
+                                case BookingStatus.Cancelled:
+                                    <span class="badge bg-danger">Cancelled</span>
+                                    break;
+                                case BookingStatus.Completed:
+                                    <span class="badge bg-secondary">Completed</span>
+                                    break;
+                                case BookingStatus.Pending:
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                    break;
+                                case BookingStatus.Confirmed:
+                                    <span class="badge bg-success">Confirmed</span>
+                                    break;
+                                default:
+                                    <span class="badge bg-light text-dark">Unknown</span>
+                                    break;
+                            }
+                        </td>
+                        <td>
+                            @if (booking.PaymentStatus == PaymentStatus.Completed)
+                            {
+                                <span class="badge bg-success">Paid</span>
+                            }
+                            else if (booking.PaymentStatus == PaymentStatus.Pending)
+                            {
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            }
+                            else if (booking.PaymentStatus == PaymentStatus.Refunded)
                             {
                                 <span class="badge bg-info">Refunded</span>
                             }
                             else
                             {
-                                @switch (booking.Status)
-                                {
-                                    case BookingStatus.Cancelled:
-                                        <span class="badge bg-danger">Cancelled</span>
-                                        break;
-                                    case BookingStatus.Completed:
-                                        <span class="badge bg-secondary">Completed</span>
-                                        break;
-                                    case BookingStatus.Pending:
-                                        <span class="badge bg-warning text-dark">Pending</span>
-                                        break;
-                                    case BookingStatus.Confirmed:
-                                        <span class="badge bg-success">Confirmed</span>
-                                        break;
-                                    default:
-                                        <span class="badge bg-light text-dark">Unknown</span>
-                                        break;
-                                }
+                                <span class="badge bg-secondary">@booking.PaymentStatus</span>
                             }
                         </td>
                         <td>

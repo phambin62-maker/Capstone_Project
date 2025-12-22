@@ -161,6 +161,13 @@ namespace FE_Capstone_Project.Controllers
             string fromDate = null,
             string toDate = null)
         {
+            // Load filter data
+            var (locSuccess, locResult, _) = await CallApiAsync<List<LocationViewModel>>("Locations");
+            ViewBag.Locations = locSuccess ? locResult : new List<LocationViewModel>();
+
+            var (catSuccess, catResult, _) = await CallApiAsync<List<TourCategoryViewModel>>("TourCategories");
+            ViewBag.Categories = catSuccess ? catResult : new List<TourCategoryViewModel>();
+
             try
             {
                 List<TourScheduleDTO> schedules;

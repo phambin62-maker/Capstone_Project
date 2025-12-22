@@ -9,7 +9,13 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
     public class TourScheduleService : ITourScheduleService
     {
         private readonly TourScheduleDAO _tourScheduleDAO;
-        public TourScheduleService(TourScheduleDAO tourScheduleDAO) => _tourScheduleDAO = tourScheduleDAO;
+        private readonly BookingDAO _bookingDAO;
+
+        public TourScheduleService(TourScheduleDAO tourScheduleDAO, BookingDAO bookingDAO) 
+        {
+            _tourScheduleDAO = tourScheduleDAO;
+            _bookingDAO = bookingDAO;
+        }
 
         public async Task<TourScheduleDTO?> GetTourScheduleById(int id)
         {
@@ -68,6 +74,19 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
 
             if (isDuplicate)
                 throw new InvalidOperationException("This tour already has a schedule on the selected date.");
+
+            if (request.ScheduleStatus == ScheduleStatus.Completed && existingSchedule.ScheduleStatus != ScheduleStatus.Completed)
+            {
+                var bookings = await _bookingDAO.GetBookingsByTourScheduleIdAsync(id);
+                foreach (var booking in bookings)
+                {
+                    if (booking.BookingStatus != BookingStatus.Cancelled) // Only complete non-cancelled bookings
+                    {
+                        booking.BookingStatus = BookingStatus.Completed;
+                        await _bookingDAO.UpdateBookingAsync(booking);
+                    }
+                }
+            }
 
             existingSchedule.DepartureDate = request.DepartureDate;
             existingSchedule.ArrivalDate = request.ArrivalDate;
