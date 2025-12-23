@@ -357,7 +357,7 @@ namespace BE_Capstone_Project.DAO
             {
                 "date_asc" => query.OrderBy(ts => ts.DepartureDate),
                 "date_desc" => query.OrderByDescending(ts => ts.DepartureDate),
-                _ => query.OrderByDescending(ts => ts.DepartureDate) // Default sort by departure date descending
+                _ => query.OrderBy(ts => ts.DepartureDate) // Default sort by departure date ascending
             };
         }
     }

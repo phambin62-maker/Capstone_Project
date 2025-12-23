@@ -105,13 +105,13 @@
                             <option value="">Sort by Date</option>
                             @if (ViewBag.CurrentSort == "date_asc")
                             {
-                                <option value="date_asc" selected>Date: Oldest First</option>
-                                <option value="date_desc">Date: Newest First</option>
+                                <option value="date_asc" selected>Date: Increasing</option>
+                                <option value="date_desc">Date: Decreasing</option>
                             }
                             else if (ViewBag.CurrentSort == "date_desc")
                             {
-                                <option value="date_asc">Date: Oldest First</option>
-                                <option value="date_desc" selected>Date: Newest First</option>
+                                <option value="date_asc">Date: Increasing</option>
+                                <option value="date_desc" selected>Date: Decreasing</option>
                             }
                             else
                             {

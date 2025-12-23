@@ -442,6 +442,7 @@ namespace BE_Capstone_Project.DAO
             {
                 var query = _context.Tours
                     .Where(t => t.TourStatus == true)
+                    .OrderByDescending(t => t.Id)
                     .Include(t => t.StartLocation)
                     .Include(t => t.EndLocation)
                     .Include(t => t.Category);
