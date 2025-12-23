@@ -1,4 +1,4 @@
-// staff-chat.js - Staff Chat Page Functionality
+﻿// staff-chat.js - Staff Chat Page Functionality
 (function () {
     'use strict';
 

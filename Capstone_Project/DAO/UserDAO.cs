@@ -182,16 +182,20 @@ namespace BE_Capstone_Project.DAO
         {
             try
             {
-                return await _context.Users.ToListAsync();
+                return await _context.Users
+                    .Where(u => u.RoleId != 1)
+                    .ToListAsync();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ [UserDAO] Error in GetAllUsers: {ex.Message}");
+                Console.WriteLine($"[UserDAO] Error in GetAllUsers: {ex.Message}");
                 if (ex.InnerException != null)
-                    Console.WriteLine($"🔍 Inner: {ex.InnerException.Message}");
+                    Console.WriteLine($"Inner: {ex.InnerException.Message}");
+
                 return new List<User>();
             }
         }
+
 
 
         public async Task<User?> GetUserById(int userId)
@@ -371,15 +375,17 @@ namespace BE_Capstone_Project.DAO
 
         // Get filtered accounts with pagination
         public async Task<(List<User> Users, int TotalCount)> GetFilteredAccountsAsync(
-            int? roleId = null,
-            UserStatus? status = null,
-            string? search = null,
-            int page = 1,
-            int pageSize = 10)
+      int? roleId = null,
+      UserStatus? status = null,
+      string? search = null,
+      int page = 1,
+      int pageSize = 10)
         {
             try
             {
-                var query = _context.Users.AsQueryable();
+                var query = _context.Users
+                    .Where(u => u.RoleId != 1) // Exclude Admin role
+                    .AsQueryable();
 
                 // Filter by role
                 if (roleId.HasValue)
