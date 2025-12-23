@@ -18,6 +18,10 @@
 
         const visitedSteps = new Set([0]);
 
+        forceNumericInput(adultsInput);
+        forceNumericInput(childrenInput);
+        forceNumericInput(infantsInput);
+
         // Disable inputs at the beginning
         adultsInput.disabled = true;
         childrenInput.disabled = true;
@@ -132,21 +136,17 @@
             const totalPriceEl = document.getElementById("totalPrice");
             const totalTravelersEl = document.getElementById("totalTravelers");
 
-            const adults = parseInt(numAdultsEl.value) || 0;
-            const children = parseInt(numChildrenEl.value) || 0;
-            const infants = parseInt(numInfantsEl.value) || 0;
-            const totalTravelers = adults + children + infants;
+            // read current values (may be clamped below)
+            let adults = parseInt(numAdultsEl.value) || 0;
+            let children = parseInt(numChildrenEl.value) || 0;
+            let infants = parseInt(numInfantsEl.value) || 0;
 
             const scheduleId = document.getElementById("tour-schedule").value;
             const available = calculateAvailableSeats(scheduleId);
 
             const seatEl = document.getElementById("availableSeats");
-            const remaining = available !== null ? available - totalTravelers : 0;
-            seatEl.textContent = remaining >= 0 ? remaining : "0";
 
-            const btnBook = document.querySelector(".btn-book");
-            btnBook.disabled = (scheduleId === "-1" || totalTravelers === 0 || remaining < 0);
-
+            // if schedule not selected, show defaults
             if (scheduleId === "-1") {
                 document.getElementById("availableSeats").textContent = "-";
                 document.getElementById("numAdults").textContent = 0;
@@ -156,29 +156,65 @@
                 document.getElementById("pricePerChild").textContent = "0 VND";
                 document.getElementById("groupDiscount").textContent = "0 VND";
                 document.getElementById("totalPrice").textContent = "0 VND";
+                const btnBookDefault = document.querySelector(".btn-book");
+                if (btnBookDefault) btnBookDefault.disabled = true;
                 return;
             }
 
+            // update remaining seats text (before adjustments)
+            const totalBeforeClamp = adults + children + infants;
+            const remainingBefore = available !== null ? available - totalBeforeClamp : 0;
+            seatEl.textContent = remainingBefore >= 0 ? remainingBefore : "0";
+
+            // clamp inputs so sum doesn't exceed available seats
             if (available !== null) {
                 const maxAllowed = available;
 
-                setMaxAndClamp(document.getElementById("adults"), Math.max(1, maxAllowed));
-                setMaxAndClamp(document.getElementById("children"), Math.max(0, maxAllowed - adults - infants));
-                setMaxAndClamp(document.getElementById("infants"), Math.max(0, maxAllowed - adults - children));
+                setMaxAndClamp(numAdultsEl, Math.max(0, maxAllowed));
+                adults = parseInt(numAdultsEl.value) || 0;
+
+                setMaxAndClamp(numChildrenEl, Math.max(0, maxAllowed - adults));
+                children = parseInt(numChildrenEl.value) || 0;
+
+                setMaxAndClamp(numInfantsEl, Math.max(0, maxAllowed - adults - children));
+                infants = parseInt(numInfantsEl.value) || 0;
+
+                let sum = adults + children + infants;
+                if (sum > maxAllowed) {
+                    const overflow = sum - maxAllowed;
+                    if (children >= overflow) {
+                        children -= overflow;
+                    } else {
+                        const remain = overflow - children;
+                        children = 0;
+                        infants = Math.max(0, infants - remain);
+                    }
+                    numChildrenEl.value = children;
+                    numInfantsEl.value = infants;
+                }
+
+                // update displayed available seats after clamp
+                const remainingAfter = maxAllowed - (adults + children + infants);
+                seatEl.textContent = remainingAfter >= 0 ? remainingAfter : "0";
             }
 
-            // Pricing calculations
-            const childPrice = tour.price * (1 - tour.childDiscount / 100);
-            let totalPrice = (adults * tour.price) + (children * childPrice);
-            let groupDiscountAmount = 0;
-            const groupThreshold = adults + children + infants >= tour.groupNumber ? tour.groupNumber : Infinity;
+            const totalTravelers = adults + children + infants;
 
-            if (totalTravelers >= groupThreshold && tour.groupDiscount > 0) {
-                groupDiscountAmount = totalPrice * (tour.groupDiscount / 100);
+            const btnBook = document.querySelector(".btn-book");
+            if (btnBook) btnBook.disabled = (scheduleId === "-1" || totalTravelers === 0 || (available !== null && (totalTravelers > available)));
+
+            // Pricing calculations
+            const childPrice = (tour.price || 0) * (1 - (tour.childDiscount || 0) / 100);
+            let totalPrice = (adults * (tour.price || 0)) + ((children + infants) * childPrice);
+            let groupDiscountAmount = 0;
+            const groupThreshold = (tour.groupNumber && tour.groupNumber > 0) ? tour.groupNumber : Infinity;
+
+            if (totalTravelers >= groupThreshold && (tour.groupDiscount || 0) > 0) {
+                groupDiscountAmount = totalPrice * ((tour.groupDiscount || 0) / 100);
                 totalPrice -= groupDiscountAmount;
             }
 
-            const totalAdultPrice = adults * tour.price;
+            const totalAdultPrice = adults * (tour.price || 0);
             const totalChildPrice = children * childPrice;
 
             // Update display
@@ -191,7 +227,9 @@
             }
             totalPriceEl.textContent = totalPrice.toLocaleString('en-US') + " VND";
             totalTravelersEl.textContent = totalTravelers;
-
+            // show combined children+infants where UI expects it
+            document.getElementById("numAdults").textContent = adults;
+            document.getElementById("numChildren").textContent = (children + infants);
         }
 
         //set tour schedule text
@@ -282,7 +320,6 @@
             updateSummary();
         });
 
-
         function calculateAvailableSeats(scheduleId) {
             if (scheduleId === "-1") return null;
             const scheduleIdNum = parseInt(scheduleId);
@@ -349,13 +386,22 @@
 
                 let invalid = false;
                 if (tag === 'select' && val === '-1') invalid = true;
-                else if ((type === 'text' || type === 'email' || type === 'tel' || tag === 'textarea' || type === 'number') && val === '') invalid = true;
+                else if (val === '') {
+                    invalid = true;
+                }
+                else if (type === 'email' && !isValidEmail(val)) {
+                    invalid = true;
+                }
 
                 if (invalid) {
                     el.classList.add('is-invalid');
                     const label = el.id ? document.querySelector('label[for="' + el.id + '"]') : el.closest('div')?.querySelector('label');
                     const name = label ? label.textContent.trim().replace('*', '').trim() : (el.name || 'Field');
-                    missing.push(name);
+                    if (type === 'email' && val !== '' && !isValidEmail(val)) {
+                        missing.push(name + ' (invalid email)');
+                    } else {
+                        missing.push(name);
+                    }
                 } else {
                     el.classList.remove('is-invalid');
                 }
@@ -457,6 +503,26 @@
                 }
             });
         });
+
+        function forceNumericInput(input) {
+            input.addEventListener("keydown", function (e) {
+                const allowedKeys = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab", "Home", "End"];
+
+                if (allowedKeys.includes(e.key)) return;
+
+                if (!/^[0-9]$/.test(e.key)) {
+                    e.preventDefault();
+                }
+            });
+
+            input.addEventListener("input", function () {
+                this.value = this.value.replace(/\D/g, '');
+            });
+        }
+
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
 
         markRequiredFields();
         attachFieldListeners();
