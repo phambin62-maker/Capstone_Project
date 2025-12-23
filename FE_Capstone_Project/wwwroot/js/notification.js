@@ -63,13 +63,21 @@ function initCustomerNotification() {
                     const iconHtml = noti.isRead ? '<i class="bi bi-check2-circle text-muted fs-4"></i>' : '<i class="bi bi-bell-fill text-primary fs-4"></i>';
                     const titleClass = noti.isRead ? '' : 'fw-bold';
 
-                    let bookingId = null;
-                    const combinedText = (noti.title + " " + noti.message);
-                    const match = combinedText.match(/Booking #(\d+)/i);
-                    if (match && match[1]) bookingId = match[1];
+                    // --- XỬ LÝ LINK ---
+                    let linkUrl = '#';
+                    const fullText = (noti.title + " " + noti.message);
 
-                    const linkUrl = bookingId ? `/Profile/MyBookings#booking-${bookingId}` : '#';
-                    const linkClass = bookingId ? '' : 'text-decoration-none cursor-default';
+                    // Case 1: Booking
+                    const bookingMatch = fullText.match(/Booking #(\d+)/i);
+                    if (bookingMatch && bookingMatch[1]) {
+                        linkUrl = `/Profile/MyBookings#booking-${bookingMatch[1]}`;
+                    }
+                    // Case 2: Wishlist
+                    else if (fullText.toLowerCase().includes("wishlist")) {
+                        linkUrl = '/Profile/Wishlist';
+                    }
+
+                    const linkClass = (linkUrl !== '#') ? '' : 'text-decoration-none cursor-default';
 
                     const li = document.createElement('li');
                     li.innerHTML = `

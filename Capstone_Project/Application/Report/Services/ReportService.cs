@@ -89,7 +89,7 @@ namespace BE_Capstone_Project.Application.Report.Services
             return new RevenueOverviewDto
             {
                 From = from,
-                To = to.AddDays(-1), // Trừ 1 ngày trả về cho nhất quán
+                To = to.AddDays(-1), 
                 TotalBookings = totalBookings,
                 TotalRevenue = totalRevenue,
                 UniqueBookingUsers = uniqueUsers,
@@ -142,7 +142,7 @@ namespace BE_Capstone_Project.Application.Report.Services
         public async Task<List<MonthlyRevenueDto>> GetMonthlyRevenueAsync(int year)
         {
             var q = _context.Bookings
-                .Where(b => b.PaymentStatus == PaymentStatus.Completed
+                .Where(b => b.BookingStatus == BookingStatus.Completed
                 && b.PaymentDate != null && b.PaymentDate.Value.Year == year)
                 .Select(b => new
                 {
@@ -284,7 +284,7 @@ namespace BE_Capstone_Project.Application.Report.Services
                 .Where(g => g.Count() > 1) 
                 .CountAsync(); 
 
-            //  Tính "Tỷ lệ quay lại"
+
             var returnRate = (decimal)loyalCustomers / totalCustomers;
 
             return new CustomerAnalysisDto
@@ -298,9 +298,8 @@ namespace BE_Capstone_Project.Application.Report.Services
 
         public async Task<List<BookingDetailDto>> GetBookingsByMonthAsync(int year, int month)
         {
-            // Lọc các booking đã thanh toán trong tháng/năm
             var bookingsInMonth = _context.Bookings
-                .Where(b => b.PaymentStatus == PaymentStatus.Completed &&
+                .Where(b => b.BookingStatus == BookingStatus.Completed &&
                             b.PaymentDate != null &&
                             b.PaymentDate.Value.Year == year &&
                             b.PaymentDate.Value.Month == month);
@@ -312,7 +311,6 @@ namespace BE_Capstone_Project.Application.Report.Services
                         join u in _context.Users on b.UserId equals u.Id into userGroup
                         from booker in userGroup.DefaultIfEmpty() 
 
-                            // Sắp xếp theo ngày thanh toán, mới nhất lên đầu
                         orderby b.PaymentDate descending
                         select new BookingDetailDto
                         {
