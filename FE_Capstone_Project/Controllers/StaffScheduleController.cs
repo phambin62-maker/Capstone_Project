@@ -494,7 +494,8 @@ namespace FE_Capstone_Project.Controllers
                         endLocationName = t.EndLocation?.LocationName,
                         categoryName = t.Category?.CategoryName,
                         price = t.Price?.ToString("N0") + " VND",
-                        duration = t.Duration + " day"
+                        duration = t.Duration + " day",
+                        rawDuration = t.Duration
                     }).ToList();
 
                     return Json(tourList);
@@ -522,7 +523,8 @@ namespace FE_Capstone_Project.Controllers
                     return Json(new
                     {
                         id = result.Data.Id,
-                        name = result.Data.Name
+                        name = result.Data.Name,
+                        duration = result.Data.Duration
                     });
                 }
 

@@ -60,7 +60,7 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label class="form-label">Tour *</label>
+                            <label class="form-label">Tour </label>
                             <div class="form-control bg-light" id="tourDisplay" style="border: none;">
                                 <i class="bi bi-info-circle text-muted me-2"></i>
                                 <span id="tourNameDisplay">No tour selected</span>
@@ -166,6 +166,7 @@
         $(document).ready(function () {
             let allTours = [];
             let filteredTours = [];
+            let selectedTourDuration = 0;
 
             // Load tours when modal opens
             $('#tourModal').on('show.bs.modal', function () {
@@ -215,7 +216,8 @@
                             <td>
                                 <button type="button" class="btn btn-sm btn-primary select-tour-btn"
                                         data-tour-id="${tour.id}"
-                                        data-tour-name="${tour.name}">
+                                        data-tour-name="${tour.name}"
+                                        data-tour-duration="${tour.rawDuration}">
                                     <i class="bi bi-check me-1"></i>Select
                                 </button>
                             </td>
@@ -228,12 +230,14 @@
                 $('.select-tour-btn').on('click', function () {
                     const tourId = $(this).data('tour-id');
                     const tourName = $(this).data('tour-name');
-                    selectTour(tourId, tourName);
+                    const duration = $(this).data('tour-duration');
+                    selectTour(tourId, tourName, duration);
                     $('#tourModal').modal('hide');
                 });
             }
 
-            function selectTour(tourId, tourName) {
+            function selectTour(tourId, tourName, duration) {
+                selectedTourDuration = parseInt(duration) || 0;
                 $('#tourIdInput').val(tourId);
 
                 $('#selectedTourId').text(tourId);
@@ -245,6 +249,11 @@
                 $('#scheduleFormSection').show();
 
                 $('#tourSelectionSection').hide();
+
+                // Trigger calculation if departure date is already set
+                 if ($('#DepartureDate').val()) {
+                     calculateReturnDate();
+                 }
             }
 
             $('#clearSelection').on('click', function () {
@@ -256,6 +265,7 @@
             });
 
             function resetTourSelection() {
+                selectedTourDuration = 0;
                 $('#tourIdInput').val('');
                 $('#selectedTourInfo').hide();
                 $('#scheduleFormSection').hide();
@@ -281,17 +291,31 @@
             });
 
             $('#DepartureDate').on('change', function () {
-                const departureDate = new Date($(this).val());
+                calculateReturnDate();
+            });
+
+            function calculateReturnDate() {
+                const departureDateInput = $('#DepartureDate').val();
+                if (!departureDateInput) return;
+
+                const departureDate = new Date(departureDateInput);
                 const minArrivalDate = new Date(departureDate);
                 minArrivalDate.setDate(minArrivalDate.getDate() + 1);
 
                 $('#ArrivalDate').attr('min', minArrivalDate.toISOString().split('T')[0]);
 
-                const arrivalDate = new Date($('#ArrivalDate').val());
-                if (arrivalDate <= departureDate) {
-                    $('#ArrivalDate').val('');
+                if (selectedTourDuration > 0) {
+                     const returnDate = new Date(departureDate);
+                     returnDate.setDate(returnDate.getDate() + selectedTourDuration);
+                     $('#ArrivalDate').val(returnDate.toISOString().split('T')[0]);
+                } else {
+                     // Keep validaton check logic
+                    const arrivalDate = new Date($('#ArrivalDate').val());
+                    if (arrivalDate <= departureDate) {
+                        $('#ArrivalDate').val('');
+                    }
                 }
-            });
+            }
 
             $('#scheduleForm').on('submit', function (e) {
                 if (!$('#tourIdInput').val()) {
@@ -316,7 +340,7 @@
                 $.get('@Url.Action("GetTourById", "StaffSchedule")', { id: tourId })
                     .done(function (tour) {
                         if (tour) {
-                            selectTour(tour.id, tour.name);
+                            selectTour(tour.id, tour.name, tour.duration);
                         }
                     })
                     .fail(function () {
