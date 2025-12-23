@@ -93,7 +93,7 @@ namespace BE_Capstone_Project.Application.Admin.Service
                 RoleId = (int)roleType,
                 UserStatus = dto.IsActive ? UserStatus.Active : UserStatus.Banned,
                 Provider = "Local",
-                Image= "https://st3.depositphotos.com/15648834/17930/v/600/depositphotos_179308454-stock-illustration-unknown-person-silhouette-glasses-profile.jpg",
+                Image = "https://st3.depositphotos.com/15648834/17930/v/600/depositphotos_179308454-stock-illustration-unknown-person-silhouette-glasses-profile.jpg"
             };
 
             var userId = await _userDao.AddUser(user);

@@ -444,7 +444,8 @@
 }
 
 .pagination .page-item.active .page-link {
-    /*background: var(--admin-accent);*/
+    /*    background: var(--admin-accent);*/
+    color: #fff;
     border-color: var(--admin-accent);
 }
 
