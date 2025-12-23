@@ -140,7 +140,7 @@ namespace FE_Capstone_Project.Controllers
                 var token = root.TryGetProperty("token", out var tokenElement) ? tokenElement.GetString() : null;
                 var message = root.TryGetProperty("message", out var msgElement) ? msgElement.GetString() : "Đăng nhập thành công";
 
-                // === SỬA 2: ĐỌC USERID TỪ BE RESPONSE ===
+                
                 var userId = root.TryGetProperty("userId", out var userIdElement) ? userIdElement.GetInt32() : 0;
 
                 if (!string.IsNullOrEmpty(token))
@@ -219,7 +219,7 @@ namespace FE_Capstone_Project.Controllers
                 else
                 {
                     var error = await response.Content.ReadAsStringAsync();
-                    ViewBag.Error = "Trùng Email hoặc User Name ";
+                    ViewBag.Error = "Duplicate Email or Username";
                     return View(model);
                 }
             }
