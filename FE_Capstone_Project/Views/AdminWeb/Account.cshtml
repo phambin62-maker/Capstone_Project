@@ -87,7 +87,6 @@
                         <label class="form-label">Role</label>
                         <select id="filterRole" class="form-select">
                             <option value="">All Roles</option>
-                            <option value="Admin">Admin</option>
                             <option value="Staff">Staff</option>
                             <option value="Customer">Customer</option>
                         </select>
@@ -134,14 +133,14 @@
                                     var fullName = $"{user.LastName} {user.FirstName}";
                                     var roleName = user.RoleId switch
                                     {
-                                        1 => "Admin",
+                                        
                                         2 => "Staff",
                                         _ => "Customer"
                                     };
 
                                     var bgColor = user.RoleId switch
                                     {
-                                        1 => "bg-danger",
+                                        
                                         2 => "bg-primary",
                                         _ => "bg-secondary"
                                     };
@@ -327,7 +326,6 @@
                         <label class="form-label">Role <span class="text-danger">*</span></label>
                         <select class="form-select" name="Role" required>
                             <option value="">Select Role</option>
-                            <option value="Admin">Admin</option>
                             <option value="Staff">Staff</option>
                             <option value="Customer">Customer</option>
                         </select>
