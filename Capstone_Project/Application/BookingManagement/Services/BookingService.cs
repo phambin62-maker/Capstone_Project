@@ -4,7 +4,7 @@ using BE_Capstone_Project.DAO;
 using BE_Capstone_Project.Domain.Enums;
 using BE_Capstone_Project.Domain.Models;
 using DocumentFormat.OpenXml.Office2010.Excel;
-using BE_Capstone_Project.Application.Notifications.Services.Interfaces; 
+using BE_Capstone_Project.Application.Notifications.Services.Interfaces;
 using BE_Capstone_Project.Application.Notifications.DTOs;
 using System;
 using System.Globalization;
@@ -110,7 +110,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                     {
                         var tourName = savedBooking.TourSchedule?.Tour?.Name ?? "Your Tour";
 
-                        string userMessage = $"Your booking for tour '{tourName}' has been created.";
+                        string userMessage = $"Booking #{newBookingId}: Your booking for tour '{tourName}' has been created.";
 
                         if (savedBooking.PaymentStatus == PaymentStatus.Pending)
                         {
@@ -120,12 +120,13 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                         var notificationDto = new CreateNotificationDTO
                         {
                             UserId = savedBooking.UserId,
-                            Title = "Booking Created", 
+                            Title = "Booking Created",
                             Message = userMessage,
                             NotificationType = NotificationType.System
                         };
 
                         await _notificationService.CreateAsync(notificationDto);
+
                         var allStaff = await _context.Users
                             .Where(u => u.RoleId == 2)
                             .ToListAsync();
@@ -142,7 +143,6 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
 
                             await _notificationService.CreateAsync(staffNoti);
                         }
-                        // ---------------------------------------------------------
                     }
                 }
                 catch (Exception ex)
@@ -301,7 +301,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                         {
                             UserId = booking.UserId,
                             Title = "Payment Successful",
-                            Message = $"Your payment for tour '{tourName}' has been successfully processed via {payment.PaymentMethod}.",
+                            Message = $"Booking #{booking.Id}: Your payment for tour '{tourName}' has been successfully processed via {payment.PaymentMethod}.",
                             NotificationType = NotificationType.System
                         };
                         await _notificationService.CreateAsync(notificationDto);
@@ -490,6 +490,7 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
                                     Message = $"Customer {booking.FirstName} {booking.LastName} has cancelled Booking #{booking.Id} for tour '{tourName}'.",
                                     NotificationType = NotificationType.System
                                 };
+
                                 await _notificationService.CreateAsync(staffNoti);
                             }
                         }
