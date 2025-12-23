@@ -1,11 +1,14 @@
 @model List<TourViewModel>
+@{
+    var BASE_API_URL = "https://localhost:7160/api/";
+}
 <body class="tours-page">
     <main class="main">
         <!-- Page Title -->
         <div class="page-title dark-background" data-aos="fade" style="background-image: url(~/assets/img/travel/showcase-8.webp);">
             <div class="container position-relative">
                 <h1>Tours</h1>
-                <p>Discover our carefully curated tours across Vietnam. From vibrant cities to breathtaking natural landscapes — find your perfect adventure today.</p>
+                <p>Discover our carefully curated tours across Vietnam. From vibrant cities to breathtaking natural landscapes ï¿½ find your perfect adventure today.</p>
                 <nav class="breadcrumbs">
                     <ol>
                         <li><a asp-controller="Home" asp-action="Index">Home</a></li>
@@ -22,7 +25,7 @@
                 <div class="row">
                     <div class="col-lg-8 mx-auto text-center mb-5">
                         <h2>Find Your Perfect Tour</h2>
-                        <p>Discover unforgettable travel experiences with our curated collection of tours. Explore by destination, travel style, or date to find the adventure that's perfect for you.</p>
+                        <p>Discover unforgettable travel experiences with our curated collection of tours. Explore by destination, travel style, price, or duration to find the adventure that's perfect for you.</p>
                     </div>
                 </div>
 
@@ -60,9 +63,12 @@
                                 {
                                     <div class="swiper-slide">
                                         <div class="featured-tour-card">
+                                            @{
+                                                var mainImage = featuredTour.TourImages.First();
+                                                var mainImageUrl = $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(mainImage!.Image!)}";
+                                            }
                                             <div class="tour-image">
-                                                <img src="@(featuredTour.TourImages != null && featuredTour.TourImages.Any() ? featuredTour.TourImages.First().Image : "/images/default-tour.jpg")"
-                                                    class="img-fluid w-100" />
+                                                <img src="@mainImageUrl" class="img-fluid w-100" />
                                                 <div class="tour-badge">@featuredTour.Category.CategoryName</div>
                                             </div>
                                             <div class="tour-content">
@@ -181,15 +187,18 @@
                                     string avgRatingText = "N/A";
                                     if (tour.Reviews != null && tour.Reviews.Any())
                                     {
-                                        decimal avgRating = (decimal)tour.Reviews.Average(r => r.Stars);
+                                        decimal avgRating = (decimal)tour.Reviews.Average(r => r.Stars)!;
                                         avgRatingText = avgRating.ToString("0.0");
                                     }
 
                                     <div class="col-lg-4 col-md-6 mb-4">
                                         <div class="tour-card">
                                             <div class="tour-image">
-                                                <img src="@(tour.TourImages != null && tour.TourImages.Any() ? tour.TourImages.First().Image : "/images/default-tour.jpg")"
-                                                    class="img-fluid w-100" />
+                                                @{
+                                                    var mainImage = tour.TourImages!.First();
+                                                    var mainImageUrl = $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(mainImage!.Image!)}";
+                                                }
+                                                <img src="@mainImageUrl" class="img-fluid w-100" />
                                                 <div class="tour-price">@string.Format("{0:N0} VND", tour.Price)</div>
                                             </div>
                                             <div class="tour-content">
@@ -197,7 +206,7 @@
                                                 <p>@tour.Description</p>
                                                 <div class="tour-details">
                                                     <span><i class="bi bi-clock"></i> @tour.Duration Day@(tour.Duration == 1 ? "" : "s")</span>
-                                                    <span><i class="bi bi-star-fill"></i> @avgRatingText (@tour.Reviews.Count reviews)</span>
+                                                    <span><i class="bi bi-star-fill"></i> @avgRatingText (@tour.Reviews.Count review@(tour.Reviews.Count == 1 ? "" : "s"))</span>
                                                 </div>
                                                 <a asp-action="TourDetails" asp-route-tourId="@tour.Id" class="btn btn-outline-primary">View Tour</a>
                                             </div>

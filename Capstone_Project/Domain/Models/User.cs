@@ -23,12 +23,13 @@ public partial class User
     public string? Image { get; set; }
 
     public int RoleId { get; set; }
-    public string Provider { get; set; } = "Google";
+    public string? Provider { get; set; }
 
     public UserStatus? UserStatus { get; set; }
     public string? PasswordResetTokenHash { get; set; } // hash của token
     public DateTime? PasswordResetExpires { get; set; }
 
+    public DateTime? CreatedDate { get; set; }
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
     public virtual ICollection<Chat> ChatCustomers { get; set; } = new List<Chat>();

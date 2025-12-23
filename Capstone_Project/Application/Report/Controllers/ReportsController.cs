@@ -1,5 +1,6 @@
 ﻿using BE_Capstone_Project.Application.Report.Services.Interfaces;
 using DocumentFormat.OpenXml.Drawing.Charts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using BE_Capstone_Project.DAO;
@@ -8,6 +9,7 @@ namespace BE_Capstone_Project.Application.Report.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles ="Admin")]
     public class ReportsController : ControllerBase
     {
         private readonly IReportService _reportService;
@@ -46,6 +48,28 @@ namespace BE_Capstone_Project.Application.Report.Controllers
             var fileBytes = await _reportService.ExportRevenueOverviewToExcelAsync(from, to.AddDays(1));
             var fileName = $"Revenue_Overview_{from:ddMMyyyy}_{to:ddMMyyyy}.xlsx";
             return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
+
+        [HttpGet("customer-analysis")]
+        public async Task<IActionResult> GetCustomerAnalysis([FromQuery] DateOnly from, [FromQuery] DateOnly to)
+        {
+            if (from > to) return BadRequest("Invalid date range");
+
+            var result = await _reportService.GetCustomerAnalysisAsync(from, to.AddDays(1));
+            return Ok(result);
+        }
+
+        [HttpGet("bookings-by-month")]
+        public async Task<IActionResult> GetBookingsByMonth([FromQuery] int year, [FromQuery] int month)
+        {
+            if (year <= 0 || month <= 0 || month > 12)
+            {
+                return BadRequest("Năm hoặc tháng không hợp lệ.");
+            }
+
+            var result = await _reportService.GetBookingsByMonthAsync(year, month);
+
+            return Ok(result);
         }
     }
 }

@@ -1,0 +1,120 @@
+@{
+    var isLoggedIn = !string.IsNullOrEmpty(Context.Session.GetString("JwtToken"));
+    var userId = Context.Session.GetInt32("UserId");
+    var roleId = Context.Session.GetInt32("UserRoleId");
+    var jwtToken = Context.Session.GetString("JwtToken");
+}
+<!-- Chat Widget - Hiển thị cho cả người chưa đăng nhập -->
+<div id="chatWidget" class="chat-widget">
+    <!-- Chat Button -->
+    <button id="chatWidgetButton" class="chat-widget-button" title="Chat with Support">
+        <i class="bi bi-chat-dots-fill"></i>
+        <span class="chat-badge" id="chatBadge" style="display: none;">0</span>
+    </button>
+
+    <!-- Chat Window -->
+    <div id="chatWindow" class="chat-window" style="display: none;">
+        <div class="chat-window-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-0" id="chatHeaderTitle">
+                    <i class="bi bi-headset"></i> Support Chat
+                </h6>
+                <button id="chatCloseButton" class="btn btn-sm btn-link text-white">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        </div>
+        <div class="chat-window-body" id="chatWidgetMessages">
+            <!-- Initial selection: Bot / Staff (for logged in users) / Login prompt (for guests) -->
+            <div id="initialSelection" class="initial-selection" style="display: none;">
+                <p class="text-center text-muted mb-3">Chose for start chat:</p>
+                <div class="selection-options">
+                    <div class="selection-option bot-option" id="selectBotOption">
+                        <div class="option-icon">
+                            <i class="bi bi-robot"></i>
+                        </div>
+                        <div class="option-content">
+                            <h6 class="mb-1">Chat with Bot</h6>
+                            <p class="text-muted small mb-0" @(!isLoggedIn ? "(Không cần đăng nhập)" : "")</p>
+                        </div>
+                    </div>
+                    @if (isLoggedIn && roleId != 2)
+                    {
+                        <div class="selection-option staff-option" id="selectStaffOption">
+                            <div class="option-icon">
+                                <i class="bi bi-person-badge"></i>
+                            </div>
+                            <div class="option-content">
+                                <h6 class="mb-1">Chat with Staff</h6>
+                                <p class="text-muted small mb-0">Live support</p>
+                            </div>
+                        </div>
+                    }
+
+                </div>
+            </div>
+
+            <!-- Bot Container - chứa iframe DenserAI -->
+            <div id="botContainer" class="bot-container" style="display: none;">
+                <iframe
+                    id="botFrame"
+                    src="@Url.Action("BotWidget", "ChatWeb")"
+                    title="AI Assistant"
+                    frameborder="0"
+                    allow="clipboard-write; microphone"
+                    loading="lazy">
+                </iframe>
+            </div>
+
+            <!-- Staff selection -->
+            <div id="staffSelection" class="staff-selection" style="display: none;">
+                <p class="text-center text-muted mb-3">Select a staff to start chatting:</p>
+                <div id="staffList" class="staff-list">
+                    <div class="text-center py-3">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="text-muted mt-2 small">Loading staff...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Staff side: customer selection -->
+            <div id="customerSelection" class="staff-selection" style="display: none;">
+                <p class="text-center text-muted mb-3">Select a customer conversation to continue:</p>
+                <div id="customerList" class="staff-list">
+                    <div class="text-center py-3">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="text-muted mt-2 small">Loading conversations...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="chatMessagesContainer" class="chat-messages-container" style="display: none;">
+                <!-- Messages will be displayed here -->
+            </div>
+        </div>
+        <div class="chat-window-footer" id="chatInputContainer" style="display: none;">
+            <div class="chat-input-group">
+                <input type="text" class="form-control chat-input" id="chatWidgetInput" placeholder="Type your message..." maxlength="500">
+                <button class="btn btn-primary chat-send-btn" id="chatWidgetSendButton">
+                    <i class="bi bi-send"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+    <!-- Inject JWT Token for JavaScript -->
+    @if (!string.IsNullOrEmpty(jwtToken))
+    {
+        <meta name="jwt-token" content="@jwtToken">
+        <input type="hidden" id="jwtToken" value="@jwtToken">
+    }
+    <input type="hidden" id="currentUserId" value="@(userId ?? 0)">
+    <input type="hidden" id="currentRoleId" value="@(roleId ?? 0)">
+    <input type="hidden" id="isLoggedIn" value="@(isLoggedIn ? "true" : "false")">
+

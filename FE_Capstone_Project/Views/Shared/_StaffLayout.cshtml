@@ -1,8 +1,8 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 @{
-        var firstname = Context.Session.GetString("FirstName");
-        var hideHeader = ViewData["HideHeader"] as bool? ?? false;
+    var firstname = Context.Session.GetString("UserName");
+    var hideHeader = ViewData["HideHeader"] as bool? ?? false;
 }
 <head>
     <meta charset="utf-8">
@@ -22,6 +22,80 @@
     <link href="~/assets/css/main.css" rel="stylesheet">
     <link href="~/css/staff.css" rel="stylesheet">
 
+    <style>
+        .staff-notification-icon {
+            position: relative;
+            cursor: pointer;
+            margin-right: 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+        }
+
+            .staff-notification-icon i {
+                font-size: 1.5rem;
+            }
+
+        .staff-notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -8px;
+            padding: 3px 6px;
+            font-size: 0.7rem;
+            border-radius: 50%;
+            background-color: #dc3545;
+            color: white;
+            font-weight: bold;
+        }
+
+        .staff-noti-dropdown {
+            width: 350px;
+            max-height: 450px;
+            overflow-y: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            background-color: white;
+            display: none;
+        }
+
+        .staff-noti-item {
+            white-space: normal;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+            .staff-noti-item:hover {
+                background-color: #f8f9fa;
+            }
+
+            .staff-noti-item.unread {
+                background-color: #e8f4ff;
+            }
+
+        /* Ẩn khung khi danh sách rỗng */
+        .staff-noti-dropdown:empty {
+            display: none !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        /* Tắt tính năng hover để chỉ hiện khi click */
+        .navmenu .dropdown:hover > .staff-noti-dropdown:not(.show) {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+        }
+
+        .staff-noti-dropdown.show {
+            display: block !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+    </style>
+
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="staff-body">
@@ -29,38 +103,47 @@
     {
         <header id="header" class="header d-flex align-items-center fixed-top">
             <div class="header-container container-fluid container-xl d-flex align-items-center justify-content-between">
-                <a href="/" class="logo d-flex align-items-center me-auto me-xl-0">
+                <a asp-action="Index" asp-controller="Staff" class="logo d-flex align-items-center me-auto me-xl-0">
                     <h1 class="sitename">Staff Panel</h1>
                 </a>
 
-                <nav id="navmenu" class="navmenu">
-                    <ul>
-                        <li class="dropdown">
-                            <a href="#"><span>Công việc</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-                            <ul>
-                                
-                                <li><a href="/Staff/Tours">Danh sách Tour</a></li>
-                                <li><a href="/StaffSchedule/Schedules">Lịch trình Tour</a></li>
-                            </ul>
-                        </li>
-                       
-                    </ul>
-                    <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-                </nav>
-
                 @if (!string.IsNullOrEmpty(firstname))
                 {
-                    <div class="dropdown">
-                        <a class="btn-getstarted dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-person-circle me-2"></i>@firstname
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/AuthWeb/Profile"><i class="bi bi-person me-2"></i>Hồ sơ</a></li>
-                            <li><a class="dropdown-item" href="/Staff/Profile"><i class="bi bi-gear me-2"></i>Cài đặt</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="/AuthWeb/Logout"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</a></li>
+                    <nav id="user-nav" class="navmenu">
+                        <ul>
+                            <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+
+                            @* --- [SỬA] Đã thêm ID staffNotiTrigger để file JS bắt sự kiện --- *@
+                            <li class="dropdown">
+                                <a href="#" class="staff-notification-icon" id="staffNotiTrigger" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-bell-fill"></i>
+                                    <span class="staff-notification-badge d-none" id="staffNotiBadge">0</span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end staff-noti-dropdown" id="staffNotiList">
+                                </ul>
+                            </li>
+                            @* ---------------------------------------- *@
+
+                            <li class="dropdown">
+                                <a style="color: white;">
+                                    <span style="color: white;">Welcome, @firstname</span>
+                                    <i class="bi bi-chevron-down toggle-dropdown" style="color: white;"></i>
+                                </a>
+                                <ul>
+                                    <li><a asp-action="Profile" asp-controller="AuthWeb">Profile</a></li>
+                                    <li><a asp-action="Logout" asp-controller="AuthWeb">Logout</a></li>
+                                </ul>
+                            </li>
                         </ul>
-                    </div>
+                    </nav>
+                }
+                else
+                {
+                    <nav id="navmenu" class="navmenu">
+                        <ul>
+                            <li><a asp-action="Login" asp-controller="AuthWeb">Login</a></li>
+                        </ul>
+                    </nav>
                 }
             </div>
         </header>
@@ -72,57 +155,59 @@
                 <div class="user-info">
                     <div class="user-avatar"><i class="bi bi-person-circle"></i></div>
                     <div class="user-details">
-                        <h6>@firstname</h6>
-                        <small>Nhân viên</small>
+                        <h6 style="color: white;">@firstname</h6>
+                        <small style="color: white;">Staff</small>
                     </div>
                 </div>
             </div>
             <nav class="sidebar-nav">
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Staff Dashboard" ? "active" : "")"
+                        <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Index" && ViewContext.RouteData.Values["controller"]?.ToString() == "Staff" ? "active" : "")"
                            href="/Staff/Index">
-                            <i class="bi bi-speedometer2 me-2"></i>Bảng điều khiển
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Bookings" ? "active" : "")"
-                           href="/Staff/Bookings">
-                            <i class="bi bi-ticket-perforated me-2"></i>Đặt tour
-                            <span class="badge bg-primary ms-2">@ViewBag.BookingCount</span>
-                        </a>
-                    </li>
-                    
-                    <li class="nav-item">
-                        <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Tours" ? "active" : "")"
-                           href="/Staff/Tours">
-                            <i class="bi bi-map me-2"></i>Danh sách Tour
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "StaffSchedule" ? "active" : "")"
-                           href="/StaffSchedule/Schedules">
-                            <i class="bi bi-calendar-event me-2"></i>Lịch trình Tour
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Tasks" ? "active" : "")"
-                           href="/Staff/Tasks">
-                            <i class="bi bi-list-check me-2"></i>Công việc của tôi
-                            <span class="badge bg-warning ms-2">@ViewBag.TaskCount</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "News" ? "active" : "")"
-                           href="/Staff/News">
-                            <i class="bi bi-newspaper me-2"></i>
-                            News
+                            <i class="bi bi-speedometer2 me-2"></i>Dashboard
                         </a>
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link" href="/Staff/Support">
-                            <i class="bi bi-headset me-2"></i>Hỗ trợ
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "StaffBooking" ? "active" : "")"
+                           href="/StaffBooking/Bookings">
+                            <i class="bi bi-journal-check me-2"></i>Booking Management
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Tours" ? "active" : "")"
+                           href="/Staff/Tours">
+                            <i class="bi bi-map me-2"></i>Tour List
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "StaffSchedule" ? "active" : "")"
+                           href="/StaffSchedule/Schedules">
+                            <i class="bi bi-calendar-event me-2"></i>Tour Schedule
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "CancelCondition" ? "active" : "")"
+                           href="/CancelCondition/Index">
+                            <i class="bi bi-x-circle me-2"></i>Cancel Conditions
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "News" ? "active" : "")"
+                           href="/Staff/News">
+                            <i class="bi bi-newspaper me-2"></i>News
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Chat" && ViewContext.RouteData.Values["controller"]?.ToString() == "Staff" ? "active" : "")"
+                           href="/Staff/Chat">
+                            <i class="bi bi-chat-dots me-2"></i>Chat
                         </a>
                     </li>
                 </ul>
@@ -131,14 +216,16 @@
 
         <main class="staff-main">
             <div class="staff-content">
-                <nav aria-label="breadcrumb" class="breadcrumb-nav">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="/Staff/Dashboard">Staff</a></li>
-                        <li class="breadcrumb-item active">@ViewData["Title"]</li>
-                    </ol>
-                </nav>
+                <div class="content-header d-flex justify-content-between align-items-center mb-4">
+                    <nav aria-label="breadcrumb" class="breadcrumb-nav">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="/Staff/Index">Staff</a></li>
+                            <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                        </ol>
+                    </nav>
+                </div>
 
-                
+                <partial name="_AlertMessages" />
 
                 @RenderBody()
             </div>
@@ -151,10 +238,10 @@
             <div class="container-fluid">
                 <div class="row align-items-center">
                     <div class="col-md-6">
-                        <p class="mb-0">&copy; @DateTime.Now.Year Staff Panel. Chào mừng @firstname!</p>
+                        <p class="mb-0">&copy; @DateTime.Now.Year Staff Panel. Welcome @firstname!</p>
                     </div>
                     <div class="col-md-6 text-end">
-                        <span class="text-muted">Hôm nay: @DateTime.Now.ToString("dd/MM/yyyy")</span>
+                        <span class="text-muted">Today: @DateTime.Now.ToString("MM/dd/yyyy")</span>
                     </div>
                 </div>
             </div>
@@ -167,7 +254,26 @@
     <script src="~/assets/vendor/swiper/swiper-bundle.min.js"></script>
     <script src="~/assets/vendor/glightbox/js/glightbox.min.js"></script>
     <script src="~/assets/js/main.js"></script>
+
+    @* Giữ lại staff.js nếu có logic khác, nếu không có thể xóa *@
     <script src="~/js/staff.js"></script>
+
+    @* --- [THÊM MỚI] LINK TỚI FILE JS GỘP CHUNG (notification.js) --- *@
+    <script src="~/js/notification.js?v=2" asp-append-version="true"></script>
+
+    @* Script xử lý Active Menu Sidebar *@
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
+
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

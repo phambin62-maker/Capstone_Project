@@ -1,0 +1,31 @@
+@using BE_Capstone_Project.Application.Company.DTOs
+@model CompanyDTO
+
+<div class="footer-contact pt-3">
+    @if (Model != null && !string.IsNullOrWhiteSpace(Model.Address))
+    {
+        <p>@Model.Address</p>
+    }
+    else
+    {
+        <p>Your Address</p>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.Phone))
+    {
+        <p class="mt-3"><strong>Phone:</strong> <span>@Model.Phone</span></p>
+    }
+    else
+    {
+        <p class="mt-3"><strong>Phone:</strong> <span>+098-765-43-21</span></p>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.Email))
+    {
+        <p><strong>Email:</strong> <span>@Model.Email</span></p>
+    }
+    else
+    {
+        <p><strong>Email:</strong> <span>info@example.com</span></p>
+    }
+</div>

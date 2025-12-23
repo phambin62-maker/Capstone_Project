@@ -1,4 +1,8 @@
 ﻿@model FE_Capstone_Project.Models.RegisterViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Register";
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -279,21 +283,21 @@
 
                 <!-- Username -->
                 <div class="form-group">
-                    <input asp-for="Username" type="text" id="username" name="username" required autocomplete="username" placeholder="Username" class="form-control" />
+                    <input asp-for="Username" type="text" id="username" name="username" required autocomplete="username" placeholder="" class="form-control" />
                     <label for="username">Username</label>
                     <span class="error-message" id="usernameError"></span>
                 </div>
 
                 <!-- Email -->
                 <div class="form-group">
-                    <input asp-for="Email" type="email" id="email" name="email" required autocomplete="email" placeholder="Email" class="form-control" />
+                    <input asp-for="Email" type="email" id="email" name="email" required autocomplete="email" placeholder="" class="form-control" />
                     <label for="email">Email</label>
                     <span class="error-message" id="emailError"></span>
                 </div>
 
                 <!-- Password -->
                 <div class="form-group">
-                    <input asp-for="Password" type="password" id="password" name="password" required autocomplete="new-password" placeholder="Password" class="form-control" />
+                    <input asp-for="Password" type="password" id="password" name="password" required autocomplete="new-password" placeholder="" class="form-control" />
                     <label for="password">Password</label>
 
                     <button type="button" class="password-toggle" id="passwordToggle" aria-label="Toggle password visibility">
@@ -304,6 +308,20 @@
 
                     <span class="error-message" id="passwordError"></span>
                 </div>
+                
+                <!-- Security Question -->
+                <div class="form-group">
+                    <input asp-for="SecurityQuestion" type="text" id="securityQuestion" name="securityQuestion" required placeholder="" class="form-control" />
+                    <label for="securityQuestion">Security Question (e.g. Pet's Name)</label>
+                    <span class="error-message"></span>
+                </div>
+
+                <!-- Security Answer -->
+                <div class="form-group">
+                    <input asp-for="SecurityAnswer" type="text" id="securityAnswer" name="securityAnswer" required placeholder="" class="form-control" />
+                    <label for="securityAnswer">Security Answer</label>
+                    <span class="error-message"></span>
+                </div>
 
                 <!-- Submit -->
                 <button type="submit" class="login-btn">
@@ -311,10 +329,10 @@
                 </button>
                 
                 <!-- Message -->
-                <p id="registerMessage"></p>
+                <p class="error-message" id="registerMessage"></p>
                 @if (ViewBag.Error != null)
                 {
-                    <div class="alert alert-danger mt-3" role="alert">
+                    <div class="alert alert-danger mt-3 error-message" role="alert">
                         @ViewBag.Error
                     </div>
                 }
@@ -331,7 +349,7 @@
                 <span>or sign up with</span>
             </div>
             <div class="signup-link">
-                <p>Already have an account? <a href="#">Sign in</a></p>
+                <p>Already have an account? <a asp-controller="AuthWeb" asp-action="Login" asp>Sign in</a></p>
             </div>
 
             <div class="success-message" id="successMessage">

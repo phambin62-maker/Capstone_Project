@@ -58,6 +58,11 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
             return await _tourDAO.GetToursByPriceRangeAsync(minPrice, maxPrice);
         }
 
+        public async Task<Tour?> GetTourByScheduleId(int scheduleId)
+        {
+            return await _tourDAO.GetTourByScheduleIdAsync(scheduleId);
+        }
+
         public async Task<List<Tour>> SearchTourByName(string name)
         {
             return await _tourDAO.SearchToursByNameAsync(name);
@@ -77,5 +82,47 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
         {
             return await _tourDAO.GetTopToursByEachCategoriesAsync();
         }
+        public async Task<List<Tour>> GetFilteredTours(
+        int page = 1,
+        int pageSize = 10,
+        bool? status = null, 
+        int? startLocation = null,
+        int? endLocation = null,
+        int? category = null,
+        decimal? minPrice = null,
+        decimal? maxPrice = null,
+        string sort = null,
+        string search = null)
+        {
+            return await _tourDAO.GetFilteredToursAsync(
+                page, pageSize, status, startLocation, endLocation,
+                category, minPrice, maxPrice, sort, search);
+        }
+
+        public async Task<int> GetFilteredTourCount(
+            bool? status = null,
+            int? startLocation = null,
+            int? endLocation = null,
+            int? category = null,
+            decimal? minPrice = null,
+            decimal? maxPrice = null,
+            string search = null)
+        {
+            return await _tourDAO.GetFilteredTourCountAsync(
+                status, startLocation, endLocation, category, minPrice, maxPrice, search);
+        }
+        public async Task<List<Tour>> GetActiveTours()
+        {
+            try
+            {
+                return await _tourDAO.GetActiveTours();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in TourService.GetActiveTours: {ex.Message}");
+                return new List<Tour>();
+            }
+        }
+
     }
 }

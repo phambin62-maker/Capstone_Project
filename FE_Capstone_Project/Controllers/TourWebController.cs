@@ -31,7 +31,7 @@ namespace FE_Capstone_Project.Controllers
                 var destinationsResponse = await _apiHelper.GetAsync<LocationsResponse>("Locations/GetAllLocations");
                 var categoriesResponse = await _apiHelper.GetAsync<TourCategoriesResponse>("TourCategories/GetAllTourCategories");
 
-                var tours = toursResponse?.Tours ?? new List<TourViewModel>();
+                var tours = toursResponse?.Tours.FindAll(t => t.TourStatus) ?? new List<TourViewModel>();
                 var featuredTours = featuredToursResponse?.Tours ?? new List<TourViewModel>();
                 var destinations = destinationsResponse?.Data ?? new List<LocationViewModel>();
                 var categories = categoriesResponse?.Data ?? new List<TourCategoryViewModel>();
@@ -77,7 +77,12 @@ namespace FE_Capstone_Project.Controllers
                 var username = HttpContext.Session.GetString("UserName");
                 var result = await _apiHelper.GetAsync<TourDetailResponse>($"Tour/GetTourById/{tourId}?username={username}");
                 var tourSchedules = await _apiHelper.GetAsync<TourScheduleListResponse>($"TourSchedule/tour/available/{tourId}");
-                var isInWishlist = await _apiHelper.GetAsync<bool>($"Wishlist/check/{tourId}?username={username}");
+                var bookedSeatsResponse = await _apiHelper.GetAsync<List<ScheduleBookedSeatsResponse>>($"Booking/tours/{tourId}/booked-seats");
+                var isInWishlist = false;
+                if(username != null)
+                {
+                    isInWishlist = await _apiHelper.GetAsync<bool>($"Wishlist/check/{tourId}?username={username}");
+                }
                 if (result == null || result.Tour == null)
                 {
                     ViewBag.ErrorMessage = "Tour could not be found.";
@@ -85,8 +90,9 @@ namespace FE_Capstone_Project.Controllers
                     return View(new TourViewModel());
                 }
 
-                ViewBag.TourSchedules = tourSchedules.Data ?? new List<TourScheduleDTO>();
+                ViewBag.TourSchedules = tourSchedules!.Data.Where(ts => ts.ScheduleStatus == ScheduleStatus.Scheduled).ToList();
                 ViewBag.CanComment = result.CanComment;
+                ViewBag.BookedSeats = bookedSeatsResponse;
                 ViewBag.IsInWishlist = isInWishlist;
                 return View(result.Tour);
             }
@@ -98,13 +104,36 @@ namespace FE_Capstone_Project.Controllers
             }
         }
 
-        public IActionResult FilterTourList(
+        public async Task<IActionResult> FilterTourList(
             string? searchValue,
             int? slcDestination,
             int? slcCategory,
             string? slcDuration,
             string? slcPriceRange)
         {
+            if(_toursCache.Count == 0)
+            {
+                var toursResponse = await _apiHelper.GetAsync<TourListResponse>("Tour/GetAllTours");
+                var featuredToursResponse = await _apiHelper.GetAsync<TourListResponse>("Tour/GetTopToursByEachCategories");
+                var destinationsResponse = await _apiHelper.GetAsync<LocationsResponse>("Locations/GetAllLocations");
+                var categoriesResponse = await _apiHelper.GetAsync<TourCategoriesResponse>("TourCategories/GetAllTourCategories");
+
+                var allTours = toursResponse?.Tours.FindAll(t => t.TourStatus) ?? new List<TourViewModel>();
+                var featuredTours = featuredToursResponse?.Tours ?? new List<TourViewModel>();
+                var destinations = destinationsResponse?.Data ?? new List<LocationViewModel>();
+                var categories = categoriesResponse?.Data ?? new List<TourCategoryViewModel>();
+
+                _toursCache.Clear();
+                _topToursCache.Clear();
+                _locationsCache.Clear();
+                _tourCategoriesCache.Clear();
+
+                _toursCache.AddRange(allTours);
+                _topToursCache.AddRange(featuredTours);
+                _locationsCache.AddRange(destinations);
+                _tourCategoriesCache.AddRange(categories);
+            }
+
             var tours = _toursCache.AsEnumerable();
 
             if (!string.IsNullOrEmpty(searchValue))

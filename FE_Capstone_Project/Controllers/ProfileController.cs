@@ -1,20 +1,40 @@
 ﻿using BE_Capstone_Project.Domain.Models;
+using FE_Capstone_Project.Filters;
 using FE_Capstone_Project.Helpers;
 using FE_Capstone_Project.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using static FE_Capstone_Project.Models.WishlistModels;
 
 namespace FE_Capstone_Project.Controllers
 {
+    [AuthorizeRole(1, 2, 3)]
     public class ProfileController : Controller
     {
         private readonly ApiHelper _apiHelper;
         private static readonly List<WishlistData> _toursCache = new();
         private static readonly int pageSize = 9;
 
+        private const string NOTIFICATION_API_ENDPOINT = "Notification";
+
         public ProfileController(ApiHelper apiHelper)
         {
             _apiHelper = apiHelper;
+        }
+        private int GetCurrentUserId()
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId.HasValue && userId.Value > 0)
+            {
+                return userId.Value;
+            }
+            return 0;
         }
 
         public async Task<IActionResult> Wishlist(int page = 1)
@@ -22,18 +42,22 @@ namespace FE_Capstone_Project.Controllers
             try
             {
                 var username = HttpContext.Session.GetString("UserName");
+                if (string.IsNullOrEmpty(username))
+                {
+                    TempData["ErrorMessage"] = "User session invalid. Please log in again.";
+                    return View(new List<WishlistData>());
+                }
+
                 var wishlistResponse = await _apiHelper.GetAsync<WishlistResponseModel>($"Wishlist?username={username}");
 
-                if (wishlistResponse == null || wishlistResponse.Wishlist == null)
+                if (wishlistResponse == null || wishlistResponse.Wishlist == null || !wishlistResponse.Wishlist.Any())
                 {
-                    ViewBag.ErrorMessage = "No tours available.";
+                    ViewBag.ErrorMessage = "No tours available in your wishlist.";
                     return View(new List<WishlistData>());
                 }
 
                 var wishlistData = wishlistResponse.Wishlist;
-
                 _toursCache.Clear();
-
                 _toursCache.AddRange(wishlistData);
 
                 int totalTours = wishlistData.Count;
@@ -61,32 +85,189 @@ namespace FE_Capstone_Project.Controllers
             try
             {
                 var username = HttpContext.Session.GetString("UserName");
-                var wishlistData = new { tourId, username };
-                var response = await _apiHelper.PostAsync<object, object>($"Wishlist", wishlistData);
+                var userId = GetCurrentUserId();
+
+                if (userId == 0 || string.IsNullOrEmpty(username))
+                {
+                    TempData["ErrorMessage"] = "User session invalid. Please log in again.";
+                    return RedirectToAction("TourDetails", "TourWeb", new { tourId });
+                }
+
+                var wishlistData = new { TourId = tourId, Username = username };
+
+                var response = await _apiHelper.PostAsync<object, WishlistData>($"Wishlist", wishlistData);
+
+                if (response == null || response.TourId <= 0)
+                {
+                    TempData["ErrorMessage"] = "Could not add to wishlist. (API Error)";
+                }
 
                 return RedirectToAction("TourDetails", "TourWeb", new { tourId });
             }
             catch (Exception ex)
             {
-                ViewBag.ErrorMessage = $"Error connecting to server: {ex.Message}";
+                TempData["ErrorMessage"] = $"Error connecting to server: {ex.Message}";
                 return RedirectToAction("TourDetails", "TourWeb", new { tourId });
             }
         }
 
-        public async Task<IActionResult> RemoveFromWishlist(int tourId)
+        public async Task<IActionResult> RemoveFromWishlist(int tourId, string tourName)
         {
             try
             {
                 var username = HttpContext.Session.GetString("UserName");
-                var response = await _apiHelper.DeleteAsync($"Wishlist/tour/{tourId}?username={username}");
+                var userId = GetCurrentUserId();
+
+                if (userId == 0 || string.IsNullOrEmpty(username))
+                {
+                    TempData["ErrorMessage"] = "User session invalid. Please log in again.";
+                    return RedirectToAction("TourDetails", "TourWeb", new { tourId });
+                }
+
+                await _apiHelper.DeleteAsync($"Wishlist/tour/{tourId}?username={username}");
+
+                try
+                {
+                    var notificationDto = new
+                    {
+                        UserId = userId,
+                        Title = "Removed from Wishlist",
+                        Message = $"Tour '{tourName ?? "N/A"}' has been removed from your wishlist.",
+                        NotificationType = "System"
+                    };
+                    _ = _apiHelper.PostAsync<object, object>(NOTIFICATION_API_ENDPOINT, notificationDto);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to send remove-wishlist notification from FE: {ex.Message}");
+                }
 
                 return RedirectToAction("TourDetails", "TourWeb", new { tourId });
             }
             catch (Exception ex)
             {
-                ViewBag.ErrorMessage = $"Error connecting to server: {ex.Message}";
+                TempData["ErrorMessage"] = $"Error connecting to server: {ex.Message}";
                 return RedirectToAction("TourDetails", "TourWeb", new { tourId });
             }
+        }
+
+        public async Task<IActionResult> MyBookings()
+        {
+            var username = HttpContext.Session.GetString("UserName");
+            if (string.IsNullOrEmpty(username))
+                return RedirectToAction("Login", "AuthWeb");
+
+            var bookingsResponse = await _apiHelper.GetAsync<List<UserBookingResponse>>($"Booking/user/{username}");
+
+            if (bookingsResponse != null)
+            {
+                foreach (var booking in bookingsResponse)
+                {
+                    try
+                    {
+                        var cancelValidation = await _apiHelper.GetAsync<CancelValidationResult>($"Booking/{booking.BookingId}/cancel-validation");
+                        if (cancelValidation != null)
+                        {
+                            booking.CancelCondition = cancelValidation;
+                            booking.CanCancel = cancelValidation.CanCancel;
+                            booking.CancelMessage = cancelValidation.Message;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error checking cancel condition for booking {booking.BookingId}: {ex.Message}");
+                        booking.CanCancel = false;
+                        booking.CancelMessage = "Unable to check cancellation conditions";
+                    }
+                }
+            }
+
+            return View(bookingsResponse);
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelBooking(int bookingId)
+        {
+            try
+            {
+
+                var username = HttpContext.Session.GetString("UserName");
+                if (string.IsNullOrEmpty(username))
+                {
+                    TempData["ErrorMessage"] = "User session invalid. Please log in again.";
+                    return RedirectToAction("MyBookings");
+                }
+
+
+                var cancelValidation = await _apiHelper.GetAsync<CancelValidationResult>($"Booking/{bookingId}/cancel-validation");
+                if (cancelValidation == null || !cancelValidation.CanCancel)
+                {
+                    TempData["ErrorMessage"] = cancelValidation?.Message ?? "Cannot cancel this booking.";
+                    return RedirectToAction("MyBookings");
+                }
+
+                var cancelRequest = new
+                {
+                    Username = username
+                };
+
+                var response = await _apiHelper.PutAsync<object, ApiResponse<object>>(
+                    $"Booking/user/{bookingId}/cancel",
+                    cancelRequest
+                );
+
+                if (response != null && response.Success)
+                {
+
+                    if (cancelValidation.RefundAmount.HasValue && cancelValidation.RefundAmount.Value > 0)
+                    {
+                        TempData["SuccessMessage"] = $"Booking cancelled successfully! Refund amount: {cancelValidation.RefundAmount.Value.ToString("N0")} VND ({cancelValidation.RefundPercent}% of total price)";
+                    }
+                    else
+                    {
+                        TempData["SuccessMessage"] = "Booking cancelled successfully!";
+                    }
+
+                    try
+                    {
+                        var userId = GetCurrentUserId();
+                        var notificationDto = new
+                        {
+                            UserId = userId,
+                            Title = "Booking Cancelled",
+                            Message = $"Your booking #{bookingId} has been cancelled successfully." +
+                                     (cancelValidation.RefundAmount.HasValue ?
+                                     $" Refund amount: {cancelValidation.RefundAmount.Value.ToString("N0")} VND" : ""),
+                            NotificationType = "System"
+                        };
+                        await _apiHelper.PostAsync<object, object>(NOTIFICATION_API_ENDPOINT, notificationDto);
+                        Console.WriteLine("Notification sent");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Failed to send cancellation notification: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"Cancellation failed: {response?.Message}");
+                    TempData["ErrorMessage"] = response?.Message ?? "Failed to cancel booking. Please try again.";
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception in FE: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                TempData["ErrorMessage"] = $"Error cancelling booking: {ex.Message}";
+            }
+
+            return RedirectToAction("MyBookings");
+        }
+        public class ApiResponse<T>
+        {
+            public bool Success { get; set; }
+            public string Message { get; set; } = string.Empty;
+            public T Data { get; set; }
         }
     }
 }

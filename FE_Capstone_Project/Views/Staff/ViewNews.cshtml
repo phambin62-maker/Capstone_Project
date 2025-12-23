@@ -36,34 +36,47 @@
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="UserId" class="form-label fw-bold">User ID</label>
-                            <input asp-for="UserId" type="number" class="form-control" disabled />
-                        </div>
-
-                        <div class="mb-3">
                             <label asp-for="NewsStatus" class="form-label fw-bold">Status</label>
-                            <p class="form-control-plaintext fw-bold">
-                                @(Model.NewsStatus == "Published" ? "" : (Model.NewsStatus == "Draft" ? "" : "Hidden"))
-                            </p>
+                            <div>
+                                @{
+                                    var status = Model.NewsStatus?.ToLowerInvariant();
+                                    string badgeClass = status switch
+                                    {
+                                        "published" => "badge bg-success",
+                                        "draft" => "badge bg-warning text-dark",
+                                        "hidden" => "badge bg-secondary",
+                                        _ => "badge bg-light text-dark"
+                                    };
+
+                                    string badgeText = status switch
+                                    {
+                                        "published" => "Published",
+                                        "draft" => "Draft",
+                                        "hidden" => "Hidden",
+                                        _ => "Unknown"
+                                    };
+                                }
+                                <span class="@badgeClass fs-5">@badgeText</span>
+                            </div>
                         </div>
                     </div>
 
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Iamge </label>
-                            <small class="form-text text-muted">Cannot change image.</small>
+                            <label class="form-label fw-bold">Image</label>
+                            @* <small class="form-text text-muted">Cannot change image.</small> *@
                         </div>
 
-                        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                        @if (!string.IsNullOrEmpty(Model.Image))
                         {
                             <div class="mb-3 text-center">
                                 <label class="form-label fw-bold">Current image</label><br />
-                                <img src="@Model.ImageUrl" alt="Current image" class="img-thumbnail rounded" style="max-height: 200px;" />
+                                <img src="@Model.Image" alt="Current image" class="img-thumbnail rounded" style="max-height: 200px;" />
                             </div>
                         }
 
                         <div class="mb-3">
-                            <label asp-for="Content" class="form-label fw-bold">Current image</label>
+                            <label asp-for="Content" class="form-label fw-bold">Content</label>
                             <textarea asp-for="Content" class="form-control" rows="6" disabled></textarea>
                         </div>
                     </div>

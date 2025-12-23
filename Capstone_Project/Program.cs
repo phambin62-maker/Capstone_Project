@@ -1,5 +1,8 @@
 ﻿using BE_Capstone_Project.Application.Auth.Services;
-using BE_Capstone_Project.Application.Bookings.Services;
+using BE_Capstone_Project.Application.BookingManagement.Services;
+using BE_Capstone_Project.Application.BookingManagement.Services.Interfaces;
+using BE_Capstone_Project.Application.Admin.Service;
+using BE_Capstone_Project.Application.Admin.Service.Interfaces;
 using BE_Capstone_Project.Application.CancelConditions.Services;
 using BE_Capstone_Project.Application.CancelConditions.Services.Interfaces;
 using BE_Capstone_Project.Application.Categories.Services;
@@ -7,7 +10,11 @@ using BE_Capstone_Project.Application.Categories.Services.Interfaces;
 using BE_Capstone_Project.Application.Locations.Services;
 using BE_Capstone_Project.Application.Locations.Services.Interfaces;
 using BE_Capstone_Project.Application.Newses.Services;
+using BE_Capstone_Project.Application.Newses.Services.Interfaces;
 using BE_Capstone_Project.Application.Notifications.Services;
+using BE_Capstone_Project.Application.Notifications.Services.Interfaces;
+using BE_Capstone_Project.Application.Payment.VnPayService;
+using BE_Capstone_Project.Application.Payment.VnPayService.Interfaces;
 using BE_Capstone_Project.Application.Report.Services;
 using BE_Capstone_Project.Application.Report.Services.Interfaces;
 using BE_Capstone_Project.Application.ReviewManagement.Services;
@@ -18,6 +25,11 @@ using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
 using BE_Capstone_Project.Application.TourPriceHistories.Services;
 using BE_Capstone_Project.Application.WishlistManagement.Services;
 using BE_Capstone_Project.Application.WishlistManagement.Services.Interfaces;
+using BE_Capstone_Project.Application.Company.Services;
+using BE_Capstone_Project.Application.Company.Services.Interfaces;
+using BE_Capstone_Project.Application.ChatManagement.Hubs;
+using BE_Capstone_Project.Application.ChatManagement.Services;
+using BE_Capstone_Project.Application.ChatManagement.Services.Interfaces;
 using BE_Capstone_Project.DAO;
 using BE_Capstone_Project.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -25,28 +37,35 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Text.Json.Serialization;
+using BE_Capstone_Project.Domain.Enums;
 
 var builder = WebApplication.CreateBuilder(args);
+
 builder.Services.AddDbContext<OtmsdbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-// Add services to the container.
+
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ITourService, TourService>();
 builder.Services.AddScoped<ITourImageService, TourImageService>();
 builder.Services.AddScoped<ITourScheduleService, TourScheduleService>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
-builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<TourPriceHistoryService>();
-builder.Services.AddScoped<NewsService>();
+builder.Services.AddScoped<INewsService, NewsService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<BookingService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<ILocationService, LocationService>();
 builder.Services.AddScoped<ITourCategoryService, TourCategoryService>();
 builder.Services.AddScoped<ICancelConditionService, CancelConditionService>();
+builder.Services.AddScoped<IVnPayService, VnPayService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<ICompanyService, CompanyService>();
+builder.Services.AddScoped<IFeatureService, FeatureService>();
+builder.Services.AddScoped<IChatService, ChatService>();
 
-//DAO
+// 3. DAO Registration
 builder.Services.AddScoped<BookingCustomerDAO>();
 builder.Services.AddScoped<BookingDAO>();
 builder.Services.AddScoped<CancelConditionDAO>();
@@ -63,7 +82,13 @@ builder.Services.AddScoped<TourPriceHistoryDAO>();
 builder.Services.AddScoped<TourScheduleDAO>();
 builder.Services.AddScoped<UserDAO>();
 builder.Services.AddScoped<WishlistDAO>();
+builder.Services.AddScoped<CompanyDAO>();
+builder.Services.AddScoped<FeatureDAO>();
 
+
+builder.Services.AddHostedService<BookingCleanupService>();
+
+// 5. Authentication & JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -79,47 +104,86 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(jwtSettings["Key"]))
         };
+
+        // SignalR Token Support
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chathub"))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
+        };
     });
-builder.Services.AddAuthorization();
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("AdminOrStaff", policy => policy.RequireRole("Admin", "Staff"));
+    options.AddPolicy("Authenticated", policy => policy.RequireAuthenticatedUser());
+});
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         options.JsonSerializerOptions.WriteIndented = true;
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
         policy =>
         {
-            policy.AllowAnyOrigin()      
+            policy.WithOrigins("https://localhost:5137")
                   .AllowAnyHeader()
-                  .AllowAnyMethod();
+                  .AllowAnyMethod()
+                  .AllowCredentials();
         });
 });
 
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
+builder.Services.AddSignalR();
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
+
 app.UseCors("AllowAll");
+
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/api/payment/payment-callback"))
+    {
+        context.Request.EnableBuffering();
+        using var reader = new StreamReader(context.Request.Body, leaveOpen: true);
+        var bodyStr = await reader.ReadToEndAsync();
+        context.Request.Body.Position = 0;
+        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+        logger.LogInformation("Payment callback raw data: {Data}", bodyStr);
+    }
+    await next();
+});
 
 if (app.Environment.IsDevelopment())
 {
-
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// Configure the HTTP request pipeline.
+app.UseStaticFiles();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<ChatHub>("/chathub");
+
 app.Run();

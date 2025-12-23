@@ -120,5 +120,33 @@ namespace BE_Capstone_Project.DAO
                 return new List<CancelCondition>();
             }
         }
+        public async Task<(List<CancelCondition>, int)> GetCancelConditionsPagingAsync(string keyword, int pageIndex, int pageSize)
+        {
+            try
+            {
+                var query = _context.CancelConditions.AsQueryable();
+
+                if (!string.IsNullOrEmpty(keyword))
+                {
+                    query = query.Where(cc => cc.Title.Contains(keyword));
+                }
+
+                int totalCount = await query.CountAsync();
+
+                var list = await query
+                    .Include(cc => cc.Tours)
+                    .OrderByDescending(cc => cc.Id)
+                    .Skip((pageIndex - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                return (list, totalCount);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while retrieving paged cancel conditions: {ex.Message}");
+                return (new List<CancelCondition>(), 0);
+            }
+        }
     }
 }

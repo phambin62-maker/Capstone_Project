@@ -10,6 +10,8 @@
     }
     bool isLoggedIn = !string.IsNullOrEmpty(Context.Session.GetString("UserName")); 
     var currentUsername = Context.Session.GetString("UserName");
+
+    var BASE_API_URL = "https://localhost:7160/api/";
 }
 <body class="tour-details-page">
     <main class="main">
@@ -35,29 +37,37 @@
                 <!-- Hero Section -->
                 <div class="tour-hero">
                     <div class="hero-image-wrapper">
-                        <img src="@(Model.TourImages != null && Model.TourImages.Any() ? Model.TourImages.First().Image : "/images/default-tour.jpg")"
-                             class="img-fluid w-100" />
+                        @{
+                            var mainImage = Model.TourImages!.First();
+                            var mainImageUrl = $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(mainImage!.Image!)}";
+                        }
+                        <img src="@mainImageUrl" class="img-fluid w-100" />
                         <div class="hero-overlay">
                             <div class="hero-content">
                                 <h1>@Model.Name</h1>
                                 <div class="hero-meta">
                                     <span class="duration"><i class="bi bi-calendar"></i> @Model.Duration Day@(Model.Duration == 1 ? "" : "s")</span>
                                     <span class="destination"><i class="bi bi-geo-alt"></i> @Model.EndLocation.LocationName</span>
-                                    <span class="rating"><i class="bi bi-star-fill"></i> @avgRatingText (@Model.Reviews.Count reviews)</span>
+                                    <span class="rating"><i class="bi bi-star-fill"></i> @avgRatingText (@Model.Reviews!.Count review@(Model.Reviews!.Count == 1 ? "" : "s"))</span>
+                                    <span class="rating"><i class="bi bi-people-fill"></i> @Model.MaxSeats seats per booking</span>
                                 </div>
-                                <p class="hero-tagline">Experience ancient wonders, pristine beaches, and vibrant cultures across three magnificent countries</p>
-                                <a asp-controller="BookingWeb" asp-action="Index" class="btn-book">Book Now</a>
+                                <a asp-controller="@(isLoggedIn ? "BookingWeb" : "AuthWeb")"
+                                   asp-action="@(isLoggedIn ? "Index" : "Login")"
+                                   asp-route-tourId="@Model.Id"
+                                   class="btn-book me-2">
+                                    @(isLoggedIn ? "Book Now" : "Login to Book")
+                                </a>
+
                                 @if (isLoggedIn)
                                 {
-                                    @if(ViewBag.IsInWishlist != null && ViewBag.IsInWishlist)
-                                    {
-                                        <a asp-controller="Profile" asp-action="RemoveFromWishlist" asp-route-tourId="@Model.Id" class="btn-book">Remove from wishlist</a>
-                                    }
-                                    else
-                                    {
-                                        <a asp-controller="Profile" asp-action="AddToWishlist" asp-route-tourId="@Model.Id" class="btn-book">Add to wishlist</a>
-                                    }
+                                    <a asp-controller="Profile"
+                                       asp-action="@(ViewBag.IsInWishlist == true ? "RemoveFromWishlist" : "AddToWishlist")"
+                                       asp-route-tourId="@Model.Id"
+                                       asp-route-tourName="@Model.Name" class="btn-book">
+                                        @(ViewBag.IsInWishlist == true ? "Remove from wishlist" : "Add to wishlist")
+                                    </a>
                                 }
+
                             </div>
                         </div>
                     </div>
@@ -68,7 +78,15 @@
                     <div class="row">
                         <div class="col-lg-12">
                             <h2>Tour Overview</h2>
-                            <p>@Model.Description</p>
+                            @{
+                                var desc = Model.Description ?? string.Empty;
+                                var paragraphs = desc.Split(new[] { "\r\n\r\n", "\n\n", "\r\r" }, StringSplitOptions.RemoveEmptyEntries);
+                            }
+                            @foreach (var para in paragraphs)
+                            {
+                                var encoded = System.Net.WebUtility.HtmlEncode(para.Trim());
+                                <p>@Html.Raw(encoded.Replace("\r\n", "<br/>").Replace("\n", "<br/>"))</p>
+                            }
                         </div>
                     </div>
                 </div>
@@ -97,24 +115,35 @@
                                     <div class="price-type">
                                         <h4>Group Discount</h4>
                                         <div class="price">@string.Format("{0:N0}", Model.GroupDiscount)%</div>
-                                        <p>for 6+ people</p>
+                                        <p>for @Model.GroupNumber+ people</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="available-dates">
-                            <h3>@DateTime.Now.Year Departure Dates</h3>
+                            <h3>@DateTime.Now.Year-@DateTime.Now.AddYears(1).Year Departure Dates</h3>
                             <div class="dates-grid">
-                                @if(ViewBag.TourSchedules != null && ViewBag.TourSchedules.Count > 0)
+                                @{
+                                    var schedules = ViewBag.TourSchedules as List<TourScheduleDTO>;
+                                }
+                                @if (schedules != null && schedules.Count > 0)
                                 {
-                                    @foreach (TourScheduleDTO schedule in ViewBag.TourSchedules)
+                                    @foreach (TourScheduleDTO schedule in schedules)
                                     {
                                         <div class="date-option">
                                             <div class="date">
                                                 @schedule.DepartureDate.Value.ToString("MMM dd", CultureInfo.InvariantCulture) -
-                                                @schedule.ArrivalDate.Value.ToString("dd", CultureInfo.InvariantCulture)
+                                                @schedule.ArrivalDate.Value.ToString("MMM dd", CultureInfo.InvariantCulture)
                                             </div>
-                                            <div class="availability">Available</div>
+                                            @{
+                                                var bookedSeatsList = ViewBag.BookedSeats as List<ScheduleBookedSeatsResponse> ?? new List<ScheduleBookedSeatsResponse>();
+                                                var bookedSeats = bookedSeatsList
+                                                        .FirstOrDefault(b => b.TourScheduleId == schedule.Id)?.BookedSeats ?? 0;
+
+                                                // Calculate available seats
+                                                var availableSeats = Model.MaxSeats - bookedSeats;
+                                            }
+                                            <div class="availability">Available (@availableSeats seats left)</div>
                                         </div>
                                     }
                                 }
@@ -134,8 +163,12 @@
                         @foreach (var images in Model.TourImages)
                         {
                             <div class="gallery-item">
-                                <a href="@images.Image" class="glightbox">
-                                    <img src="@images.Image" class="img-fluid" loading="lazy">
+                                @{
+                                    var image = images;
+                                    var imageUrl = $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(image.Image!)}";
+                                }
+                                <a href="@imageUrl" class="glightbox">
+                                    <img src="@imageUrl" class="img-fluid" loading="lazy">
                                 </a>
                             </div>
                         }
@@ -144,92 +177,6 @@
             </div>
 
         </section><!-- /Travel Tour Details Section -->
-        <!-- Blog Comments Section -->
-        <section id="blog-comments" class="blog-comments section">
-
-            <div class="container" data-aos="fade-up" data-aos-delay="100">
-
-                <div class="blog-comments-4">
-                    <div class="comments-header">
-                        <h3 class="title">Community Feedback</h3>
-                        <div class="comments-stats">
-                            <span class="count">@Model.Reviews.Count</span>
-                            <span class="label">Comment@(Model.Reviews.Count == 1 ? "" : "s")</span>
-                        </div>
-                    </div>
-
-                    <div class="comments-container">
-                        @foreach (var comment in Model.Reviews)
-                        {
-                            <div class="comment-thread">
-                                <div class="comment-box">
-                                    <div class="comment-wrapper">
-                                        <div class="avatar-wrapper">
-                                            <img src="@comment.User.Image" alt="Avatar" loading="lazy">
-                                            <span class="status-indicator"></span>
-                                        </div>
-
-                                        <div class="comment-content">
-                                            <div class="comment-header">
-                                                <div class="user-info">
-                                                    <h4>@comment.User.Username</h4>
-                                                    <div class="star-display">
-                                                        @for (int i = 1; i <= 5; i++)
-                                                        {
-                                                            if (i <= comment.Stars)
-                                                            {
-                                                                <i class="bi bi-star-fill text-warning"></i>
-                                                            }
-                                                            else
-                                                            {
-                                                                <i class="bi bi-star text-secondary"></i>
-                                                            }
-                                                        }
-                                                    </div>
-                                                    <span class="time-badge">
-                                                        <i class="bi bi-clock"></i>
-                                                        @TimeHelper.GetTimeAgo(comment.CreatedDate.Value)
-                                                    </span>
-                                                </div>
-
-                                                <div class="engagement">
-                                                    @if (comment.User.Username == currentUsername)
-                                                    {
-                                                        <div class="comment-actions d-flex gap-2">
-                                                            <button class="btn btn-light btn-sm border"
-                                                                    onclick="openEditModal(@comment.TourId, @comment.Id, @comment.Stars, '@comment.Comment')">
-                                                                <i class="bi bi-pencil"></i>
-                                                            </button>
-
-                                                            <form asp-action="DeleteComment"
-                                                                  asp-controller="Review"
-                                                                  asp-route-reviewId="@comment.Id"
-                                                                  asp-route-tourId="@comment.TourId"
-                                                                  method="post"
-                                                                  class="d-inline">
-                                                                <button type="submit" class="btn btn-light btn-sm border text-danger">
-                                                                    <i class="bi bi-trash"></i>
-                                                                </button>
-                                                            </form>
-                                                        </div>
-                                                    }
-                                                </div>
-                                            </div>
-
-                                            <div class="comment-body" id="comment-body-@comment.Id">
-                                                <p class="comment-text">@comment.Comment</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        }
-
-
-                    </div>
-                </div>
-            </div>
-        </section><!-- /Blog Comments Section -->
         <!-- Blog Comment Form Section -->
         <section id="blog-comment-form" class="blog-comment-form section position-relative">
 
@@ -240,9 +187,9 @@
                     <div class="overlay-content">
                         <p>
                             You can only leave a review after booking this tour.
-                            @if(isLoggedIn)
+                            @if (isLoggedIn)
                             {
-                                <a asp-controller="BookingWeb" asp-action="Index"> Book Now</a>
+                                <a asp-controller="BookingWeb" asp-action="Index" asp-route-tourId="@Model.Id"> Book Now</a>
                             }
                             else
                             {
@@ -284,6 +231,94 @@
             </div>
         </section>
 
+        <!-- Blog Comments Section -->
+        <section id="blog-comments" class="blog-comments section">
+
+            <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+                <div class="blog-comments-4">
+                    <div class="comments-header">
+                        <h3 class="title">Community Feedback</h3>
+                        <div class="comments-stats">
+                            <span class="count">@Model.Reviews.Count</span>
+                            <span class="label">Comment@(Model.Reviews.Count == 1 ? "" : "s")</span>
+                        </div>
+                    </div>
+
+                    <div class="comments-container">
+                    @{
+                        var sortedReviews = Model.Reviews.OrderByDescending(r => r.CreatedDate).ToList();
+                    }
+                        @foreach (var comment in sortedReviews)
+                        {
+                            <div class="comment-thread">
+                                <div class="comment-box">
+                                    <div class="comment-wrapper">
+                                        <div class="avatar-wrapper">
+                                            <img src="@comment.User.Image" alt="Avatar" loading="lazy">
+                                        </div>
+
+                                        <div class="comment-content">
+                                            <div class="comment-header">
+                                                <div class="user-info">
+                                                    <h4>@comment.User.Username</h4>
+                                                    <div class="star-display">
+                                                        @for (int i = 1; i <= 5; i++)
+                                                        {
+                                                            if (i <= comment.Stars)
+                                                            {
+                                                                <i class="bi bi-star-fill text-warning"></i>
+                                                            }
+                                                            else
+                                                            {
+                                                                <i class="bi bi-star text-secondary"></i>
+                                                            }
+                                                        }
+                                                    </div>
+                                                    <span class="time-badge">
+                                                        <i class="bi bi-clock"></i>
+                                                        @TimeHelper.GetTimeAgo(comment.CreatedDate.Value)
+                                                    </span>
+                                                </div>
+
+                                                <div class="engagement">
+                                                    @if (comment.User.Username == currentUsername)
+                                                    {
+                                                        <div class="comment-actions d-flex gap-2">
+                                                            <button class="btn btn-light btn-sm border"
+                                                                    onclick="openEditModal(@comment.TourId, @comment.Id, @comment.Stars, '@comment.Comment')">
+                                                                <i class="bi bi-pencil"></i>
+                                                            </button>
+
+                                                            <form asp-action="DeleteComment"
+                                                                  asp-controller="Review"
+                                                                  asp-route-reviewId="@comment.Id"
+                                                                  asp-route-tourId="@comment.TourId"
+                                                                  method="post"
+                                                                  class="d-inline">
+                                                                <button type="submit" 
+                                                                        onclick="return confirm('Are you sure you want to delete this review?');"
+                                                                        class="btn btn-light btn-sm border text-danger">
+                                                                    <i class="bi bi-trash"></i>
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </div>
+
+                                            <div class="comment-body" id="comment-body-@comment.Id">
+                                                <p class="comment-text">@comment.Comment</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </section><!-- /Blog Comments Section -->
     </main>
 
     <!-- Scroll Top -->

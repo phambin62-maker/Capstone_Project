@@ -1,53 +1,101 @@
 ﻿@model FE_Capstone_Project.Models.UpdateTourScheduleRequest
 @{
-    ViewData["Title"] = "Chỉnh sửa Lịch trình";
+    ViewData["Title"] = "Edit Schedule";
     Layout = "~/Views/Shared/_StaffLayout.cshtml";
 }
 
 <div class="container-fluid">
+    <!-- Alert Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0 text-dark">@ViewData["Title"]</h1>
-        <a href="@Url.Action("Schedules")" class="btn btn-secondary">
-            <i class="bi bi-arrow-left me-2"></i>Quay lại
+        <a href="javascript:void(0)" onclick="goBackToList('schedules', '@Url.Action("Schedules")')" class="btn btn-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Back to List
         </a>
     </div>
 
     <div class="card">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-pencil-square me-2"></i>Edit Information
+            </h5>
+        </div>
         <div class="card-body">
             <form method="post">
-                <div class="row">
+                <!-- Tour Information Display -->
+                <div class="row mb-3">
                     <div class="col-md-6">
-                        <div class="mb-3">
-                            <label asp-for="DepartureDate" class="form-label">Ngày khởi hành *</label>
-                            <input asp-for="DepartureDate" type="date" class="form-control" />
-                            <span asp-validation-for="DepartureDate" class="text-danger"></span>
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="ArrivalDate" class="form-label">Ngày kết thúc *</label>
-                            <input asp-for="ArrivalDate" type="date" class="form-control" />
-                            <span asp-validation-for="ArrivalDate" class="text-danger"></span>
+                        <label class="form-label">Tour Information</label>
+                        <div class="card bg-light">
+                            <div class="card-body py-2">
+                                <div class="row align-items-center">
+                                    <div class="col-12">
+                                        <p class="mb-0 fw-bold text-primary">
+                                            <i class="bi bi-map me-2"></i>
+                                            @if (ViewData["TourName"] != null)
+                                            {
+                                                @ViewData["TourName"]
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">No tour information</span>
+                                            }
+                                        </p>                                       
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label asp-for="ScheduleStatus" class="form-label">Trạng thái *</label>
+                            <label asp-for="ScheduleStatus" class="form-label">Status <span class="text-danger">*</span></label>
                             <select asp-for="ScheduleStatus" class="form-select">
-                                <option value="@ScheduleStatus.Scheduled">Đã lên lịch</option>
-                                <option value="@ScheduleStatus.Ongoing">Đang diễn ra</option>
-                                <option value="@ScheduleStatus.Completed">Đã hoàn thành</option>
-                                <option value="@ScheduleStatus.Cancelled">Đã hủy</option>
+                                <option value="@ScheduleStatus.Scheduled">Scheduled</option>
+                                <option value="@ScheduleStatus.Ongoing">Ongoing</option>
+                                <option value="@ScheduleStatus.Completed">Completed</option>
+                                <option value="@ScheduleStatus.Cancelled">Cancelled</option>
                             </select>
-                            <span asp-validation-for="ScheduleStatus" class="text-danger"></span>
+                            <span asp-validation-for="ScheduleStatus" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="DepartureDate" class="form-label">Departure Date <span class="text-danger">*</span></label>
+                            <input asp-for="DepartureDate" type="date" class="form-control" />
+                            <span asp-validation-for="DepartureDate" class="text-danger small"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="ArrivalDate" class="form-label">Return Date <span class="text-danger">*</span></label>
+                            <input asp-for="ArrivalDate" type="date" class="form-control" />
+                            <span asp-validation-for="ArrivalDate" class="text-danger small"></span>
                         </div>
                     </div>
                 </div>
 
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-circle me-2"></i>Cập nhật
+                        <i class="bi bi-check-circle me-2"></i>Update
                     </button>
-                    <a href="@Url.Action("Schedules")" class="btn btn-secondary">Hủy</a>
+                    <a href="javascript:void(0)" onclick="goBackToList('schedules', '@Url.Action("Schedules")')" class="btn btn-secondary">Cancel</a>
                 </div>
             </form>
         </div>
@@ -56,4 +104,26 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function () {
+            // Date validation
+            $('#DepartureDate').on('change', function () {
+                const departureDate = new Date($(this).val());
+                const minArrivalDate = new Date(departureDate);
+                minArrivalDate.setDate(minArrivalDate.getDate() + 1);
+
+                $('#ArrivalDate').attr('min', minArrivalDate.toISOString().split('T')[0]);
+
+                const arrivalDate = new Date($('#ArrivalDate').val());
+                if (arrivalDate <= departureDate) {
+                    $('#ArrivalDate').val('');
+                }
+            });
+
+            // Auto-hide alerts after 5 seconds
+            setTimeout(function() {
+                $('.alert').alert('close');
+            }, 5000);
+        });
+    </script>
 }

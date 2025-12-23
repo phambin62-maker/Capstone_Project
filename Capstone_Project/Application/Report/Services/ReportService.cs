@@ -6,6 +6,11 @@ using ClosedXML.Excel;
 using BE_Capstone_Project.Application.Report.Services.Interfaces;
 using BE_Capstone_Project.Application.Report.DTOs;
 using BE_Capstone_Project.Domain.Enums;
+using System.Collections.Generic; 
+using System.Threading.Tasks;  
+using System.IO;              
+using System.Linq;
+using System;
 
 namespace BE_Capstone_Project.Application.Report.Services
 {
@@ -37,6 +42,14 @@ namespace BE_Capstone_Project.Application.Report.Services
                     .Distinct()
                     .CountAsync();
             }
+
+            //  TÍNH ĐÁNH GIÁ TRUNG BÌNH ===
+            var fromDateTime = from.ToDateTime(TimeOnly.MinValue);
+            var toDateTime = to.ToDateTime(TimeOnly.MinValue);
+
+            var averageRating = await _context.Reviews
+                .Where(r => r.CreatedDate >= fromDateTime && r.CreatedDate < toDateTime)
+                .AverageAsync(r => (decimal?)r.Stars) ?? 0m;
 
             var tourRevenueQuery = from b in paid
                                    join ts in _context.TourSchedules on b.TourScheduleId equals ts.Id
@@ -76,13 +89,14 @@ namespace BE_Capstone_Project.Application.Report.Services
             return new RevenueOverviewDto
             {
                 From = from,
-                To = to,
+                To = to.AddDays(-1), 
                 TotalBookings = totalBookings,
                 TotalRevenue = totalRevenue,
                 UniqueBookingUsers = uniqueUsers,
                 UniqueCustomers = uniqueCustomers,
                 TopToursByRevenue = topByRevenue,
-                TopToursByBookings = topByBookings
+                TopToursByBookings = topByBookings,
+                AverageRating = averageRating
             };
         }
 
@@ -128,7 +142,7 @@ namespace BE_Capstone_Project.Application.Report.Services
         public async Task<List<MonthlyRevenueDto>> GetMonthlyRevenueAsync(int year)
         {
             var q = _context.Bookings
-                .Where(b => b.PaymentStatus == PaymentStatus.Completed
+                .Where(b => b.BookingStatus == BookingStatus.Completed
                 && b.PaymentDate != null && b.PaymentDate.Value.Year == year)
                 .Select(b => new
                 {
@@ -170,14 +184,18 @@ namespace BE_Capstone_Project.Application.Report.Services
             ws.Cell(5, 2).Value = overview.TotalRevenue;
             ws.Cell(6, 1).Value = "UniqueBookingUsers";
             ws.Cell(6, 2).Value = overview.UniqueBookingUsers;
-            ws.Cell(7, 1).Value = overview.UniqueCustomers;
+            ws.Cell(7, 1).Value = "UniqueCustomers";
+            ws.Cell(7, 2).Value = overview.UniqueCustomers;
+            ws.Cell(8, 1).Value = "AverageRating";
+            ws.Cell(8, 2).Value = overview.AverageRating;
+
 
             // Convert to DataTables
             var dtTopRevenue = ToDataTable(overview.TopToursByRevenue);
             var dtTopBookings = ToDataTable(overview.TopToursByBookings);
 
             // Insert Top Tours by Revenue
-            var startRow = 9;
+            var startRow = 10;
             ws.Cell(startRow, 1).Value = "Top Tours by Revenue";
             ws.Cell(startRow + 1, 1).InsertTable(dtTopRevenue, true);
 
@@ -218,9 +236,95 @@ namespace BE_Capstone_Project.Application.Report.Services
 
         private IQueryable<Booking> PaidBookingsInRange(DateOnly from, DateOnly to)
         {
+            var toDateTime = to.ToDateTime(TimeOnly.MinValue);
             return _context.Bookings.Where(b => b.PaymentStatus == PaymentStatus.Completed &&
-                 b.PaymentDate != null && b.PaymentDate >= from && b.PaymentDate <= to
-             );
+                                                b.BookingStatus == BookingStatus.Completed &&
+                  b.PaymentDate != null &&
+                  b.PaymentDate >= from && 
+                  b.PaymentDate < to
+            );
+        }
+
+        public async Task<CustomerAnalysisDto> GetCustomerAnalysisAsync(DateOnly from, DateOnly to)
+        {
+            var fromDateTime = from.ToDateTime(TimeOnly.MinValue);
+            var toDateTime = to.ToDateTime(TimeOnly.MinValue);
+            var customerRole = await _context.Roles.AsNoTracking()
+                                         .FirstOrDefaultAsync(r => r.RoleName == "Customer");
+
+            if (customerRole == null)
+            {
+                return new CustomerAnalysisDto();
+            }
+            var allCustomersQuery = _context.Users
+                                          .AsNoTracking()
+                                          .Where(u => u.RoleId == customerRole.Id);
+
+            var totalCustomers = await allCustomersQuery.CountAsync();
+
+            if (totalCustomers == 0)
+            {
+
+                return new CustomerAnalysisDto { TotalCustomers = 0, LoyalCustomers = 0, NewCustomersInRange = 0, ReturnRate = 0 };
+            }
+
+            var newCustomersInRange = await allCustomersQuery
+                .Where(u => u.CreatedDate != null && 
+                u.CreatedDate.Value >= fromDateTime && 
+                u.CreatedDate.Value < toDateTime) 
+                .CountAsync();
+
+            var loyalCustomers = await _context.Bookings
+                .Where(b => b.PaymentStatus == PaymentStatus.Completed)
+                .Join(allCustomersQuery,
+                      b => b.UserId,
+                      u => u.Id,
+                      (b, u) => u.Id) 
+                .GroupBy(userId => userId)
+                .Where(g => g.Count() > 1) 
+                .CountAsync(); 
+
+
+            var returnRate = (decimal)loyalCustomers / totalCustomers;
+
+            return new CustomerAnalysisDto
+            {
+                TotalCustomers = totalCustomers,
+                LoyalCustomers = loyalCustomers,
+                NewCustomersInRange = newCustomersInRange,
+                ReturnRate = returnRate
+            };
+        }
+
+        public async Task<List<BookingDetailDto>> GetBookingsByMonthAsync(int year, int month)
+        {
+            var bookingsInMonth = _context.Bookings
+                .Where(b => b.BookingStatus == BookingStatus.Completed &&
+                            b.PaymentDate != null &&
+                            b.PaymentDate.Value.Year == year &&
+                            b.PaymentDate.Value.Month == month);
+
+            var query = from b in bookingsInMonth
+
+                        join ts in _context.TourSchedules on b.TourScheduleId equals ts.Id
+                        join t in _context.Tours on ts.TourId equals t.Id
+                        join u in _context.Users on b.UserId equals u.Id into userGroup
+                        from booker in userGroup.DefaultIfEmpty() 
+
+                        orderby b.PaymentDate descending
+                        select new BookingDetailDto
+                        {
+                            BookingId = b.Id,
+                            TourName = t.Name,
+                            CustomerName = (booker != null)
+                                           ? (booker.FirstName + " " + booker.LastName)
+                                           : (b.FirstName + " " + b.LastName), 
+                            BookingDate = b.BookingDate, 
+                            TotalPrice = b.TotalPrice,
+                            Status = b.BookingStatus.HasValue ? b.BookingStatus.Value.ToString() : "N/A" 
+                        };
+
+            return await query.ToListAsync();
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using BE_Capstone_Project.Application.Bookings.Services;
+﻿using BE_Capstone_Project.Application.BookingManagement.Services.Interfaces;
 using BE_Capstone_Project.Application.Services;
 using BE_Capstone_Project.Application.TourManagement.DTOs;
 using BE_Capstone_Project.Application.TourManagement.Services.Interfaces;
@@ -9,6 +9,7 @@ using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.IO;
 
 namespace BE_Capstone_Project.Application.TourManagement.Controllers
 {
@@ -19,12 +20,12 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         private readonly ITourService _tourService;
         private readonly ITourImageService _tourImageService;
         private readonly IUserService _userService;
-        private readonly BookingService _bookingService;
+        private readonly IBookingService _bookingService;
         public TourController(
             ITourService tourService, 
             ITourImageService tourImageService, 
             IUserService userService, 
-            BookingService bookingService)
+            IBookingService bookingService)
         {
             _tourService = tourService;
             _tourImageService = tourImageService;
@@ -33,7 +34,8 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpPost("AddTour")]
-        public async Task<IActionResult> AddTour([FromForm] TourDTO tour, [FromForm] List<string?> images)
+        [Authorize(Roles = "Admin,Staff")] 
+        public async Task<IActionResult> AddTour([FromForm] TourDTO tour, [FromForm] List<IFormFile> images)
         {
             var tourToAdd = new Tour
             {
@@ -56,22 +58,48 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
 
             if (result == -1) return BadRequest(new { message = "Failed to add tour" });
 
-            foreach (var image in images)
+            var imagePaths = new List<string>();
+            if (images != null && images.Count > 0)
             {
-                var imageToAdd = new TourImage
+                foreach (var image in images)
                 {
-                    TourId = result,
-                    Image = image,
-                };
+                    if (image.Length > 0)
+                    {
+                        var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(image.FileName)}";
+                        var imagesPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "tours");
 
-                await _tourImageService.AddTourImage(imageToAdd);
+                        if (!Directory.Exists(imagesPath))
+                        {
+                            Directory.CreateDirectory(imagesPath);
+                        }
+
+                        var fullPath = Path.Combine(imagesPath, fileName);
+
+                        using (var stream = new FileStream(fullPath, FileMode.Create))
+                        {
+                            await image.CopyToAsync(stream);
+                        }
+
+                        var relativePath = $"/images/tours/{fileName}";
+                        imagePaths.Add(relativePath);
+
+                        var imageToAdd = new TourImage
+                        {
+                            TourId = result,
+                            Image = relativePath,
+                        };
+
+                        await _tourImageService.AddTourImage(imageToAdd);
+                    }
+                }
             }
 
             return Ok(new { message = "Tour added successfully", tourId = result });
         }
 
         [HttpPost("UpdateTour")]
-        public async Task<IActionResult> UpdateTour([FromForm] TourDTO tour, [FromForm] List<string?> images)
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> UpdateTour([FromForm] TourDTO tour, [FromForm] List<IFormFile> images)
         {
             var tourToUpdate = await _tourService.GetTourById(tour.Id.Value);
             if (tourToUpdate == null) return BadRequest(new { message = "Failed to update tour" });
@@ -93,38 +121,47 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
             var result = await _tourService.UpdateTour(tourToUpdate);
 
             if (!result) return BadRequest(new { message = "Failed to update tour" });
-
-            var existingTourImages = await _tourImageService.GetTourImagesByTourId(tour.Id.Value);
-
-            if (existingTourImages != null && existingTourImages.Count > 0)
-            {
-                await _tourImageService.DeleteTourImagesByTourId(tour.Id.Value);
-            }
-
-            var newImages = new List<TourImage>();
+           
+            
             if (images != null && images.Count > 0)
             {
                 foreach (var image in images)
                 {
-                    if (!string.IsNullOrEmpty(image))
+                    if (image.Length > 0)
                     {
-                        newImages.Add(new TourImage
+                        var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(image.FileName)}";
+                        var imagesPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "tours");
+
+                        if (!Directory.Exists(imagesPath))
+                        {
+                            Directory.CreateDirectory(imagesPath);
+                        }
+
+                        var fullPath = Path.Combine(imagesPath, fileName);
+
+                        using (var stream = new FileStream(fullPath, FileMode.Create))
+                        {
+                            await image.CopyToAsync(stream);
+                        }
+
+                        var relativePath = $"/images/tours/{fileName}";
+
+                        var imageToAdd = new TourImage
                         {
                             TourId = tour.Id.Value,
-                            Image = image
-                        });
+                            Image = relativePath
+                        };
+
+                        await _tourImageService.AddTourImage(imageToAdd);
                     }
                 }
-
-                var imgsResult = await _tourImageService.AddTourImages(newImages);
-                if (imgsResult == -1)
-                    return BadRequest(new { message = "Failed to update tour images" });
             }
 
             return Ok(new { message = "Tour updated successfully" });
         }
 
         [HttpDelete("DeleteTour")]
+        [Authorize(Roles = "Admin,Staff")] 
         public async Task<IActionResult> DeleteTour(int tourId)
         {
             var imagesToDelete = await _tourImageService.GetTourImagesByTourId(tourId);
@@ -141,6 +178,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpGet("GetAllTours")]
+        [AllowAnonymous] 
         public async Task<IActionResult> GetAllTours()
         {
             var tours = await _tourService.GetAllTours();
@@ -152,6 +190,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpGet("GetTourById/{id}")]
+        [AllowAnonymous] 
         public async Task<IActionResult> GetTourById(int id, [FromQuery] string? username)
         {
             var tour = await _tourService.GetTourById(id);
@@ -174,6 +213,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpGet("GetToursByCategoryId")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetToursByCategoryId(int categoryId)
         {
             var tours = await _tourService.GetToursByCategoryId(categoryId);
@@ -185,6 +225,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpGet("GetToursByStartLocationId")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetToursByStartLocationId(int startLocationId)
         {
             var tours = await _tourService.GetToursByStartLocationId(startLocationId);
@@ -196,6 +237,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpGet("GetToursByEndLocationId")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetToursByEndLocationId(int endLocationId)
         {
             var tours = await _tourService.GetToursByEndLocationId(endLocationId);
@@ -207,6 +249,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpGet("GetToursByPriceRange")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetToursByPriceRange(decimal minPrice, decimal maxPrice)
         {
             var tours = await _tourService.GetToursByPriceRange(minPrice, maxPrice);
@@ -220,6 +263,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
 
 
         [HttpGet("SearchTourByName")]
+        [AllowAnonymous]
         public async Task<IActionResult> SearchTourByName(string name)
         {
             var tours = await _tourService.SearchTourByName(name);
@@ -232,6 +276,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
 
 
         [HttpGet("GetTotalTourCount")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetTotalTourCount()
         {
             var tourCount = await _tourService.GetTotalTourCount();
@@ -242,6 +287,7 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpGet("GetPaginatedTours")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetPaginatedTours(int page = 1, int pageSize = 10)
         {
             var tours = await _tourService.GetPaginatedTours(page, pageSize);
@@ -253,36 +299,37 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
         }
 
         [HttpPost("ToggleTourStatus")]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> ToggleTourStatus(int tourId)
         {
             try
             {
                 var tour = await _tourService.GetTourById(tourId);
                 if (tour == null)
-                    return NotFound(new { message = $"Không tìm thấy tour với id {tourId}" });
+                    return NotFound(new { message = $"No tour found with id {tourId}" });
 
-                // Đảo ngược trạng thái
                 tour.TourStatus = !tour.TourStatus;
                 var newStatus = tour.TourStatus;
 
                 var result = await _tourService.UpdateTour(tour);
 
                 if (!result)
-                    return BadRequest(new { message = "Thay đổi trạng thái thất bại" });
+                    return BadRequest(new { message = "Failed to change status" });
 
                 return Ok(new
                 {
-                    message = (bool)newStatus ? "Tour đã được hiển thị" : "Tour đã được ẩn",
+                    message = (bool)newStatus ? "Tour has been shown" : "Tour has been hidden",
                     newStatus = newStatus
                 });
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "Lỗi khi thay đổi trạng thái", error = ex.Message });
+                return BadRequest(new { message = "Error changing state", error = ex.Message });
             }
-        }
+            }
 
         [HttpGet("GetTopToursByEachCategories")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetTopToursByEachCategories()
         {
             var tours = await _tourService.GetTopToursByEachCategories();
@@ -292,5 +339,182 @@ namespace BE_Capstone_Project.Application.TourManagement.Controllers
 
             return Ok(new { message = $"Found {tours.Count} tours", tours });
         }
+
+        [HttpGet("GetFilteredTours")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetFilteredTours(
+        int page = 1,
+        int pageSize = 10,
+        bool? status = null,  
+        int? startLocation = null,
+        int? endLocation = null,
+        int? category = null,
+        decimal? minPrice = null,
+        decimal? maxPrice = null,
+        string sort = null,
+        string search = null)
+        {
+            var tours = await _tourService.GetFilteredTours(
+                page, pageSize, status, startLocation, endLocation,
+                category, minPrice, maxPrice, sort, search);
+
+            if (tours == null || !tours.Any())
+                return Ok(new { message = "No tours found", tours });
+
+            return Ok(new { message = $"Found {tours.Count} tours", tours });
+        }
+
+        [HttpGet("GetFilteredTourCount")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetFilteredTourCount(
+            bool? status = null,
+            int? startLocation = null,
+            int? endLocation = null,
+            int? category = null,
+            decimal? minPrice = null,
+            decimal? maxPrice = null,
+            string search = null)
+        {
+            var count = await _tourService.GetFilteredTourCount(
+                status, startLocation, endLocation, category, minPrice, maxPrice, search);
+
+            return Ok(new { message = $"Filtered tour count: {count}", tourCount = count });
+        }
+
+        [HttpPost("DeleteTourImage")]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> DeleteTourImage(int imageId)
+        {
+            try
+            {
+                var imageToDelete = await _tourImageService.GetTourImageById(imageId);
+
+                if (imageToDelete == null)
+                    return NotFound(new { success = false, message = "Image not found" });
+
+                var result = await _tourImageService.DeleteTourImage(imageId);
+
+                if (!result)
+                    return BadRequest(new { success = false, message = "Failed to delete image" });
+
+                return Ok(new { success = true, message = "Image deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = "Error deleting image" });
+            }
+        }
+
+        [HttpPost("UploadTourImages")]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> UploadTourImages(int tourId, List<IFormFile> images)
+        {
+            try
+            {
+                var uploadedImages = new List<string>();
+
+                foreach (var image in images)
+                {
+                    if (image.Length > 0)
+                    {
+                        var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(image.FileName)}";
+
+                        var imagesPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "tours");
+
+
+                        if (!Directory.Exists(imagesPath))
+                        {
+                            Directory.CreateDirectory(imagesPath);
+                        }
+
+                        var fullPath = Path.Combine(imagesPath, fileName);
+
+                        using (var stream = new FileStream(fullPath, FileMode.Create))
+                        {
+                            await image.CopyToAsync(stream);
+                        }
+
+                        var relativePath = $"/images/tours/{fileName}";
+                        uploadedImages.Add(relativePath);
+                    }
+                }
+
+                return Ok(new { message = "Images uploaded successfully", images = uploadedImages });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Failed to upload images", error = ex.Message });
+            }
+        }
+        [HttpGet("GetImage")]
+        public IActionResult GetImage([FromQuery] string path)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(path))
+                    return NotFound(new { message = "Image path is required" });
+
+                var safePath = path.TrimStart('/');
+                var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", safePath);
+                var rootPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"));
+                var requestedPath = Path.GetFullPath(fullPath);
+
+                if (!requestedPath.StartsWith(rootPath))
+                {
+                    return BadRequest(new { message = "Invalid image path" });
+                }
+                if (!System.IO.File.Exists(fullPath))
+                {
+                    var defaultImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "default-tour.jpg");
+                    if (System.IO.File.Exists(defaultImagePath))
+                    {
+                        var defaultImageBytes = System.IO.File.ReadAllBytes(defaultImagePath);
+                        return File(defaultImageBytes, "image/jpeg");
+                    }
+                    return NotFound(new { message = "Image not found" });
+                }
+
+                var imageBytes = System.IO.File.ReadAllBytes(fullPath);
+                var contentType = GetContentType(fullPath);
+
+                return File(imageBytes, contentType);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Error loading image", error = ex.Message });
+            }
+        }
+
+        private string GetContentType(string path)
+        {
+            var extension = Path.GetExtension(path).ToLowerInvariant();
+            return extension switch
+            {
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".png" => "image/png",             
+                _ => "application/octet-stream"
+            };
+        }
+
+        [HttpGet("GetActiveTours")]
+        public async Task<ActionResult<ApiResponse<List<Tour>>>> GetActiveTours()
+        {
+            try
+            {
+                var tours = await _tourService.GetActiveTours();
+
+                if (tours == null || !tours.Any())
+                {
+                    return Ok(new ApiResponse<List<Tour>>(true, "No active tours found", new List<Tour>()));
+                }
+
+                return Ok(new ApiResponse<List<Tour>>(true, "Active tours retrieved successfully", tours));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ApiResponse<List<Tour>>(false, $"Internal server error: {ex.Message}"));
+            }
+        }
+
     }
 }

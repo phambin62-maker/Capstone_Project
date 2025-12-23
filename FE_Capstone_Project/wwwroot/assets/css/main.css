@@ -8542,3 +8542,26 @@ section,
 .disabled {
     pointer-events: none;
 }
+
+.form-control:disabled{
+    opacity: 0.5;
+}
+
+.travelers-container {
+    max-height: 900px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.step.nav-link.disabled-step {
+    pointer-events: none;
+    cursor: not-allowed;
+}
+
+.tour-content p, p.description, p.brief {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

@@ -1,0 +1,2 @@
+ALTER TABLE Users ADD SecurityQuestion NVARCHAR(255) NULL;
+GO

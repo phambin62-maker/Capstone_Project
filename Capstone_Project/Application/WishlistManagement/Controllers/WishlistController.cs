@@ -1,4 +1,4 @@
-﻿using BE_Capstone_Project.Application.Bookings.Services;
+﻿using BE_Capstone_Project.Application.BookingManagement.Services;
 using BE_Capstone_Project.Application.Services;
 using BE_Capstone_Project.Application.WishlistManagement.DTOs;
 using BE_Capstone_Project.Application.WishlistManagement.Services.Interfaces;
@@ -12,7 +12,7 @@ namespace BE_Capstone_Project.Application.WishlistManagement.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize]
+    [Authorize]
     public class WishlistController : ControllerBase
     {
         private readonly IWishlistService _wishlistService;

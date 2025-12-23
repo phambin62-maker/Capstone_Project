@@ -18,6 +18,8 @@
         public string? Image { get; set; }
         public string? ImageUrl { get; set; }
         public string? NewsStatus { get; set; }
+        public DateTime? UpdatedDate { get; set; }
+        public string? UpdatedAuthor { get; set; }
     }
 
     public class NewsViewModel
@@ -32,6 +34,8 @@
         public string? NewsTitle { get; set; }
         public int PageSize { get; set; } = 10;
         public string? Search { get; set; }
+        public DateTime? UpdatedDate { get; set; }
+        public string? UpdatedAuthor { get; set; }
     }
 
         public class NewsListViewModel
@@ -43,5 +47,14 @@
             public int CurrentPage { get; set; }
             public int TotalPages { get; set; }
             public string? Status { get; set; }
+        }
+
+
+    public class NewsStatsDTO
+    {
+        public int Total { get; set; }
+        public int Published { get; set; }
+        public int Draft { get; set; }
+        public int Hidden { get; set; }
     }
 }

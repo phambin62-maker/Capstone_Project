@@ -62,5 +62,21 @@ namespace BE_Capstone_Project.Application.Auth.Controllers
             };
             return Ok(userDto);
         }
+
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            var users = await _userService.GetAllUsers();
+            var userDtos = users.ConvertAll(user => new UserDto
+            {
+                Id = user.Id,
+                Username = user.Username,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                PhoneNumber = user.PhoneNumber,
+                Email = user.Email,
+            });
+            return Ok(userDtos);
+        }
     }
 }

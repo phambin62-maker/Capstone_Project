@@ -7,6 +7,15 @@
     var activeTours = Model?.Count(t => t.TourStatus) ?? 0;
     var inactiveTours = Model?.Count(t => !t.TourStatus) ?? 0;
     var displayingTours = Model?.Count ?? 0;
+
+    var currentStatus = Context.Request.Query["status"].ToString();
+    var currentStartLocation = Context.Request.Query["startLocation"].ToString();
+    var currentEndLocation = Context.Request.Query["endLocation"].ToString();
+    var currentCategory = Context.Request.Query["category"].ToString();
+    var currentMinPrice = Context.Request.Query["minPrice"].ToString();
+    var currentMaxPrice = Context.Request.Query["maxPrice"].ToString();
+    var currentSort = Context.Request.Query["sort"].ToString();
+    var currentSearch = Context.Request.Query["search"].ToString();
 }
 
 <div class="container-fluid">
@@ -28,69 +37,68 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
-    <!-- Quick statistics -->
     <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card stat-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon bg-primary">
-                            <i class="bi bi-map"></i>
-                        </div>
-                        <div class="ms-3">
-                            <h4 class="mb-0">@ViewBag.TotalCount</h4>
-                            <small class="text-muted">Total Tours</small>
-                        </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-primary">
+                        <i class="bi bi-map"></i>
                     </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card stat-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon bg-success">
-                            <i class="bi bi-eye"></i>
-                        </div>
-                        <div class="ms-3">
-                            <h4 class="mb-0">@activeTours</h4>
-                            <small class="text-muted">Active</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card stat-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon bg-secondary">
-                            <i class="bi bi-eye-slash"></i>
-                        </div>
-                        <div class="ms-3">
-                            <h4 class="mb-0">@inactiveTours</h4>
-                            <small class="text-muted">Inactive</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card stat-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon bg-info">
-                            <i class="bi bi-clock"></i>
-                        </div>
-                        <div class="ms-3">
-                            <h4 class="mb-0">@displayingTours</h4>
-                            <small class="text-muted">Displayed</small>
-                        </div>
+                    <div class="ms-3">
+                        <h4 class="mb-0">@ViewBag.TotalTours</h4>
+                        <small class="text-muted">Total Tours</small>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-success">
+                        <i class="bi bi-eye"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h4 class="mb-0">@ViewBag.ActiveTours</h4>
+                        <small class="text-muted">Active</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-secondary">
+                        <i class="bi bi-eye-slash"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h4 class="mb-0">@ViewBag.InactiveTours</h4>
+                        <small class="text-muted">Inactive</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-info">
+                        <i class="bi bi-clock"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h4 class="mb-0">@ViewBag.DisplayingTours</h4>
+                        <small class="text-muted">Displayed</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
     <div class="card">
         <div class="card-header bg-transparent">
@@ -103,15 +111,37 @@
                 <div class="col-md-6 text-end">
                     <div class="d-flex justify-content-end gap-2">
                         <div class="input-group input-group-sm" style="width: 250px;">
-                            <input type="text" class="form-control" placeholder="Search tour..." id="searchInput">
+                            <input type="text" class="form-control" placeholder="Search tour..." id="searchInput" value="@currentSearch">
                             <button class="btn btn-outline-secondary" type="button" id="searchButton">
                                 <i class="bi bi-search"></i>
                             </button>
-                        </div>
-                        <select class="form-select form-select-sm" style="width: 180px;" id="statusFilter">
-                            <option value="">All Status</option>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
+                        </div>                        
+                        <!-- Sort by -->
+                        <select class="form-select form-select-sm" style="width: 180px;" id="sortBy">
+                            <option value="">Sort by: Newest</option>
+                            @if (currentSort == "asc")
+                            {
+                                <option value="asc" selected>Price: Low to High</option>
+                                <option value="desc">Price: High to Low</option>
+
+                            }
+                            else if (currentSort == "desc")
+                            {
+                                <option value="asc">Price: Low to High</option>
+                                <option value="desc" selected>Price: High to Low</option>
+                            }
+                            else if (currentSort == "newest")
+                            {
+                                <option value="asc">Price: Low to High</option>
+                                <option value="desc">Price: High to Low</option>
+                                <option value="newest" selected>Newest First</option>
+                            }
+                            else
+                            {
+                                <option value="asc">Price: Low to High</option>
+                                <option value="desc">Price: High to Low</option>
+
+                            }
                         </select>
                     </div>
                 </div>
@@ -122,7 +152,25 @@
                 <div class="col-md-12">
                     <div class="d-flex flex-wrap gap-2 align-items-center">
                         <small class="text-muted me-2"><strong>Filters:</strong></small>
-                        
+                        <!-- Status filter -->
+                        <select class="form-select form-select-sm" style="width: 180px;" id="statusFilter">
+                            <option value="">All Status</option>
+                            @if (currentStatus == "active")
+                            {
+                                <option value="active" selected>Active</option>
+                                <option value="inactive">Inactive</option>
+                            }
+                            else if (currentStatus == "inactive")
+                            {
+                                <option value="active">Active</option>
+                                <option value="inactive" selected>Inactive</option>
+                            }
+                            else
+                            {
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            }
+                        </select>
                         <!-- Start location filter -->
                         <select class="form-select form-select-sm" style="width: 180px;" id="startLocationFilter">
                             <option value="">All Start Locations</option>
@@ -130,7 +178,14 @@
                             {
                                 foreach (var location in ViewBag.Locations)
                                 {
-                                    <option value="@location.Id">@location.LocationName</option>
+                                    if (currentStartLocation == location.Id.ToString())
+                                    {
+                                        <option value="@location.Id" selected>@location.LocationName</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@location.Id">@location.LocationName</option>
+                                    }
                                 }
                             }
                         </select>
@@ -142,7 +197,14 @@
                             {
                                 foreach (var location in ViewBag.Locations)
                                 {
-                                    <option value="@location.Id">@location.LocationName</option>
+                                    if (currentEndLocation == location.Id.ToString())
+                                    {
+                                        <option value="@location.Id" selected>@location.LocationName</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@location.Id">@location.LocationName</option>
+                                    }
                                 }
                             }
                         </select>
@@ -154,28 +216,28 @@
                             {
                                 foreach (var category in ViewBag.Categories)
                                 {
-                                    <option value="@category.Id">@category.CategoryName</option>
+                                    if (currentCategory == category.Id.ToString())
+                                    {
+                                        <option value="@category.Id" selected>@category.CategoryName</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@category.Id">@category.CategoryName</option>
+                                    }
                                 }
                             }
                         </select>
 
-                        <!-- Sort by price -->
-                        <select class="form-select form-select-sm" style="width: 180px;" id="sortByPrice">
-                            <option value="">Sort by Price</option>
-                            <option value="asc">Price: Low to High</option>
-                            <option value="desc">Price: High to Low</option>
-                        </select>
-
                         <!-- Price range -->
                         <div class="input-group input-group-sm" style="width: 200px;">
-                            <input type="number" class="form-control" placeholder="Min Price" id="minPrice">
-                            <input type="number" class="form-control" placeholder="Max Price" id="maxPrice">
+                            <input type="number" class="form-control" placeholder="Min Price" id="minPrice" value="@currentMinPrice">
+                            <input type="number" class="form-control" placeholder="Max Price" id="maxPrice" value="@currentMaxPrice">
                         </div>
 
                         <button class="btn btn-sm btn-outline-primary" id="applyFilters">
                             <i class="bi bi-funnel me-1"></i>Apply
                         </button>
-                        
+            
                         <button class="btn btn-sm btn-outline-secondary" id="resetFilters">
                             <i class="bi bi-arrow-clockwise me-1"></i>Reset
                         </button>
@@ -201,7 +263,6 @@
                     <table class="table table-hover table-striped" id="toursTable">
                         <thead class="table-light">
                             <tr>
-                                <th width="80" class="text-center">ID</th>
                                 <th>Tour Name</th>
                                 <th width="150" class="text-center">Start Location</th>
                                 <th width="150" class="text-center">End Location</th>
@@ -218,27 +279,11 @@
                         <tbody>
                             @foreach (var tour in Model)
                             {
-                                <tr data-status="@(tour.TourStatus ? "active" : "inactive")"
-                                    data-start-location="@tour.StartLocationId"
-                                    data-end-location="@tour.EndLocationId"
-                                    data-category="@tour.CategoryId"
-                                    data-price="@tour.Price">
-                                    <td class="text-center">
-                                        <span class="badge bg-secondary">#@tour.Id</span>
-                                    </td>
+                                <tr>                                   
                                     <td>
                                         <div class="d-flex align-items-start">
-                                            <div class="tour-avatar me-3">
-                                                <i class="bi bi-map text-primary"></i>
-                                            </div>
-                                            <div>
+                                            <div class="me-3">
                                                 <strong class="text-dark d-block">@tour.Name</strong>
-                                                @if (!string.IsNullOrEmpty(tour.Description))
-                                                {
-                                                    <small class="text-muted">
-                                                        @(tour.Description.Length > 100 ? tour.Description.Substring(0, 100) + "..." : tour.Description)
-                                                    </small>
-                                                }
                                             </div>
                                         </div>
                                     </td>
@@ -302,7 +347,6 @@
                                     </td>
                                     <td class="text-center">
                                         <div class="seat-info">
-                                            <small class="text-muted d-block">Min: <strong>@(tour.MinSeats?.ToString() ?? "N/A")</strong></small>
                                             <small class="text-muted d-block">Max: <strong>@(tour.MaxSeats?.ToString() ?? "N/A")</strong></small>
                                         </div>
                                     </td>
@@ -355,7 +399,18 @@
                             <ul class="pagination pagination-sm mb-0">
                                 <!-- Previous button -->
                                 <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
-                                    <a class="page-link" href="@Url.Action("Tours", new { page = ViewBag.CurrentPage - 1, pageSize = ViewBag.PageSize })">
+                                    <a class="page-link" href="@Url.Action("Tours", new { 
+                                        page = ViewBag.CurrentPage - 1, 
+                                        pageSize = ViewBag.PageSize,
+                                        status = currentStatus,
+                                        startLocation = currentStartLocation,
+                                        endLocation = currentEndLocation,
+                                        category = currentCategory,
+                                        minPrice = currentMinPrice,
+                                        maxPrice = currentMaxPrice,
+                                        sort = currentSort,
+                                        search = currentSearch
+                                    })">
                                         <i class="bi bi-chevron-left"></i>
                                     </a>
                                 </li>
@@ -366,7 +421,18 @@
                                     if (i == 1 || i == ViewBag.TotalPages || (i >= ViewBag.CurrentPage - 1 && i <= ViewBag.CurrentPage + 1))
                                     {
                                         <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
-                                            <a class="page-link" href="@Url.Action("Tours", new { page = i, pageSize = ViewBag.PageSize })">@i</a>
+                                            <a class="page-link" href="@Url.Action("Tours", new { 
+                                                page = i, 
+                                                pageSize = ViewBag.PageSize,
+                                                status = currentStatus,
+                                                startLocation = currentStartLocation,
+                                                endLocation = currentEndLocation,
+                                                category = currentCategory,
+                                                minPrice = currentMinPrice,
+                                                maxPrice = currentMaxPrice,
+                                                sort = currentSort,
+                                                search = currentSearch
+                                            })">@i</a>
                                         </li>
                                     }
                                     else if (i == ViewBag.CurrentPage - 2 || i == ViewBag.CurrentPage + 2)
@@ -379,7 +445,18 @@
 
                                 <!-- Next button -->
                                 <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
-                                    <a class="page-link" href="@Url.Action("Tours", new { page = ViewBag.CurrentPage + 1, pageSize = ViewBag.PageSize })">
+                                    <a class="page-link" href="@Url.Action("Tours", new { 
+                                        page = ViewBag.CurrentPage + 1, 
+                                        pageSize = ViewBag.PageSize,
+                                        status = currentStatus,
+                                        startLocation = currentStartLocation,
+                                        endLocation = currentEndLocation,
+                                        category = currentCategory,
+                                        minPrice = currentMinPrice,
+                                        maxPrice = currentMaxPrice,
+                                        sort = currentSort,
+                                        search = currentSearch
+                                    })">
                                         <i class="bi bi-chevron-right"></i>
                                     </a>
                                 </li>
@@ -392,112 +469,107 @@
     </div>
 </div>
 
+@section Styles {
+    <style>
+        .stat-card {
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+    </style>
+}
+
 @section Scripts {
     <script>
         $(document).ready(function () {
-            // Initialize tooltip
             $('[data-bs-toggle="tooltip"]').tooltip();
 
-            // Search tour by name
-            $('#searchInput').on('keyup', function () {
-                var value = $(this).val().toLowerCase();
-                $('#toursTable tbody tr').filter(function () {
-                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
-                });
+            $('#applyFilters').on('click', function () {
+                applyFiltersAndRedirect();
+            });
+
+            
+            $('#searchInput').on('keyup', function (e) {
+                if (e.keyCode === 13) { 
+                    applyFiltersAndRedirect();
+                }
             });
 
             $('#searchButton').on('click', function () {
-                var value = $('#searchInput').val().toLowerCase();
-                $('#toursTable tbody tr').filter(function () {
-                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
-                });
+                applyFiltersAndRedirect();
             });
 
-            // Filter by status
-            $('#statusFilter').on('change', function () {
-                applyAllFilters();
+            $('#sortBy').on('change', function () {
+                applyFiltersAndRedirect();
             });
 
-            // Apply all filters
-            $('#applyFilters').on('click', function () {
-                applyAllFilters();
-            });
-
-            // Reset filters
             $('#resetFilters').on('click', function () {
-                $('#startLocationFilter').val('');
-                $('#endLocationFilter').val('');
-                $('#categoryFilter').val('');
-                $('#sortByPrice').val('');
-                $('#minPrice').val('');
-                $('#maxPrice').val('');
-                $('#statusFilter').val('');
-                $('#searchInput').val('');
-                
-                // Show all rows
-                $('#toursTable tbody tr').show();
-                
-                // Sort back to original order
-                var tbody = $('#toursTable tbody');
-                tbody.find('tr').sort(function(a, b) {
-                    return $(a).find('td:first .badge').text().localeCompare($(b).find('td:first .badge').text());
-                }).appendTo(tbody);
+                window.location.href = '@Url.Action("Tours")';
             });
 
-            function applyAllFilters() {
+            function applyFiltersAndRedirect() {
                 var statusFilter = $('#statusFilter').val();
                 var startLocationFilter = $('#startLocationFilter').val();
                 var endLocationFilter = $('#endLocationFilter').val();
                 var categoryFilter = $('#categoryFilter').val();
                 var minPrice = $('#minPrice').val();
                 var maxPrice = $('#maxPrice').val();
-                var sortByPrice = $('#sortByPrice').val();
-                var searchValue = $('#searchInput').val().toLowerCase();
+                var sortBy = $('#sortBy').val();
+                var searchValue = $('#searchInput').val();
 
-                $('#toursTable tbody tr').each(function () {
-                    var showRow = true;
-                    var $row = $(this);
-        
-                    if (statusFilter && $row.data('status') !== statusFilter) {
-                        showRow = false;
-                    }
-                    if (startLocationFilter && $row.data('start-location')?.toString() !== startLocationFilter) {
-                        showRow = false;
-                    }
-                    if (endLocationFilter && $row.data('end-location')?.toString() !== endLocationFilter) {
-                        showRow = false;
-                    }
-                    if (categoryFilter && $row.data('category')?.toString() !== categoryFilter) {
-                        showRow = false;
-                    }
-                    var price = parseFloat($row.data('price')) || 0;
-                    if (minPrice && price < parseFloat(minPrice)) showRow = false;
-                    if (maxPrice && price > parseFloat(maxPrice)) showRow = false;
-                    if (searchValue && $row.text().toLowerCase().indexOf(searchValue) === -1) showRow = false;
-        
-                    $row.toggle(showRow);
-                });
-
-                if (sortByPrice) {
-                    var tbody = $('#toursTable tbody');
-                    var rows = tbody.find('tr:visible').get();
-                    rows.sort(function(a, b) {
-                        var priceA = parseFloat($(a).data('price')) || 0;
-                        var priceB = parseFloat($(b).data('price')) || 0;
-                        return sortByPrice === 'asc' ? priceA - priceB : priceB - priceA;
-                    });
-                    $.each(rows, function(index, row) {
-                        tbody.append(row);
-                    });
+                var url = '@Url.Action("Tours", new { page = 1 })';
+                
+                if (statusFilter) {
+                    url += '&status=' + encodeURIComponent(statusFilter);
                 }
+                if (startLocationFilter) {
+                    url += '&startLocation=' + encodeURIComponent(startLocationFilter);
+                }
+                if (endLocationFilter) {
+                    url += '&endLocation=' + encodeURIComponent(endLocationFilter);
+                }
+                if (categoryFilter) {
+                    url += '&category=' + encodeURIComponent(categoryFilter);
+                }
+                if (minPrice) {
+                    url += '&minPrice=' + encodeURIComponent(minPrice);
+                }
+                if (maxPrice) {
+                    url += '&maxPrice=' + encodeURIComponent(maxPrice);
+                }
+                if (sortBy) {
+                    url += '&sort=' + encodeURIComponent(sortBy);
+                }
+                if (searchValue) {
+                    url += '&search=' + encodeURIComponent(searchValue);
+                }
+                window.location.href = url;
             }
 
-            // Auto hide alerts after 5 seconds
+            // Save list state for "Back to List" functionality
+            if (typeof saveListState === 'function') {
+                saveListState('tours');
+            }
+
             setTimeout(function() {
                 $('.alert').alert('close');
             }, 5000);
 
-            // Hover effect for table rows
             $('#toursTable tbody tr').hover(
                 function() { $(this).addClass('table-active'); },
                 function() { $(this).removeClass('table-active'); }

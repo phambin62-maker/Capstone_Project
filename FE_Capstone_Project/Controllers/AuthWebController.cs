@@ -52,7 +52,7 @@ namespace FE_Capstone_Project.Controllers
 
             if (!response.IsSuccessStatusCode)
             {
-                model.Message = "Sai thông tin đăng nhập hoặc tài khoản không tồn tại.";
+                model.Message = "Invalid login credentials or account does not exist.";
                 return View(model);
             }
 
@@ -64,7 +64,7 @@ namespace FE_Capstone_Project.Controllers
 
             if (loginResult == null || string.IsNullOrEmpty(loginResult.Token))
             {
-                model.Message = "Không nhận được token từ server.";
+                model.Message = "Failed to receive token from server.";
                 return View(model);
             }
             var handler = new JwtSecurityTokenHandler();
@@ -73,23 +73,22 @@ namespace FE_Capstone_Project.Controllers
 
             var firstName = payload.ContainsKey("unique_name") ? payload["unique_name"].ToString() : "";
             var email = payload.ContainsKey("email") ? payload["email"].ToString() : "";
-            
+            var userId = int.Parse(payload.ContainsKey("UserId") ? payload["UserId"].ToString() : "0");
+            HttpContext.Session.SetInt32("UserId", userId);
             HttpContext.Session.SetString("JwtToken", loginResult.Token);
             HttpContext.Session.SetString("UserName", firstName);
             HttpContext.Session.SetString("UserEmail", email);
             HttpContext.Session.SetInt32("UserRoleId", loginResult.RoleId);
+            
             switch (loginResult.RoleId)
             {
-                case 3: 
+                case 3:
                     return RedirectToAction("Index", "Home");
-
-                case 2: 
+                case 2:
                     return RedirectToAction("Index", "Staff");
-
                 case 1:
-                    return RedirectToAction("Dashboard", "Admin");
+                    return RedirectToAction("Account", "AdminWeb");
                 default:
-                   
                     return RedirectToAction("Index", "Home");
             }
         }
@@ -104,6 +103,7 @@ namespace FE_Capstone_Project.Controllers
 
         public async Task<IActionResult> GoogleResponse()
         {
+
             var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             var claims = result.Principal.Identities.FirstOrDefault()?.Claims.ToList();
 
@@ -113,14 +113,14 @@ namespace FE_Capstone_Project.Controllers
 
             if (email == null)
             {
-                _logger.LogWarning("Google login không có email, chuyển hướng về trang Login");
+                _logger.LogWarning("Google login missing email, redirecting to Login page");
                 return RedirectToAction("Login", "AuthWeb");
             }
 
             HttpContext.Session.SetString("UserName", name ?? "");
             HttpContext.Session.SetString("UserEmail", email);
 
-            // ✅ Gửi yêu cầu đến BE
+            // Gửi yêu cầu đến BE
             var userPayload = new
             {
                 Email = email,
@@ -129,62 +129,77 @@ namespace FE_Capstone_Project.Controllers
             };
 
             var requestUrl = $"{_baseUrl}/google-sync";
-            //_logger.LogInformation($"Gửi request đồng bộ Google user đến {requestUrl}");
-
             var response = await _httpClient.PostAsJsonAsync(requestUrl, userPayload);
 
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
-
-                // ✅ Deserialize để lấy token BE trả về
                 using var doc = JsonDocument.Parse(content);
                 var root = doc.RootElement;
 
                 var token = root.TryGetProperty("token", out var tokenElement) ? tokenElement.GetString() : null;
                 var message = root.TryGetProperty("message", out var msgElement) ? msgElement.GetString() : "Đăng nhập thành công";
 
+                
+                var userId = root.TryGetProperty("userId", out var userIdElement) ? userIdElement.GetInt32() : 0;
+
                 if (!string.IsNullOrEmpty(token))
                 {
                     HttpContext.Session.SetString("JwtToken", token);
-                    _logger.LogInformation($"Lưu token vào session thành công cho {email}");
+
+                    var handler = new JwtSecurityTokenHandler();
+                    var jwtToken = handler.ReadJwtToken(token);
+                    var payload = jwtToken.Payload;
+
+                    var username = payload.ContainsKey("unique_name") ? payload["unique_name"].ToString()
+                                   : payload.ContainsKey("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")
+                                     ? payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"].ToString()
+                                     : name ?? email.Split('@')[0];
+
+                    var roleId = payload.ContainsKey("RoleId") ? int.Parse(payload["RoleId"].ToString() ?? "3") : 3;
+
+                    HttpContext.Session.SetString("UserName", username ?? name ?? "");
+                    HttpContext.Session.SetString("UserEmail", email);
+                    HttpContext.Session.SetInt32("UserRoleId", roleId);
+                    HttpContext.Session.SetInt32("UserId", userId);
+
+
+                    _logger.LogInformation($"Successfully saved token to session for {email}, username: {username}");
                 }
                 else
                 {
-                    _logger.LogWarning($"BE không trả về token cho {email}. Message: {message}");
+                    _logger.LogWarning($"Backend did not return token for {email}. Message: {message}");
                 }
-
                 return RedirectToAction("Index", "Home");
             }
             else
             {
                 var err = await response.Content.ReadAsStringAsync();
-                _logger.LogError($"Không thể đồng bộ user Google: {err}");
+                _logger.LogError($"Unable to sync Google user: {err}");
                 return RedirectToAction("Login", "AuthWeb");
             }
         }
 
-
-
         public IActionResult Logout()
         {
-            
             HttpContext.Session.Clear();
             return RedirectToAction("Index", "Home");
         }
+
         [HttpGet]
         public IActionResult Register()
         {
             ViewData["HideHeader"] = true;
             return View(new RegisterViewModel());
         }
+
         [HttpPost]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
             ViewData["HideHeader"] = true;
             if (!ModelState.IsValid)
             {
-                ViewBag.Error = "Vui lòng nhập đầy đủ thông tin.";
+                ViewBag.Error = "Please fill in all required information.";
                 return View(model);
             }
 
@@ -198,24 +213,22 @@ namespace FE_Capstone_Project.Controllers
 
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["SuccessMessage"] = "🎉 Đăng ký thành công! Vui lòng đăng nhập.";
+                    TempData["SuccessMessage"] = "Registration successful. Please login.";
                     return RedirectToAction("Login");
                 }
                 else
                 {
                     var error = await response.Content.ReadAsStringAsync();
-                    ViewBag.Error = "Trùng Email hoặc User Name ";
+                    ViewBag.Error = "Duplicate Email or Username";
                     return View(model);
                 }
             }
             catch (Exception ex)
             {
-                ViewBag.Error = "⚠️ Không thể kết nối đến máy chủ: " + ex.Message;
+                ViewBag.Error = "Unable to connect to server: " + ex.Message;
                 return View(model);
             }
         }
-
-
 
         public IActionResult CheckSession()
         {
@@ -223,20 +236,25 @@ namespace FE_Capstone_Project.Controllers
             var token = HttpContext.Session.GetString("JwtToken");
             var name = HttpContext.Session.GetString("UserName");
             var email = HttpContext.Session.GetString("UserEmail");
-            if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(email))
+
+            // === THÊM KIỂM TRA USERID ===
+            var userId = HttpContext.Session.GetString("UserId");
+
+            if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(userId))
             {
-                return Content("Session chưa được lưu hoặc đã hết hạn.");
+                return Content("Session chưa được lưu hoặc đã hết hạn. (Thiếu UserId, UserName hoặc Email)");
             }
 
-            return Content($"Session hợp lệ! UserName: {name}, Token: {token.Substring(0, 15)}..., username:{name}");
+            return Content($"Session hợp lệ! UserName: {name}, UserId: {userId}, Token: {token?.Substring(0, 15)}...");
         }
+
         [HttpGet]
         public async Task<IActionResult> Profile()
         {
             var token = HttpContext.Session.GetString("JwtToken");
             var email = HttpContext.Session.GetString("UserEmail");
 
-            if (string.IsNullOrEmpty(email))
+            if (string.IsNullOrEmpty(token))
                 return RedirectToAction("Login");
 
             _httpClient.DefaultRequestHeaders.Authorization =
@@ -257,6 +275,7 @@ namespace FE_Capstone_Project.Controllers
 
             return View(user);
         }
+
         [HttpPost]
         public async Task<IActionResult> Profile(UserProfileViewModel model)
         {
@@ -283,7 +302,7 @@ namespace FE_Capstone_Project.Controllers
 
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["Success"] = "Cập nhật thông tin thành công.";
+                    TempData["Success"] = "Update Infomation successfully.";
                     return RedirectToAction("profile");
                 }
 
@@ -297,7 +316,6 @@ namespace FE_Capstone_Project.Controllers
                 return View(model);
             }
         }
-
 
         private static Dictionary<string, object> DecodeJwtPayload(string token)
         {
@@ -318,16 +336,228 @@ namespace FE_Capstone_Project.Controllers
 
             return JsonSerializer.Deserialize<Dictionary<string, object>>(json);
         }
+
         public IActionResult Users()
         {
             return View();
         }
-        
+
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            ViewData["HideHeader"] = true;
+            return View(new ResetPasswordViewModel());
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ForgotPassword(ResetPasswordViewModel model)
+        {
+            ViewData["HideHeader"] = true;
+            
+            if (string.IsNullOrWhiteSpace(model.Email))
+            {
+                model.Error = "Please enter your email address.";
+                return View(model);
+            }
+
+            try
+            {
+                var requestDto = new { Email = model.Email };
+                var json = JsonSerializer.Serialize(requestDto);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                
+                var response = await _httpClient.PostAsync($"{_baseUrl}/get-security-question", content);
+                var responseString = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    string errorMessage = "Account not found or security question not set up.";
+                    
+                    try
+                    {
+                        var errorResponse = JsonSerializer.Deserialize<Dictionary<string, string>>(responseString, new JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true
+                        });
+                        
+                        if (errorResponse?.ContainsKey("message") == true)
+                        {
+                            errorMessage = errorResponse["message"];
+                        }
+                        else if (!string.IsNullOrWhiteSpace(responseString) && !responseString.StartsWith("{"))
+                        {
+                            // Handle plain string error messages
+                            errorMessage = responseString.Trim('"');
+                        }
+                    }
+                    catch
+                    {
+                        // If JSON parsing fails, use the raw response string
+                        if (!string.IsNullOrWhiteSpace(responseString))
+                        {
+                            errorMessage = responseString.Trim('"');
+                        }
+                    }
+                    
+                    model.Error = errorMessage;
+                    return View(model);
+                }
+
+                var result = JsonSerializer.Deserialize<Dictionary<string, string>>(responseString, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                if (result != null && result.ContainsKey("question"))
+                {
+                    model.SecurityQuestion = result["question"];
+                    return RedirectToAction("ResetPassword", new { email = model.Email, securityQuestion = model.SecurityQuestion });
+                }
+
+                model.Error = "Unable to retrieve security question.";
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving security question");
+                model.Error = "An error occurred while processing your request. Please try again.";
+                return View(model);
+            }
+        }
+
+        [HttpGet]
+        public IActionResult ResetPassword(string email, string securityQuestion)
+        {
+            ViewData["HideHeader"] = true;
+            
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(securityQuestion))
+            {
+                TempData["Error"] = "Invalid information. Please try again from the beginning.";
+                return RedirectToAction("ForgotPassword");
+            }
+
+            var model = new ResetPasswordViewModel
+            {
+                Email = email,
+                SecurityQuestion = securityQuestion
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        {
+            ViewData["HideHeader"] = true;
+
+            if (string.IsNullOrWhiteSpace(model.Email))
+            {
+                TempData["Error"] = "Invalid email. Please try again from the beginning.";
+                return RedirectToAction("ForgotPassword");
+            }
+
+            if (string.IsNullOrWhiteSpace(model.SecurityAnswer))
+            {
+                model.Error = "Please enter your security answer.";
+                return View(model);
+            }
+
+            if (string.IsNullOrWhiteSpace(model.NewPassword))
+            {
+                model.Error = "Please enter a new password.";
+                return View(model);
+            }
+
+            if (model.NewPassword != model.ConfirmPassword)
+            {
+                model.Error = "Passwords do not match.";
+                return View(model);
+            }
+
+            if (model.NewPassword.Length < 6)
+            {
+                model.Error = "Password must be at least 6 characters long.";
+                return View(model);
+            }
+
+            try
+            {
+                var requestDto = new
+                {
+                    Email = model.Email,
+                    SecurityAnswer = model.SecurityAnswer,
+                    NewPassword = model.NewPassword,
+                    ConfirmPassword = model.ConfirmPassword
+                };
+
+                var json = JsonSerializer.Serialize(requestDto);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                
+                var response = await _httpClient.PostAsync($"{_baseUrl}/reset-password", content);
+                var responseString = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    string errorMessage = "Unable to reset password. Please check your information.";
+                    
+                    try
+                    {
+                        var errorResponse = JsonSerializer.Deserialize<Dictionary<string, string>>(responseString, new JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true
+                        });
+                        
+                        if (errorResponse?.ContainsKey("message") == true)
+                        {
+                            errorMessage = errorResponse["message"];
+                        }
+                        else if (!string.IsNullOrWhiteSpace(responseString) && !responseString.StartsWith("{"))
+                        {
+                            // Handle plain string error messages
+                            errorMessage = responseString.Trim('"');
+                        }
+                    }
+                    catch
+                    {
+                        // If JSON parsing fails, use the raw response string
+                        if (!string.IsNullOrWhiteSpace(responseString))
+                        {
+                            errorMessage = responseString.Trim('"');
+                        }
+                    }
+                    
+                    model.Error = errorMessage;
+                    return View(model);
+                }
+
+                var result = JsonSerializer.Deserialize<Dictionary<string, string>>(responseString, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                if (result != null && result.ContainsKey("message"))
+                {
+                    TempData["SuccessMessage"] = "Password reset successful. Please login with your new password.";
+                    return RedirectToAction("Login");
+                }
+
+                model.Error = "An unknown error occurred.";
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error resetting password");
+                model.Error = "An error occurred while processing your request. Please try again.";
+                return View(model);
+            }
+        }
+
     }
+
     public class LoginResponse
     {
         public string Token { get; set; }
         public int RoleId { get; set; }
+       
     }
-
 }

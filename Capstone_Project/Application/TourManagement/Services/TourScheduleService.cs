@@ -9,7 +9,13 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
     public class TourScheduleService : ITourScheduleService
     {
         private readonly TourScheduleDAO _tourScheduleDAO;
-        public TourScheduleService(TourScheduleDAO tourScheduleDAO) => _tourScheduleDAO = tourScheduleDAO;
+        private readonly BookingDAO _bookingDAO;
+
+        public TourScheduleService(TourScheduleDAO tourScheduleDAO, BookingDAO bookingDAO) 
+        {
+            _tourScheduleDAO = tourScheduleDAO;
+            _bookingDAO = bookingDAO;
+        }
 
         public async Task<TourScheduleDTO?> GetTourScheduleById(int id)
         {
@@ -33,7 +39,14 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
         {
             if (request.DepartureDate >= request.ArrivalDate)
                 throw new ArgumentException("Departure date must be before arrival date");
+            
+            var isDuplicate = await _tourScheduleDAO.ExistsAsync(
+                request.TourId,
+                request.DepartureDate
+            );
 
+            if (isDuplicate)
+                throw new InvalidOperationException("This tour already has a schedule on the selected date.");
             var tourSchedule = new TourSchedule
             {
                 TourId = request.TourId,
@@ -49,10 +62,31 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
         {
             if (request.DepartureDate >= request.ArrivalDate)
                 throw new ArgumentException("Departure date must be before arrival date");
-
+            
             var existingSchedule = await _tourScheduleDAO.GetTourScheduleById(id);
             if (existingSchedule == null)
                 throw new KeyNotFoundException($"Tour schedule with ID {id} not found");
+            var isDuplicate = await _tourScheduleDAO.ExistsForUpdateAsync(
+                existingSchedule.TourId,
+                request.DepartureDate,
+                id
+            );
+
+            if (isDuplicate)
+                throw new InvalidOperationException("This tour already has a schedule on the selected date.");
+
+            if (request.ScheduleStatus == ScheduleStatus.Completed && existingSchedule.ScheduleStatus != ScheduleStatus.Completed)
+            {
+                var bookings = await _bookingDAO.GetBookingsByTourScheduleIdAsync(id);
+                foreach (var booking in bookings)
+                {
+                    if (booking.BookingStatus != BookingStatus.Cancelled) // Only complete non-cancelled bookings
+                    {
+                        booking.BookingStatus = BookingStatus.Completed;
+                        await _bookingDAO.UpdateBookingAsync(booking);
+                    }
+                }
+            }
 
             existingSchedule.DepartureDate = request.DepartureDate;
             existingSchedule.ArrivalDate = request.ArrivalDate;
@@ -77,6 +111,59 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
             var tourSchedules = await _tourScheduleDAO.GetPaginatedTourSchedulesByTourId(tourId, page, pageSize);
             return tourSchedules.Select(MapToDTO).ToList();
         }
+        public async Task<List<TourScheduleDTO>> GetFilteredTourSchedules(
+            int? tourId = null,
+            string? tourName = null,
+            string? location = null,
+            string? category = null,
+            string? status = null,
+            string? sort = null,
+            string? search = null,
+            string? fromDate = null,
+            string? toDate = null,
+            int page = 1,
+            int pageSize = 10)
+        {
+            try
+            {
+                var tourSchedules = await _tourScheduleDAO.GetFilteredTourSchedules(
+                    tourId, tourName, location, category, status, sort, search, fromDate, toDate, page, pageSize);
+
+                return tourSchedules.Select(ts => MapToDTO(ts)).ToList();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in TourScheduleService.GetFilteredTourSchedules: {ex.Message}");
+                return new List<TourScheduleDTO>();
+            }
+        }
+
+        public async Task<int> GetFilteredTourScheduleCount(
+            int? tourId = null,
+            string? tourName = null,
+            string? location = null,
+            string? category = null,
+            string? status = null,
+            string? search = null,
+            string? fromDate = null,
+            string? toDate = null)
+        {
+            try
+            {
+                return await _tourScheduleDAO.GetFilteredTourScheduleCount(
+                    tourId, tourName, location, category, status, search, fromDate, toDate);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in TourScheduleService.GetFilteredTourScheduleCount: {ex.Message}");
+                return 0;
+            }
+        }
+
+        public async Task<bool> IsScheduleFullAsync(int tourScheduleId)
+        {
+            return await _tourScheduleDAO.IsScheduleFullAsync(tourScheduleId);
+        }
 
         private TourScheduleDTO MapToDTO(TourSchedule tourSchedule)
         {
@@ -85,14 +172,16 @@ namespace BE_Capstone_Project.Application.TourManagement.Services
             {
                 Id = tourSchedule.Id,
                 TourId = tourSchedule.TourId,
+                TourName = tourSchedule.Tour?.Name,
                 StartLocation = tourSchedule.Tour?.StartLocation?.LocationName,
                 EndLocation = tourSchedule.Tour?.EndLocation?.LocationName,
                 CategoryName = tourSchedule.Tour?.Category?.CategoryName,
                 DepartureDate = tourSchedule.DepartureDate,
                 ArrivalDate = tourSchedule.ArrivalDate,
                 ScheduleStatus = tourSchedule.ScheduleStatus,
-                TourName = tourSchedule.Tour?.Name
+
             };
         }
+
     }
 }

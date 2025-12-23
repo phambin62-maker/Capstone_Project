@@ -2,24 +2,115 @@
 @{
     ViewData["Title"] = "Tour Details";
     Layout = "~/Views/Shared/_StaffLayout.cshtml";
+
 }
 
 <div class="container-fluid">
+    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0 text-dark">@ViewData["Title"]</h1>
+        <div>
+            <h1 class="h3 mb-1 text-dark">@Model.Name</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Tours")">Tour Management</a></li>
+                    <li class="breadcrumb-item active">Tour Details</li>
+                </ol>
+            </nav>
+        </div>
         <div>
             <a href="@Url.Action("Edit", "Staff", new { id = Model.Id })" class="btn btn-warning me-2">
                 <i class="bi bi-pencil me-2"></i>Edit Tour
             </a>
-            <a href="@Url.Action("Tours")" class="btn btn-secondary">
-                <i class="bi bi-arrow-left me-2"></i>Back
+            <a href="javascript:void(0)" onclick="goBackToList('tours', '@Url.Action("Tours")')" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Back to List
             </a>
         </div>
     </div>
 
     <div class="row">
-        <div class="col-md-8">
-            <!-- Basic Info -->
+        <div class="col-lg-8"> 
+            <!-- Main Tour Image & Gallery -->
+            @if (Model.TourImages != null && Model.TourImages.Any())
+            {
+                <div class="card mb-4">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-images me-2"></i>Tour Gallery
+                            <span class="badge bg-primary ms-2">@Model.TourImages.Count</span>
+                        </h5>
+                        <small class="text-muted">Click on images to view larger</small>
+                    </div>
+                    <div class="card-body">
+                        <!-- Main Featured Image -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                @{
+                                    var mainImageUrl = Url.Action("GetTourDetailImage", "Staff", new { tourId = Model.Id, imageIndex = 0 });
+                                }
+                                <div class="main-image-container position-relative rounded border" style="height: 400px; overflow: hidden;">
+                                    <img id="mainImage" src="@mainImageUrl"
+                                         class="img-fluid w-100 h-100"
+                                         style="object-fit: cover; cursor: pointer;"
+                                         alt="Featured tour image"
+                                         data-bs-toggle="modal"
+                                         data-bs-target="#imageModal"
+                                         data-bs-slide-to="0"
+                                         onerror="this.src='@Url.Action("GetDefaultImage", "Staff")'">
+                                    <div class="position-absolute top-0 end-0 m-3">
+                                        <span class="badge bg-dark bg-opacity-75 text-white">
+                                            <i class="bi bi-star-fill me-1"></i>Featured
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Thumbnail Gallery -->
+                        <div class="row g-2">
+                            @for (int i = 0; i < Model.TourImages.Count; i++)
+                            {
+                                var imageUrl = Url.Action("GetTourDetailImage", "Staff", new { tourId = Model.Id, imageIndex = i });
+
+                                <div class="col-md-3 col-sm-4 col-6">
+                                    <div class="thumbnail-container position-relative rounded border"
+                                         style="height: 100px; overflow: hidden; cursor: pointer;"
+                                         onclick="changeMainImage('@imageUrl', @i)">
+                                        <img src="@imageUrl"
+                                             class="img-fluid w-100 h-100"
+                                             style="object-fit: cover;"
+                                             alt="Tour image @(i + 1)"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#imageModal"
+                                             data-bs-slide-to="@i"
+                                             onerror="this.src='@Url.Action("GetDefaultImage", "Staff")'">
+                                        @if (i == 0)
+                                        {
+                                            <div class="position-absolute top-0 start-0 m-1">
+                                                <span class="badge bg-primary" style="font-size: 0.6rem;">Main</span>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="card mb-4">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-image display-1 text-muted mb-3"></i>
+                        <h5 class="text-muted">No Images Available</h5>
+                        <p class="text-muted mb-0">This tour doesn't have any images yet.</p>
+                        <a href="@Url.Action("Edit", "Staff", new { id = Model.Id })" class="btn btn-primary mt-3">
+                            <i class="bi bi-plus-circle me-2"></i>Add Images
+                        </a>
+                    </div>
+                </div>
+            }
+
+            <!-- Basic Information -->
             <div class="card mb-4">
                 <div class="card-header bg-primary text-white">
                     <h5 class="card-title mb-0">
@@ -31,26 +122,22 @@
                         <div class="col-md-6">
                             <table class="table table-borderless">
                                 <tr>
-                                    <td width="40%" class="fw-bold">Tour ID:</td>
+                                    <td width="40%" class="fw-bold text-muted">Tour ID:</td>
                                     <td><span class="badge bg-secondary">#@Model.Id</span></td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-bold">Tour Name:</td>
-                                    <td><strong class="text-primary">@Model.Name</strong></td>
+                                    <td class="fw-bold text-muted">Tour Name:</td>
+                                    <td><strong class="text-dark">@Model.Name</strong></td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-bold">Price:</td>
-                                    <td><span class="text-success fw-bold fs-5">@Model.Price.ToString("N0") VND</span></td>
+                                    <td class="fw-bold text-muted">Price:</td>
+                                    <td><span class="text-success fw-bold fs-6">@Model.Price.ToString("N0") VND</span></td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-bold">Duration:</td>
-                                    <td>@Model.Duration days</td>
-                                </tr>
-                                <tr>
-                                    <td class="fw-bold">Status:</td>
+                                    <td class="fw-bold text-muted">Duration:</td>
                                     <td>
-                                        <span class="badge @(Model.TourStatus ? "bg-success" : "bg-danger")">
-                                            @(Model.TourStatus ? "Active" : "Hidden")
+                                        <span class="badge bg-light text-dark border">
+                                            <i class="bi bi-clock me-1"></i>@Model.Duration days
                                         </span>
                                     </td>
                                 </tr>
@@ -59,20 +146,37 @@
                         <div class="col-md-6">
                             <table class="table table-borderless">
                                 <tr>
-                                    <td width="40%" class="fw-bold">Start Location:</td>
-                                    <td>@Model.StartLocationName</td>
+                                    <td width="40%" class="fw-bold text-muted">Start Location:</td>
+                                    <td>
+                                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary">
+                                            @Model.StartLocationName
+                                        </span>
+                                    </td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-bold">End Location:</td>
-                                    <td>@Model.EndLocationName</td>
+                                    <td class="fw-bold text-muted">End Location:</td>
+                                    <td>
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success">
+                                            @Model.EndLocationName
+                                        </span>
+                                    </td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-bold">Category:</td>
-                                    <td>@Model.CategoryName</td>
+                                    <td class="fw-bold text-muted">Category:</td>
+                                    <td>
+                                        <span class="badge bg-info bg-opacity-10 text-info border border-info">
+                                            @Model.CategoryName
+                                        </span>
+                                    </td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-bold">Cancellation Policy:</td>
-                                    <td>@Model.CancelConditionName</td>
+                                    <td class="fw-bold text-muted">Status:</td>
+                                    <td>
+                                        <span class="badge @(Model.TourStatus ? "bg-success" : "bg-secondary")">
+                                            <i class="bi @(Model.TourStatus ? "bi-eye" : "bi-eye-slash") me-1"></i>
+                                            @(Model.TourStatus ? "Active" : "Inactive")
+                                        </span>
+                                    </td>
                                 </tr>
                             </table>
                         </div>
@@ -82,76 +186,313 @@
 
             <!-- Detailed Description -->
             <div class="card mb-4">
-                <div class="card-header bg-secondary text-white">
+                <div class="card-header bg-light">
                     <h5 class="card-title mb-0">
-                        <i class="bi bi-card-text me-2"></i>Detailed Description
+                        <i class="bi bi-card-text me-2"></i>Tour Description
                     </h5>
                 </div>
                 <div class="card-body">
                     @if (!string.IsNullOrEmpty(Model.Description))
                     {
-                        <p class="card-text">@Model.Description</p>
+                        <div class="description-content">
+                            @Html.Raw(Model.Description.Replace("\n", "<br>"))
+                        </div>
                     }
                     else
                     {
-                        <p class="text-muted">No description available</p>
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-card-text display-4 opacity-50"></i>
+                            <p class="mt-3 mb-0">No description available for this tour</p>
+                        </div>
                     }
                 </div>
             </div>
+
         </div>
 
-        <div class="col-md-4">
-            <!-- Discount Info -->
+        <!-- Right Column - Sidebar -->
+        <div class="col-lg-4">
+            <!-- Quick Actions -->
             <div class="card mb-4">
-                <div class="card-header bg-info text-white">
+                <div class="card-header bg-dark text-white">
                     <h5 class="card-title mb-0">
-                        <i class="bi bi-percent me-2"></i>Discount Information
+                        <i class="bi bi-lightning me-2"></i>Quick Actions
                     </h5>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4 text-center">
-                            <div class="border rounded p-3">
-                                <h6 class="text-muted">Child Discount</h6>
-                                <h4 class="text-info">@(Model.ChildDiscount?.ToString("N0") ?? "0")%</h4>
-                            </div>
-                        </div>
-                        <div class="col-md-4 text-center">
-                            <div class="border rounded p-3">
-                                <h6 class="text-muted">Group Discount</h6>
-                                <h4 class="text-warning">@(Model.GroupDiscount?.ToString("N0") ?? "0")%</h4>
-                            </div>
-                        </div>
-                        <div class="col-md-4 text-center">
-                            <div class="border rounded p-3">
-                                <h6 class="text-muted">Group Number</h6>
-                                <h4 class="text-success">@(Model.GroupNumber?.ToString() ?? "N/A")</h4>
-                            </div>
-                        </div>
+                    <div class="d-grid gap-2">
+                        <a href="@Url.Action("Edit", "Staff", new { id = Model.Id })" class="btn btn-warning">
+                            <i class="bi bi-pencil me-2"></i>Edit Tour
+                        </a>
+                        <form method="post" action="@Url.Action("ToggleTourStatus", "Staff")" class="d-grid">
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <button type="submit" class="btn @(Model.TourStatus ? "btn-outline-secondary" : "btn-outline-success")">
+                                <i class="bi @(Model.TourStatus ? "bi-eye-slash" : "bi-eye") me-2"></i>
+                                @(Model.TourStatus ? "Hide Tour" : "Show Tour")
+                            </button>
+                        </form>
+                        <a href="javascript:void(0)" onclick="goBackToList('tours', '@Url.Action("Tours")')" class="btn btn-outline-primary">
+                            <i class="bi bi-list-ul me-2"></i>Back to List
+                        </a>
                     </div>
                 </div>
             </div>
 
-            <!-- Seats Info -->
+            <!-- Pricing & Discounts -->
             <div class="card mb-4">
                 <div class="card-header bg-success text-white">
                     <h5 class="card-title mb-0">
-                        <i class="bi bi-people me-2"></i>Seat Information
+                        <i class="bi bi-tag me-2"></i>Pricing & Discounts
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">Base Price</span>
+                            <strong class="text-success fs-5">@Model.Price.ToString("N0") VND</strong>
+                        </div>
+                        <hr class="my-2">
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="text-center p-3 border rounded bg-light">
+                                <div class="text-info mb-2">
+                                    <i class="bi bi-person-standing display-6"></i>
+                                </div>
+                                <h6 class="text-muted mb-1">Child Discount</h6>
+                                <h4 class="text-info mb-0">@(Model.ChildDiscount?.ToString("N0") ?? "0")%</h4>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center p-3 border rounded bg-light">
+                                <div class="text-warning mb-2">
+                                    <i class="bi bi-people display-6"></i>
+                                </div>
+                                <h6 class="text-muted mb-1">Group Discount</h6>
+                                <h4 class="text-warning mb-0">@(Model.GroupDiscount?.ToString("N0") ?? "0")%</h4>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (Model.GroupNumber.HasValue)
+                    {
+                        <div class="mt-3 p-3 border rounded bg-light">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Group Number for Discount</span>
+                                <strong class="text-dark">@Model.GroupNumber.Value+ people</strong>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Capacity Information -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-diagram-3 me-2"></i>Capacity
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-12">
+                            <div class="pe-3">
+                                <div class="text-primary mb-2">
+                                    <i class="bi bi-arrow-up-circle display-6"></i>
+                                </div>
+                                <h6 class="text-muted mb-1">Maximum</h6>
+                                <h3 class="text-primary mb-0">@(Model.MaxSeats?.ToString() ?? "N/A")</h3>
+                                <small class="text-muted">seats</small>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Cancellation Policy -->
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-shield-exclamation me-2"></i>Cancellation Policy
                     </h5>
                 </div>
                 <div class="card-body">
                     <div class="text-center">
-                        <div class="mb-3">
-                            <h6 class="text-muted">Minimum Seats</h6>
-                            <h3 class="text-primary">@(Model.MinSeats?.ToString() ?? "N/A")</h3>
-                        </div>
-                        <div>
-                            <h6 class="text-muted">Maximum Seats</h6>
-                            <h3 class="text-primary">@(Model.MaxSeats?.ToString() ?? "N/A")</h3>
-                        </div>
+                        <i class="bi bi-file-text display-4 text-warning mb-3"></i>
+                        <h6 class="text-dark">@Model.CancelConditionName</h6>
+                        <small class="text-muted">Refer to policy details for cancellation terms and conditions</small>
                     </div>
                 </div>
+            </div>
+
+            <!-- Reviews Section -->
+            @if (Model.Reviews != null && Model.Reviews.Any())
+            {
+                <div class="card mt-4">
+                    <div class="card-header bg-light">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-star me-2"></i>Customer Reviews
+                                <span class="badge bg-primary ms-2">@Model.Reviews.Count</span>
+                            </h5>
+                            @{
+                                var averageRating = Model.Reviews.Average(r => r.Stars);
+                                var ratingPercent = (averageRating / 5) * 100;
+                            }
+                            <div class="text-warning">
+                                <div class="star-rating">
+                                    <div class="stars-outer">
+                                        <div class="stars-inner" style="width: @(ratingPercent)%"></div>
+                                    </div>
+                                    <small class="text-muted ms-2">@(averageRating?.ToString("0.0") ?? "0.0")</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3" id="reviewsContainer">
+                            @for (int i = 0; i < Model.Reviews.Count; i++)
+                            {
+                                var review = Model.Reviews[i];
+                                <div class="col-12 review-item" @(i >= 5 ? "style=display:none" : "")>
+                                    <div class="border rounded p-3">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <strong class="text-dark">@review.User?.Username</strong>
+                                                <div class="text-warning small">
+                                                    @for (int j = 1; j <= 5; j++)
+                                                    {
+                                                        <i class="bi @(j <= review.Stars ? "bi-star-fill" : "bi-star")"></i>
+                                                    }
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">@review.CreatedDate?.ToString("MMM dd, yyyy")</small>
+                                        </div>
+                                        <p class="mb-0 text-dark">@review.Comment</p>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        @if (Model.Reviews.Count > 5)
+                        {
+                            <div class="text-center mt-3">
+                                <button type="button" id="btnViewMoreReviews" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-plus-circle me-1"></i>View More Reviews (@(Model.Reviews.Count - 5) more)
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">Tour Gallery - @Model.Name</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="imageCarousel" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        @if (Model.TourImages != null && Model.TourImages.Any())
+                        {
+                            @for (int i = 0; i < Model.TourImages.Count; i++)
+                            {
+                                var imageUrl = Url.Action("GetTourDetailImage", "Staff", new { tourId = Model.Id, imageIndex = i });
+                                <div class="carousel-item @(i == 0 ? "active" : "")">
+                                    <img src="@imageUrl"
+                                         class="d-block w-100 rounded"
+                                         style="max-height: 70vh; object-fit: contain;"
+                                         alt="Tour image @(i + 1)"
+                                         onerror="this.src='@Url.Action("GetDefaultImage", "Staff")'">
+                                </div>
+                            }
+                        }
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#imageCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#imageCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <small class="text-muted me-auto">
+                    Image <span id="currentImageIndex">1</span> of @(Model.TourImages?.Count ?? 0)
+                </small>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
 </div>
+<style>
+    .star-rating {
+        display: inline-block;
+        position: relative;
+    }
+
+    .stars-outer {
+        display: inline-block;
+        position: relative;
+        font-family: bootstrap-icons;
+    }
+
+        .stars-outer::before {
+            content: "\f586\f586\f586\f586\f586";
+            color: #e4e5e9;
+        }
+
+    .stars-inner {
+        position: absolute;
+        top: 0;
+        left: 0;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+        .stars-inner::before {
+            content: "\f586\f586\f586\f586\f586";
+            color: #ffc107;
+        }
+
+    .description-content {
+        line-height: 1.6;
+        color: #495057;
+    }
+
+    .image-container:hover img {
+        transform: scale(1.05);
+        transition: transform 0.3s ease;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const btnViewMore = document.getElementById('btnViewMoreReviews');
+        if (btnViewMore) {
+            btnViewMore.addEventListener('click', function () {
+                const hiddenReviews = document.querySelectorAll('.review-item');
+                hiddenReviews.forEach(item => {
+                    item.style.display = 'block';
+                });
+                this.parentElement.style.display = 'none';
+            });
+        }
+    });
+
+    function changeMainImage(url, index) {
+        const mainImg = document.getElementById('mainImage');
+        if (mainImg) mainImg.src = url;
+        const currentIdx = document.getElementById('currentImageIndex');
+        if (currentIdx) currentIdx.textContent = index + 1;
+    }
+</script>

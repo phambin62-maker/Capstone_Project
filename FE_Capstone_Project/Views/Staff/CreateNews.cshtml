@@ -5,78 +5,70 @@
 }
 
 <div class="container-fluid">
-    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0 text-dark">@ViewData["Title"]</h1>
         <div>
-            <a href="@Url.Action("News")" class="btn btn-secondary">
-                <i class="bi bi-arrow-left me-2"></i>Come back
+            <a href="@Url.Action("News", "Staff")" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Back
             </a>
         </div>
     </div>
 
-    <!-- Error Message -->
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-
-    <!-- Form -->
     <div class="card shadow-sm">
         <div class="card-body">
-            <form method="post" enctype="multipart/form-data">
+            <form asp-action="CreateNews" method="post" enctype="multipart/form-data">
+
+                <input type="hidden" asp-for="UserId" />
+
                 <div class="row">
-                    <!-- Left column -->
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label asp-for="Title" class="form-label fw-bold">Title *</label>
+                            <label asp-for="Title" class="form-label fw-bold">Title <span class="text-danger">*</span></label>
                             <input asp-for="Title" class="form-control" placeholder="Enter the article title..." />
                             <span asp-validation-for="Title" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="UserId" class="form-label fw-bold">User ID *</label>
-                            <input asp-for="UserId" type="number" class="form-control" placeholder="VD: 1" />
-                            <span asp-validation-for="UserId" class="text-danger"></span>
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="NewsStatus" class="form-label fw-bold">Status *</label>
+                            <label asp-for="NewsStatus" class="form-label fw-bold">Status <span class="text-danger">*</span></label>
                             <select asp-for="NewsStatus" class="form-select">
                                 <option value="">-- Select status --</option>
-                                <option value="0">Hidden</option>
-                                <option value="1">Published</option>
-                                <option value="2">Draft</option>
+                                <option value="Published">Published</option>
+                                <option value="Draft">Draft</option>
+                                <option value="Hidden">Hidden</option>
                             </select>
                             <span asp-validation-for="NewsStatus" class="text-danger"></span>
                         </div>
                     </div>
 
-                    <!-- Right column -->
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label asp-for="Image" class="form-label fw-bold">Image (Optional)</label>
-                            <input asp-for="Image" type="file" class="form-control" accept="image/*" name="imageFile" />
-                            <small class="text-muted">Select an image to display with the article.</small>
-                        </div>
+                            <label class="form-label fw-bold">Image (Optional)</label>
 
+                            <div class="d-flex align-items-center p-2 border rounded bg-white">
+                                <label for="customFile" class="btn btn-light border me-3" style="cursor: pointer;">
+                                    Choose File
+                                </label>
+
+                                <span id="fileNameDisplay" class="text-muted fst-italic">No file chosen</span>
+
+                                <input type="file" id="customFile" name="imageFile" class="d-none" accept="image/*"
+                                       onchange="document.getElementById('fileNameDisplay').textContent = this.files[0] ? this.files[0].name : 'No file chosen'" />
+                            </div>
+                            <small class="text-muted mt-1 d-block">Select an image to display with the article.</small>
+                        </div>
                         <div class="mb-3">
-                            <label asp-for="Content" class="form-label fw-bold">Contents*</label>
-                            <textarea asp-for="Content" class="form-control" rows="6" placeholder="Enter details..."></textarea>
+                            <label asp-for="Content" class="form-label fw-bold">Contents<span class="text-danger">*</span></label>
+                            <textarea asp-for="Content" class="form-control" rows="10" placeholder="Enter details..."></textarea>
                             <span asp-validation-for="Content" class="text-danger"></span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Buttons -->
                 <div class="d-flex gap-2 mt-3">
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-check-circle me-2"></i>Create News
                     </button>
-                    <a href="@Url.Action("News")" class="btn btn-secondary">
+                    <a href="@Url.Action("News", "Staff")" class="btn btn-secondary">
                         <i class="bi bi-x-circle me-2"></i>Cancel
                     </a>
                 </div>

@@ -2,6 +2,7 @@
 using BE_Capstone_Project.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using BE_Capstone_Project.Domain.Enums;
+using BE_Capstone_Project.Application.BookingManagement.DTOs;
 
 namespace BE_Capstone_Project.DAO
 {
@@ -84,7 +85,8 @@ namespace BE_Capstone_Project.DAO
             try{
                 return await _context.Bookings
                     .Include(b => b.User)
-                    .Include(b => b.TourSchedule)
+                    .Include(b => b.TourSchedule).ThenInclude(ts => ts.Tour)
+                    .Include(b => b.BookingCustomers)
                     .FirstOrDefaultAsync(b => b.Id == bookingId);
             }
             catch (Exception ex)
@@ -101,7 +103,9 @@ namespace BE_Capstone_Project.DAO
                 return await _context.Bookings
                 .Where(b => b.UserId == userId)
                 .Include(b => b.User)
-                .Include(b => b.TourSchedule)
+                .Include(b => b.TourSchedule).ThenInclude(b => b.Tour)
+                .Include(b => b.BookingCustomers)
+                .OrderByDescending(b => b.BookingDate)
                 .ToListAsync();
             }
             catch (Exception ex)
@@ -160,5 +164,147 @@ namespace BE_Capstone_Project.DAO
                 return null;
             }
         }
+
+        public async Task<bool> UpdatePaymentStatusAsync(PaymentDTO payment)
+        {
+            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.Id == payment.BookingId);
+            if (booking == null) return false;
+
+            if (payment.Success)
+            {
+                booking.PaymentStatus = PaymentStatus.Completed;
+                booking.PaymentMethod = (byte)(payment.PaymentMethod == "VnPay" ? 1 : 0);
+                booking.BookingStatus = BookingStatus.Confirmed;
+                booking.PaymentDate = DateOnly.FromDateTime(DateTime.Now);
+                await _context.SaveChangesAsync();
+
+                return true;
+            }
+
+            return false;
+        }
+
+        public async Task DeleteExpiredPendingBookingsAsync()
+        {
+            var now = DateTime.Now;
+
+            var expiredBookings = await _context.Bookings
+                .Where(b => b.PaymentStatus == PaymentStatus.Pending
+                         && b.ExpirationTime <= now)
+                .ToListAsync();
+
+            if (!expiredBookings.Any())
+                return;
+
+            var expiredBookingIds = expiredBookings.Select(b => b.Id).ToList();
+            var expiredBookingCustomers = await _context.BookingCustomers
+                .Where(bc => expiredBookingIds.Contains(bc.BookingId))
+                .ToListAsync();
+            var expiredReviews = await _context.Reviews
+                .Where(r => expiredBookingIds.Contains(r.BookingId))
+                .ToListAsync();
+
+            if (expiredBookingCustomers.Any())
+                _context.BookingCustomers.RemoveRange(expiredBookingCustomers);
+
+            if (expiredReviews.Any())
+                _context.Reviews.RemoveRange(expiredReviews);
+
+            _context.Bookings.RemoveRange(expiredBookings);
+
+            await _context.SaveChangesAsync();
+        }
+        
+        public async Task<List<Booking>> GetBookingsWithFiltersAsync(
+            string? searchTerm = null,
+            BookingStatus? bookingStatus = null,
+            PaymentStatus? paymentStatus = null,
+            int page = 1,
+            int pageSize = 10)
+        {
+            try
+            {
+                var query = _context.Bookings
+                    .Include(b => b.User)
+                    .Include(b => b.TourSchedule)
+                        .ThenInclude(ts => ts.Tour)
+                    .Include(b => b.BookingCustomers)
+                    .AsQueryable();
+
+                if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    var searchTermLower = searchTerm.ToLower();
+                    query = query.Where(b =>
+                        b.User.Username.ToLower().Contains(searchTermLower) ||
+                        (b.FirstName + " " + b.LastName).ToLower().Contains(searchTermLower) ||
+                        b.Email.ToLower().Contains(searchTermLower) ||
+                        b.PhoneNumber.Contains(searchTerm) ||
+                        b.TourSchedule.Tour.Name.ToLower().Contains(searchTermLower)
+                    );
+                }
+
+                if (bookingStatus.HasValue)
+                {
+                    query = query.Where(b => b.BookingStatus == bookingStatus.Value);
+                }
+
+                if (paymentStatus.HasValue)
+                {
+                    query = query.Where(b => b.PaymentStatus == paymentStatus.Value);
+                }
+
+                return await query
+                    .OrderByDescending(b => b.BookingDate)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while retrieving filtered bookings: {ex.Message}");
+                return new List<Booking>();
+            }
+        }
+
+        public async Task<int> GetBookingsCountAsync(
+            string? searchTerm = null,
+            BookingStatus? bookingStatus = null,
+            PaymentStatus? paymentStatus = null)
+        {
+            try
+            {
+                var query = _context.Bookings.AsQueryable();
+
+                if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    var searchTermLower = searchTerm.ToLower();
+                    query = query.Where(b =>
+                        b.User.Username.ToLower().Contains(searchTermLower) ||
+                        (b.FirstName + " " + b.LastName).ToLower().Contains(searchTermLower) ||
+                        b.Email.ToLower().Contains(searchTermLower) ||
+                        b.PhoneNumber.Contains(searchTerm) ||
+                        b.TourSchedule.Tour.Name.ToLower().Contains(searchTermLower)
+                    );
+                }
+
+                if (bookingStatus.HasValue)
+                {
+                    query = query.Where(b => b.BookingStatus == bookingStatus.Value);
+                }
+
+                if (paymentStatus.HasValue)
+                {
+                    query = query.Where(b => b.PaymentStatus == paymentStatus.Value);
+                }
+
+                return await query.CountAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while counting bookings: {ex.Message}");
+                return 0;
+            }
+        }
+
     }
 }

@@ -10,5 +10,6 @@ namespace BE_Capstone_Project.Application.Services
         Task<bool> UpdateUserAsync(UpdateUserDto request);
         Task<(bool Success, string Message, int? UserId,string? Token)> SyncGoogleUserAsync(GoogleUserDto dto);
         Task<User?> GetUserByUsername(string username);
+        Task<List<User>> GetAllUsers();
     }
 }

@@ -1,0 +1,253 @@
+﻿@using FE_Capstone_Project.Models
+@using System.Globalization
+
+@{
+    var BASE_API_URL = "https://localhost:7160/api/";
+}
+
+<body class="booking-page">
+    <main class="main">
+        <!-- Travel Booking Section -->
+        <section id="travel-booking" class="travel-booking section">
+
+            <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="booking-form-container">
+                            <style>
+                                .required-star { color: #dc3545; font-weight: 700; margin-left: 4px; }
+                                .is-invalid { border-color: #dc3545 !important; box-shadow: none !important; }
+                                #form-validation-message { font-size: .95rem; }
+                            </style>
+
+                            <!-- Progress Steps -->
+                            <div class="booking-progress nav nav-tabs" data-aos="fade-up" data-aos-delay="200">
+                                <button class="step nav-link disabled-step active" data-bs-toggle="tab" data-bs-target="#travel-booking-step-1" aria-current="page">
+                                    <span class="step-number">1</span>
+                                    <span class="step-title">Tour &amp; Dates</span>
+                                </button>
+                                <button class="step nav-link disabled-step" data-bs-toggle="tab" data-bs-target="#travel-booking-step-2">
+                                    <span class="step-number">2</span>
+                                    <span class="step-title">Booking Person</span>
+                                </button>
+                                <button class="step nav-link disabled-step" data-bs-toggle="tab" data-bs-target="#travel-booking-step-3">
+                                    <span class="step-number">3</span>
+                                    <span class="step-title">Travelers</span>
+                                </button>
+                                <button class="step nav-link disabled-step" data-bs-toggle="tab" data-bs-target="#travel-booking-step-4">
+                                    <span class="step-number">4</span>
+                                    <span class="step-title">Payment Method</span>
+                                </button>
+                            </div><!-- End Progress Steps -->
+                            <!-- Booking Form -->
+                            <form asp-action="BookTour" asp-controller="BookingWeb" method="post" class="booking-form" data-aos="fade-up" data-aos-delay="300">
+
+                                <div class="tab-content" id="bookingTabContent">
+                                    <!-- Step 1: Tour & Dates -->
+                                    <div class="form-step tab-pane fade show active" id="travel-booking-step-1" role="tabpanel">
+                                        <h4>Select Your Optimal Tour Schedule</h4>
+
+                                        <div class="row gy-4">
+                                            <div class="col-md-12">
+                                                <label for="tour-select">Selected Tour Package</label>
+                                                <input type="text" name="tour_package" id="tour-select" class="form-control" value="@ViewBag.Tour.Name" disabled>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label for="tour-schedule">Tour schedule</label>
+                                                <select name="tour_schedule" id="tour-schedule" class="form-select" required="">
+                                                    <option value="-1">Select a tour schedule</option>
+                                                    @foreach (TourScheduleDTO schedule in ViewBag.TourSchedules)
+                                                    {
+                                                        <option value="@schedule.Id">
+                                                            @schedule.DepartureDate.Value.ToString("MMMM dd", CultureInfo.InvariantCulture) -
+                                                            @schedule.ArrivalDate.Value.ToString("MMMM dd", CultureInfo.InvariantCulture)
+                                                        </option>
+                                                    }
+                                                </select>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label for="departure-location">Departure Location</label>
+                                                <input type="text" name="departure_location" id="departure-location" class="form-control" value="@ViewBag.Tour.StartLocation.LocationName" disabled>
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label for="adults">Adults</label>
+                                                <input type="number" name="adults" id="adults" class="form-control" required="" min="0" value="0">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label for="children">Children (2-12)</label>
+                                                <input type="number" name="children" id="children" class="form-control" required="" min="0" value="0">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label for="infants">Infants (0-2)</label>
+                                                <input type="number" name="infants" id="infants" class="form-control" required="" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="form-navigation mt-4 d-flex justify-content-end">
+                                            <button type="button" class="btn btn-primary next-button">Next</button>
+                                        </div>
+                                    </div><!-- End Step 1 -->
+                                    <!-- Step 2: Traveler Information -->
+                                    <div class="form-step tab-pane fade" id="travel-booking-step-2" role="tabpanel">
+                                        <h4>Traveler Information</h4>
+
+                                        <div class="traveler-info">
+                                            <h5>Booking Person</h5>
+                                            <div class="row gy-3">
+                                                <div class="col-md-6">
+                                                    <label for="first-name">First Name</label>
+                                                    <input type="text" name="first_name" id="first-name" class="form-control" required="" value="@ViewBag.User.FirstName">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="last-name">Last Name</label>
+                                                    <input type="text" name="last_name" id="last-name" class="form-control" required="" value="@ViewBag.User.LastName">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="email">Email Address</label>
+                                                    <input type="email" name="email" id="email" class="form-control" required="" value="@ViewBag.User.Email">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="phone">Phone Number</label>
+                                                    <input type="tel" name="phone" id="phone" class="form-control" required="" value="@ViewBag.User.PhoneNumber">
+                                                </div>
+                                                <div class="col-md-12">
+                                                    <label for="certificate-id">Identification Number</label>
+                                                    <input type="text" name="certificate_id" id="certificate-id" class="form-control" required="">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-navigation mt-4 d-flex justify-content-between">
+                                            <button type="button" class="btn btn-secondary prev-button">Previous</button>
+                                            <button type="button" class="btn btn-primary next-button">Next</button>
+                                        </div>
+                                    </div><!-- End Step 2 -->
+                                    <!-- Step 3: Travelers -->
+                                    <div class="form-step tab-pane fade" id="travel-booking-step-3" role="tabpanel">
+                                        <div id="travelers-list" class="row gy-3 travelers-container"></div>
+                                        <div class="form-navigation mt-4 d-flex justify-content-between">
+                                            <button type="button" class="btn btn-secondary prev-button">Previous</button>
+                                            <button type="button" class="btn btn-primary next-button">Next</button>
+                                        </div>
+                                    </div><!-- End Step 3 -->
+                                    <!-- Step 4: Payment Information -->
+                                    <div class="form-step tab-pane fade" id="travel-booking-step-4" role="tabpanel">
+                                        <h4>Payment Information</h4>
+
+                                        <div class="payment-methods">
+                                            <div class="method-selector">
+                                                <input type="radio" name="paymentMethod" id="vnpay" value="vnpay" checked="">
+                                                <label for="vnpay"><i class="bi bi-credit-card-fill"></i> VNPay</label>
+                                            </div>
+                                            <div class="method-selector">
+                                                <input type="radio" name="paymentMethod" id="cash" value="cash">
+                                                <label for="cash"><i class="bi bi-cash-stack"></i> Cash</label>
+                                            </div>
+                                        </div>
+                                        <div class="form-navigation mt-4 d-flex justify-content-between">
+                                            <button type="button" class="btn btn-secondary prev-button">Previous</button>
+                                            <button type="submit" class="btn btn-book">Complete Booking</button>
+                                        </div>
+                                    </div><!-- End Step 4 -->
+                                </div><!-- End Tab Content -->
+
+                                <div id="form-validation-message" class="alert alert-danger d-none mt-3" role="alert" aria-live="polite"></div>
+                            </form><!-- End Booking Form -->
+                        </div>
+                    </div>
+
+                    <!-- Booking Summary Sidebar -->
+                    <div class="col-lg-4">
+                        <div class="booking-summary" data-aos="fade-up" data-aos-delay="400">
+                            <div class="summary-header">
+                                <h4>Booking Summary</h4>
+                            </div>
+
+                            <div class="selected-tour">
+                                @{
+                                    var img = ViewBag.FirstImage ?? "default";
+                                    var mainImageUrl = $"{BASE_API_URL}Tour/GetImage?path={Uri.EscapeDataString(img)}";
+                                }
+                                <img src="@mainImageUrl" alt="Selected Tour" class="img-fluid">
+                                <div class="tour-info">
+                                    <h5>@ViewBag.Tour.Name</h5>
+                                    <p><i class="bi bi-calendar"></i> @ViewBag.Tour.Duration Day@(ViewBag.Tour.Duration == 1 ? "" : "s")</p>
+                                    <p><i class="bi bi-geo-alt"></i> @ViewBag.Tour.EndLocation.LocationName</p>
+                                </div>
+                            </div>
+                            <div class="booking-details">
+                                <div class="detail-item">
+                                    <span class="label">Tour Schedule:</span>
+                                    <span class="value" id="tSchedule">Tour schedule</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="label">Departure Location:</span>
+                                    <span class="value" id="depLocation">@ViewBag.Tour.StartLocation.LocationName</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="label">Available Seats:</span>
+                                    <span class="value" id="availableSeats">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="label">Adults:</span>
+                                    <span class="value" id="numAdults">0</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="label">Children and Infants:</span>
+                                    <span class="value" id="numChildren">0</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="label">Total Travelers:</span>
+                                    <span class="value" id="totalTravelers">0</span>
+                                </div>
+                            </div>
+
+                            <div class="price-breakdown mt-3">
+                                <div class="price-item">
+                                    <span class="description">General Price (Adult)</span>
+                                    <span class="amount" id="pricePerAdult">0 VND</span>
+                                </div>
+                                <div class="price-item">
+                                    <span class="description">Child Price (after discount)</span>
+                                    <span class="amount" id="pricePerChild">0 VND</span>
+                                </div>
+                                <div class="price-item">
+                                    <span class="description">Group Discount (@ViewBag.Tour.GroupNumber+)</span>
+                                    <span class="amount" id="groupDiscount">0 VND</span>
+                                </div>
+                                <div class="price-total">
+                                    <span class="description">Total Amount</span>
+                                    <span class="amount" id="totalPrice">0 VND</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section><!-- /Travel Booking Section -->
+    </main>
+    <!-- Scroll Top -->
+    <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+    <!-- Preloader -->
+    <div id="preloader"></div>
+    <!-- Vendor JS Files -->
+    <script src="~/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/assets/vendor/php-email-form/validate.js"></script>
+    <script src="~/assets/vendor/aos/aos.js"></script>
+    <script src="~/assets/vendor/purecounter/purecounter_vanilla.js"></script>
+    <script src="~/assets/vendor/swiper/swiper-bundle.min.js"></script>
+    <script src="~/assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
+    <script src="~/assets/vendor/imagesloaded/imagesloaded.pkgd.min.js"></script>
+    <script src="~/assets/vendor/glightbox/js/glightbox.min.js"></script>
+    <!-- Main JS File -->
+    <script src="~/assets/js/main.js"></script>
+    <script src="~/assets/js/booking.js"></script>
+    <script>
+        const tour = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Tour));
+        const bookedSeats = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.BookedSeats));
+    </script>
+</body>

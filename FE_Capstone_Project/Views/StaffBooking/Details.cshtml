@@ -1,0 +1,441 @@
+﻿@using BE_Capstone_Project.Domain.Enums
+@model StaffBookingDTO
+@{
+    ViewData["Title"] = $"Booking Details #{Model.Id}";
+    Layout = "~/Views/Shared/_StaffLayout.cshtml";
+
+    // Check if booking is editable
+    bool isEditable = IsBookingEditable(Model.BookingStatus, Model.PaymentStatus);
+    string editableClass = isEditable ? "" : "opacity-50";
+    string editableTooltip = isEditable ? "" : "Booking cannot be edited as it is in a final state";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-calendar-check me-2"></i>Booking Details #@Model.Id
+        </h1>
+        <div class="d-flex gap-2">
+            <a href="@Url.Action("Bookings")" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Back to List
+            </a>
+        </div>
+    </div>
+
+    <!-- Booking locked notification -->
+    @if (!isEditable)
+    {
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Booking has ended:</strong> Cannot change status when booking is completed, cancelled, or refunded.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <!-- Main Information -->
+        <div class="col-lg-8">
+            <!-- Booking Information -->
+            <div class="card shadow mb-4 @editableClass">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-info-circle me-2"></i>Booking Information
+                    </h6>
+
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-bold text-muted" width="40%">Booking ID:</td>
+                                    <td class="fw-bold text-dark">#@Model.Id</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold text-muted">Tour:</td>
+                                    <td>@Model.TourName</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold text-muted">Departure Date:</td>
+                                    <td>
+                                        <i class="fas fa-plane-departure text-primary me-2"></i>
+                                        @Model.DepartureDate?.ToString("dd/MM/yyyy ")
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold text-muted">Return Date:</td>
+                                    <td>
+                                        <i class="fas fa-plane-arrival text-success me-2"></i>
+                                        @Model.ArrivalDate?.ToString("dd/MM/yyyy ")
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-bold text-muted" width="40%">Booking Date:</td>
+                                    <td>
+                                        <i class="fas fa-calendar text-info me-2"></i>
+                                        @Model.BookingDate?.AddHours(7).ToString("dd/MM/yyyy HH:mm")
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold text-muted">Quantity:</td>
+                                    <td>
+                                        <div class="d-flex gap-3">
+                                            <span class="badge bg-primary">
+                                                <i class="fas fa-user me-1"></i>@Model.AdultCount Adults
+                                            </span>
+                                            <span class="badge bg-info">
+                                                <i class="fas fa-child me-1"></i>@Model.ChildCount Children
+                                            </span>
+                                            <span class="badge bg-secondary">
+                                                <i class="fas fa-baby me-1"></i>@Model.InfantCount Infants
+                                            </span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold text-muted">Total Amount:</td>
+                                    <td class="h5 text-success fw-bold">
+                                        @Model.TotalPrice?.ToString("N0") ₫
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold text-muted">Booking Status:</td>
+                                    <td>
+                                        <span class="badge @GetBookingStatusBadge(Model.BookingStatus) fs-6">
+                                            @GetBookingStatusText(Model.BookingStatus)
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Information -->
+            <div class="card shadow mb-4 @editableClass">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-user me-2"></i>Customer Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-bold text-muted" width="40%">Full Name:</td>
+                                    <td class="fw-bold text-dark">@Model.FullName</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold text-muted">Username:</td>
+                                    <td>
+                                        <i class="fas fa-user-circle text-secondary me-2"></i>
+                                        @Model.UserName
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold text-muted">Email:</td>
+                                    <td>
+                                        <i class="fas fa-envelope text-primary me-2"></i>
+                                        <span>@Model.Email</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-bold text-muted" width="40%">Phone Number:</td>
+                                    <td>
+                                        <i class="fas fa-phone text-success me-2"></i>
+                                        <span>@Model.PhoneNumber</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold text-muted">Payment Status:</td>
+                                    <td>
+                                        <span class="badge @GetPaymentStatusBadge(Model.PaymentStatus) fs-6">
+                                            @GetPaymentStatusText(Model.PaymentStatus)
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar - Status & Actions -->
+        <div class="col-lg-4">
+            <!-- Update Status -->
+            <div class="card shadow mb-4 @editableClass"
+                 @if (!isEditable)
+                 {
+                             <text>data-bs-toggle="tooltip" title="@editableTooltip"</text>
+                 }
+>
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-edit me-2"></i>Update Status
+                    </h6>
+                    @if (!isEditable)
+                    {
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-lock me-1"></i>Locked
+                                    </span>
+                    }
+                </div>
+                <div class="card-body">
+                    <!-- Update Booking Status -->
+                    <form method="post" action="@Url.Action("UpdateBookingStatus", "StaffBooking")"
+                          id="bookingStatusForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <div class="mb-3">
+                            <label for="BookingStatus" class="form-label fw-bold">
+                                <i class="fas fa-calendar-check me-1"></i>Booking Status
+                            </label>
+                            <select class="form-control" id="BookingStatus" name="BookingStatus" required
+                                    @if (!isEditable)
+                                    {
+                                                <text>disabled</text>
+                                    }
+>
+                                @foreach (var status in ViewBag.BookingStatuses)
+                                {
+                                                <option value="@status" selected="@(status == Model.BookingStatus)">
+                                                    @GetBookingStatusText(status)
+                                                </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="BookingNote" class="form-label fw-bold">
+                                <i class="fas fa-sticky-note me-1"></i>Note (optional)
+                            </label>
+                            <textarea class="form-control" id="BookingNote" name="Note" rows="2"
+                                      placeholder="Enter note about status change..."
+                                      @if (!isEditable) {
+                                      <text>disabled</text>
+                                      }
+                            ></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100"
+                                @if (!isEditable)
+                                {
+                                            <text>disabled</text>
+                                }
+>
+                            <i class="fas fa-save me-1"></i>
+                            @if (isEditable)
+                            {
+                                            <text>Update Booking</text>
+                            }
+                            else
+                            {
+                                            <text>Locked</text>
+                            }
+                        </button>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <!-- Update Payment Status -->
+                    <form method="post" action="@Url.Action("UpdatePaymentStatus", "StaffBooking")"
+                          id="paymentStatusForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <div class="mb-3">
+                            <label for="PaymentStatus" class="form-label fw-bold">
+                                <i class="fas fa-money-bill-wave me-1"></i>Payment Status
+                            </label>
+                            <select class="form-control" id="PaymentStatus" name="PaymentStatus" required
+                                    @if (!isEditable)
+                                    {
+                                                <text>disabled</text>
+                                    }
+>
+                                @foreach (var status in ViewBag.PaymentStatuses)
+                                {
+                                                <option value="@status" selected="@(status == Model.PaymentStatus)">
+                                                    @GetPaymentStatusText(status)
+                                                </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="PaymentNote" class="form-label fw-bold">
+                                <i class="fas fa-sticky-note me-1"></i>Note (optional)
+                            </label>
+                            <textarea class="form-control" id="PaymentNote" name="Note" rows="2"
+                                      placeholder="Enter note about payment..."
+                                      @if (!isEditable) {
+                                      <text>disabled</text>
+                                      }
+                            ></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100"
+                                @if (!isEditable)
+                                {
+                                            <text>disabled</text>
+                                }
+>
+                            <i class="fas fa-money-bill-wave me-1"></i>
+                            @if (isEditable)
+                            {
+                                            <text>Update Payment</text>
+                            }
+                            else
+                            {
+                                            <text>Locked</text>
+                            }
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Initialize tooltip
+            $('[data-bs-toggle="tooltip"]').tooltip();
+
+            // Auto-hide alerts after 5 seconds
+            setTimeout(function() {
+                $('.alert').alert('close');
+            }, 5000);
+
+            // Handle form submission with loading state
+            $('#bookingStatusForm, #paymentStatusForm').submit(function(e) {
+                const form = $(this);
+                const submitBtn = form.find('button[type="submit"]');
+
+                // Check if form is disabled
+                if (submitBtn.prop('disabled')) {
+                    e.preventDefault();
+                    return false;
+                }
+
+                // Store original text and show loading
+                const originalText = submitBtn.html();
+                submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Processing...');
+
+                // Form will submit normally - no AJAX
+                // The loading state will be cleared when page reloads
+            });
+        });
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                // Show temporary success message
+                const alertHtml = `
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>Booking ID copied to clipboard!
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+
+                // Create temporary container
+                let tempAlertContainer = $('#tempAlerts');
+                if (tempAlertContainer.length === 0) {
+                    $('.container-fluid').prepend('<div id="tempAlerts"></div>');
+                    tempAlertContainer = $('#tempAlerts');
+                }
+
+                tempAlertContainer.html(alertHtml);
+
+                // Auto remove after 3 seconds
+                setTimeout(() => {
+                    tempAlertContainer.find('.alert').alert('close');
+                }, 3000);
+            }, function() {
+                // Show error message
+                const alertHtml = `
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>Failed to copy booking ID
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+
+                let tempAlertContainer = $('#tempAlerts');
+                if (tempAlertContainer.length === 0) {
+                    $('.container-fluid').prepend('<div id="tempAlerts"></div>');
+                    tempAlertContainer = $('#tempAlerts');
+                }
+
+                tempAlertContainer.html(alertHtml);
+
+                setTimeout(() => {
+                    tempAlertContainer.find('.alert').alert('close');
+                }, 3000);
+            });
+        }
+    </script>
+}
+
+@functions {
+    private string GetBookingStatusText(BookingStatus? status)
+    {
+        return status switch
+        {
+            BookingStatus.Pending => "Pending Confirmation",
+            BookingStatus.Confirmed => "Confirmed",
+            BookingStatus.Completed => "Completed",
+            BookingStatus.Cancelled => "Cancelled",
+            _ => "Unknown"
+        };
+    }
+
+    private string GetPaymentStatusText(PaymentStatus? status)
+    {
+        return status switch
+        {
+            PaymentStatus.Pending => "Pending Payment",
+            PaymentStatus.Completed => "Paid",
+            PaymentStatus.Refunded => "Refunded",
+            _ => "Unknown"
+        };
+    }
+
+    private string GetBookingStatusBadge(BookingStatus? status)
+    {
+        return status switch
+        {
+            BookingStatus.Pending => "bg-warning",
+            BookingStatus.Confirmed => "bg-info",
+            BookingStatus.Completed => "bg-success",
+            BookingStatus.Cancelled => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetPaymentStatusBadge(PaymentStatus? status)
+    {
+        return status switch
+        {
+            PaymentStatus.Pending => "bg-warning",
+            PaymentStatus.Completed => "bg-success",
+            PaymentStatus.Refunded => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+
+    private bool IsBookingEditable(BookingStatus? bookingStatus, PaymentStatus? paymentStatus)
+    {
+        // Booking is editable when:
+        // - BookingStatus is NOT Completed or Cancelled
+        // - PaymentStatus is NOT Refunded
+        return bookingStatus != BookingStatus.Completed &&
+               paymentStatus != PaymentStatus.Refunded;
+    }
+}

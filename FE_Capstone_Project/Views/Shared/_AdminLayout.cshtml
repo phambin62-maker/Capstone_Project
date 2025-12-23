@@ -1,0 +1,130 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+@{
+        var firstname = Context.Session.GetString("UserName");
+        var hideHeader = ViewData["HideHeader"] as bool? ?? false;
+}
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>@ViewData["Title"] - Admin Panel</title>
+    <link href="~/assets/img/favicon.png" rel="icon">
+    <link href="~/assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="~/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="~/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+    <link href="~/assets/vendor/aos/aos.css" rel="stylesheet">
+    <link href="~/assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
+    <link href="~/assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
+    <link href="~/assets/css/main.css" rel="stylesheet">
+    <link href="~/css/admin.css" rel="stylesheet">
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="admin-body">
+    @if (!hideHeader)
+    {
+        <header id="header" class="header d-flex align-items-center fixed-top">
+            <div class="header-container container-fluid container-xl d-flex align-items-center justify-content-between">
+                <a asp-action="Account" asp-controller="AdminWeb" class="logo d-flex align-items-center me-auto me-xl-0">
+                    <h1 class="sitename">ADMIN PANEL</h1>
+                </a>
+                @if (!string.IsNullOrEmpty(firstname))
+                {
+                    <nav id="user-nav" class="navmenu">
+                        <ul>
+                            @if (!string.IsNullOrEmpty(firstname))
+                            {
+                                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                                <li class="dropdown">
+                                    <a>
+                                        <span>Welcome, @firstname</span>
+                                        <i class="bi bi-chevron-down toggle-dropdown"></i>
+                                    </a>
+                                    <ul>
+                                        <li><a asp-action="Profile" asp-controller="AuthWeb">Profile</a></li>
+                                        <li><a asp-action="Logout" asp-controller="AuthWeb">Logout</a></li>
+                                    </ul>
+                                </li>
+                            }
+                            else
+                            {
+                                <li><a asp-action="Login" asp-controller="AuthWeb">Login</a></li>
+                            }
+                        </ul>
+                    </nav>
+                }
+            </div>
+        </header>
+    }
+
+    <div class="admin-container">
+        <div class="admin-sidebar">
+            <div class="sidebar-header">
+                <div class="user-info">
+                    <div class="user-avatar"><i class="bi bi-person-circle"></i></div>
+                    <div class="user-details">
+                        <h6>@firstname</h6>
+                        <small>Admin</small>
+                    </div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Accounts" ? "active" : "")"
+                           href="/AdminWeb/Account">
+                            <i class="bi bi-people me-2"></i>Account Management
+                            <span class="badge bg-info ms-2">@ViewBag.AccountCount</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Reports" ? "active" : "")"
+                           href="/AdminWeb/Report">
+                            <i class="bi bi-graph-up me-2"></i>Reports & Statistics
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        <main class="admin-main">
+            <div class="admin-content">
+                <nav aria-label="breadcrumb" class="breadcrumb-nav">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/Admin/Index">Admin</a></li>
+                        <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                    </ol>
+                </nav>
+                @RenderBody()
+            </div>
+        </main>
+    </div>
+
+    @if (!hideHeader)
+    {
+        <footer class="admin-footer">
+            <div class="container-fluid">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <p class="mb-0">&copy; @DateTime.Now.Year Admin Panel. Welcome @firstname!</p>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <span class="text-muted">Today: @DateTime.Now.ToString("dd/MM/yyyy")</span>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    }
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/assets/vendor/aos/aos.js"></script>
+    <script src="~/assets/vendor/swiper/swiper-bundle.min.js"></script>
+    <script src="~/assets/vendor/glightbox/js/glightbox.min.js"></script>
+    <script src="~/assets/js/main.js"></script>
+    <script src="~/js/admin.js"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,736 @@
+﻿@{
+    ViewData["Title"] = "Reports & Statistics";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    @@media print {
+        .no-print {
+            display: none !important;
+        }
+
+        header,
+        nav,
+        footer,
+        .admin-header,
+        .admin-sidebar,
+        .admin-footer,
+        .navbar,
+        #header,
+        .header,
+        #main-nav,
+        #top-bar,
+        .top-bar {
+            display: none !important;
+        }
+
+        body,
+        .main-content,
+        .container-fluid {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        .admin-card {
+            border: 1px solid #dee2e6 !important;
+            box-shadow: none !important;
+            page-break-inside: avoid;
+        }
+
+        canvas {
+            max-width: 100% !important;
+        }
+    }
+
+    #monthlyRevenueTable tbody tr.clickable-row {
+        cursor: pointer;
+    }
+
+        #monthlyRevenueTable tbody tr.clickable-row:hover {
+            background-color: #f8f9fa; 
+        }
+</style>
+
+<div class="row mb-4 no-print">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">Reports & Statistics</h2>
+            <div>
+                <button class="btn btn-outline-secondary me-2" id="printButton">
+                    <i class="bi bi-printer me-2"></i>Print Report
+                </button>
+                <button class="btn btn-success" id="exportButton">
+                    <i class="bi bi-file-earmark-excel me-2"></i>Export Excel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4 no-print">
+    <div class="col-12">
+        <div class="admin-card">
+            <div class="card-body">
+                <div class="row align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">From Date</label>
+                        <input type="date" class="form-control" id="fromDate">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">To Date</label>
+                        <input type="date" class="form-control" id="toDate">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Report Type</label>
+                        <select class="form-select" id="reportTypeSelect">
+                            <option value="all">All</option>
+                            <option value="revenue">Revenue Only</option>
+                            <option value="booking">Bookings Only</option>
+                            <option value="customer">Customers Only</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-primary w-100" id="searchButton">
+                            <i class="bi bi-search me-2"></i>Search
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4" id="overviewBlock">
+    <div class="col-md-3">
+        <div class="admin-card stat-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="text-muted mb-0">Total Revenue</h6>
+                    <div class="stat-icon bg-success">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                </div>
+                <h3 class="mb-1" id="statTotalRevenue">0 VND</h3>
+                <small class="text-muted" id="statRevenueChange">
+                    (Data in selected range)
+                </small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="admin-card stat-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="text-muted mb-0">Total Bookings</h6>
+                    <div class="stat-icon bg-primary">
+                        <i class="bi bi-ticket-perforated"></i>
+                    </div>
+                </div>
+                <h3 class="mb-1" id="statTotalBookings">0</h3>
+                <small class="text-muted" id="statBookingsChange">
+                    (Data in selected range)
+                </small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="admin-card stat-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="text-muted mb-0">New Customers</h6>
+                    <div class="stat-icon bg-info">
+                        <i class="bi bi-person-plus"></i>
+                    </div>
+                </div>
+                <h3 class="mb-1" id="statNewCustomers">0</h3>
+                <small class="text-muted" id="statNewCustomersChange">
+                    (Registered in selected range)
+                </small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="admin-card stat-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="text-muted mb-0">Avg. Rating</h6>
+                    <div class="stat-icon bg-warning">
+                        <i class="bi bi-star-fill"></i>
+                    </div>
+                </div>
+                <h3 class="mb-1" id="statAvgRating">0/5.0</h3>
+                <small class="text-muted" id="statAvgRatingChange">
+                    (In selected range)
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4" id="chartsBlock">
+    <div class="col-md-8" id="revenueChartBlock">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-graph-up me-2"></i>Revenue Chart (By Year)
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4" id="tourChartBlock">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-pie-chart me-2"></i>Top 5 Popular Tours
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="tourChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4" id="tablesBlock">
+    <div class="col-md-6" id="monthlyRevenueTableBlock">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-calendar-check me-2"></i>Booking Statistics (By Year)
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="monthlyRevenueTable">
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th class="text-center">Bookings</th>
+                                <th class="text-end">Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6" id="topToursTableBlock">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-trophy me-2"></i>Top 5 Bestselling Tours
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="topToursTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Tour Name</th>
+                                <th class="text-center">Bookings</th>
+                                <th class="text-end">Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4" id="customerBlock">
+    <div class="col-md-12">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-people me-2"></i>Customer Analysis (Overview)
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center border-end">
+                        <h4 class="text-primary" id="statTotalCustomersAllTime">0</h4>
+                        <p class="text-muted mb-0">Total Customers</p>
+                    </div>
+                    <div class="col-md-3 text-center border-end">
+                        <h4 class="text-success" id="statLoyalCustomers">0</h4>
+                        <p class="text-muted mb-0">Loyal Customers</p>
+                    </div>
+                    <div class="col-md-3 text-center border-end">
+                        <h4 class="text-info" id="statNewCustomersMonth">0</h4>
+                        <p class="text-muted mb-0">New Customers (in period)</p>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <h4 class="text-warning" id="statReturnRate">0%</h4>
+                        <p class="text-muted mb-0">Return Rate</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="bookingDetailModal" tabindex="-1" aria-labelledby="bookingDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bookingDetailModalLabel">
+                    <i class="bi bi-card-list me-2"></i>Booking Details for
+                    <span id="modalMonthYearTitle"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="bookingDetailModalBody">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let revenueChartInstance;
+        let tourChartInstance;
+        let bookingDetailModal; 
+
+        const API_BASE_URL = '@ViewBag.ApiBaseUrl';
+        const JWT_TOKEN = '@ViewBag.JwtToken';
+
+        function getAuthHeader() {
+            if (!JWT_TOKEN) {
+                console.error('Token not found!');
+                alert('Session expired. Please login again.');
+                window.location.href = '/AuthWeb/Login';
+                return {};
+            }
+            return {
+                'Authorization': `Bearer ${JWT_TOKEN}`,
+                'Content-Type': 'application/json'
+            };
+        }
+        function formatCurrencyVND(value) {
+            if (value === null || value === undefined) return "0 VND";
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+        }
+        function formatPercentage(value) {
+            if (value === null || value === undefined) return "0%";
+            return (value * 100).toFixed(1) + '%';
+        }
+        function formatNumber(value) {
+            if (value === null || value === undefined) return "0";
+            return new Intl.NumberFormat('vi-VN').format(value);
+        }
+
+        function formatBookingDate(dateString) {
+            if (!dateString) return "N/A";
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-GB', { 
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+
+        async function loadBookingDetails(year, month) {
+            const modalBody = document.getElementById('bookingDetailModalBody');
+            const modalTitle = document.getElementById('modalMonthYearTitle');
+
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            modalTitle.textContent = `${monthNames[month - 1]} / ${year}`;
+            modalBody.innerHTML = `
+                                <div class="d-flex justify-content-center my-5">
+                                    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>`;
+
+            try {
+                const headers = getAuthHeader();
+                const apiUrl = `${API_BASE_URL}/api/reports/bookings-by-month?year=${year}&month=${month}`;
+
+                const response = await fetch(apiUrl, { headers });
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`API Error: ${response.status} - ${errorText}`);
+                }
+                const bookings = await response.json();
+
+                if (!bookings || bookings.length === 0) {
+                    modalBody.innerHTML = '<p class="text-center my-4">No bookings found for this month.</p>';
+                    return;
+                }
+
+                let tableHtml = `
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-striped table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>ID</th>
+                                                    <th>Tour Name</th>
+                                                    <th>Customer</th>
+                                                    <th>Booking Date</th>
+                                                    <th>Status</th>
+                                                    <th class="text-end">Total Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>`;
+
+                for (const b of bookings) {
+                    let statusBadge = '';
+                    let statusText = b.status || "N/A";
+                    if (statusText.toLowerCase() === 'completed') {
+                        statusBadge = `<span class="badge bg-success">${statusText}</span>`;
+                    } else if (statusText.toLowerCase() === 'confirmed') {
+                        statusBadge = `<span class="badge bg-primary">${statusText}</span>`;
+                    } else if (statusText.toLowerCase() === 'pending') {
+                        statusBadge = `<span class="badge bg-warning text-dark">${statusText}</span>`;
+                    } else if (statusText.toLowerCase() === 'cancelled') {
+                        statusBadge = `<span class="badge bg-danger">${statusText}</span>`;
+                    } else {
+                        statusBadge = `<span class="badge bg-secondary">${statusText}</span>`;
+                    }
+
+                    tableHtml += `
+                                        <tr>
+                                            <td>${b.bookingId}</td>
+                                            <td>${b.tourName}</td>
+                                            <td>${b.customerName}</td>
+                                            <td>${formatBookingDate(b.bookingDate)}</td>
+                                            <td>${statusBadge}</td>
+                                            <td class="text-end">${formatCurrencyVND(b.totalPrice)}</td>
+                                        </tr>`;
+                }
+
+                tableHtml += '</tbody></table></div>';
+                modalBody.innerHTML = tableHtml;
+
+            } catch (error) {
+                console.error('Error loading booking details:', error);
+                modalBody.innerHTML = `<p class="text-center text-danger my-4">An error occurred while loading data: ${error.message}</p>`;
+            }
+        }
+
+        function toggleReportBlocks(reportType) {
+            const overviewBlock = document.getElementById('overviewBlock');
+            const chartsBlock = document.getElementById('chartsBlock');
+            const tablesBlock = document.getElementById('tablesBlock');
+            const customerBlock = document.getElementById('customerBlock');
+            const revenueChartBlock = document.getElementById('revenueChartBlock');
+            const tourChartBlock = document.getElementById('tourChartBlock');
+            const monthlyRevenueTableBlock = document.getElementById('monthlyRevenueTableBlock');
+            const topToursTableBlock = document.getElementById('topToursTableBlock');
+
+            overviewBlock.classList.add('d-none');
+            chartsBlock.classList.add('d-none');
+            tablesBlock.classList.add('d-none');
+            customerBlock.classList.add('d-none');
+            revenueChartBlock.classList.add('d-none');
+            tourChartBlock.classList.add('d-none');
+            monthlyRevenueTableBlock.classList.add('d-none');
+            topToursTableBlock.classList.add('d-none');
+
+            overviewBlock.classList.remove('d-none');
+
+            if (reportType === 'all') {
+                chartsBlock.classList.remove('d-none');
+                tablesBlock.classList.remove('d-none');
+                customerBlock.classList.remove('d-none');
+                revenueChartBlock.classList.remove('d-none');
+                tourChartBlock.classList.remove('d-none');
+                monthlyRevenueTableBlock.classList.remove('d-none');
+                topToursTableBlock.classList.remove('d-none');
+            } else if (reportType === 'revenue') {
+                chartsBlock.classList.remove('d-none');
+                tablesBlock.classList.remove('d-none');
+                revenueChartBlock.classList.remove('d-none');
+                monthlyRevenueTableBlock.classList.remove('d-none');
+            } else if (reportType === 'booking') {
+                chartsBlock.classList.remove('d-none');
+                tablesBlock.classList.remove('d-none');
+                tourChartBlock.classList.remove('d-none');
+                topToursTableBlock.classList.remove('d-none');
+            } else if (reportType === 'customer') {
+                customerBlock.classList.remove('d-none');
+            }
+        }
+
+
+        // === UI UPDATES ===
+        function updateOverviewCards(data) {
+            document.getElementById('statTotalRevenue').textContent = formatCurrencyVND(data.totalRevenue);
+            document.getElementById('statTotalBookings').textContent = formatNumber(data.totalBookings);
+            document.getElementById('statAvgRating').textContent = (data.averageRating || 0).toFixed(1) + '/5.0';
+        }
+
+        function updateCustomerAnalysis(data) {
+            document.getElementById('statTotalCustomersAllTime').textContent = formatNumber(data.totalCustomers);
+            document.getElementById('statLoyalCustomers').textContent = formatNumber(data.loyalCustomers);
+            document.getElementById('statNewCustomersMonth').textContent = formatNumber(data.newCustomersInRange);
+            document.getElementById('statReturnRate').textContent = formatPercentage(data.returnRate);
+            document.getElementById('statNewCustomers').textContent = formatNumber(data.newCustomersInRange);
+        }
+
+        function updateTopToursTable(data) {
+            const tableBody = document.querySelector("#topToursTable tbody");
+            if (!tableBody) return;
+            tableBody.innerHTML = '';
+            if (!data || data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No data available.</td></tr>';
+                return;
+            }
+            let rank = 1;
+            for (const tour of data) {
+                const row = `
+                                            <tr>
+                                                <td>
+                                                    <span class="badge ${rank == 1 ? 'bg-warning text-dark' : (rank == 2 ? 'bg-secondary' : (rank == 3 ? 'bg-danger' : 'bg-info'))}">
+                                                        <i class="bi ${rank <= 3 ? 'bi-trophy-fill' : 'bi-bookmark-star'}"></i> ${rank++}
+                                                    </span>
+                                                </td>
+                                                <td>${tour.tourName}</td>
+                                                <td class="text-center">${formatNumber(tour.bookingsCount)}</td>
+                                                <td class="text-end">${formatCurrencyVND(tour.revenue)}</td>
+                                            </tr>
+                                        `;
+                tableBody.insertAdjacentHTML('beforeend', row);
+            }
+        }
+
+        function updateMonthlyRevenueTable(data) {
+            const tableBody = document.querySelector("#monthlyRevenueTable tbody");
+            if (!tableBody) return;
+            tableBody.innerHTML = '';
+            if (!data || data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="3" class="text-center">No data for this year.</td></tr>';
+                return;
+            }
+
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            data.sort((a, b) => b.month - a.month);
+            for (const monthData of data) {
+                const row = `
+                                    <tr class="clickable-row" data-year="${monthData.year}" data-month="${monthData.month}">
+                                        <td>${monthNames[monthData.month - 1]} / ${monthData.year}</td>
+                                        <td class="text-center">${formatNumber(monthData.bookingsCount)}</td>
+                                        <td class="text-end">${formatCurrencyVND(monthData.totalRevenue)}</td>
+                                    </tr>
+                                `;
+                tableBody.insertAdjacentHTML('beforeend', row);
+            }
+        }
+
+        function updateRevenueChart(data) {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const monthlyData = new Array(12).fill(0);
+            for (const month of data) {
+                monthlyData[month.month - 1] = month.totalRevenue / 1000000;
+            }
+            const chartData = {
+                labels: labels,
+                datasets: [{
+                    label: 'Revenue (million VND)',
+                    data: monthlyData,
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            };
+            if (revenueChartInstance) {
+                revenueChartInstance.data = chartData;
+                revenueChartInstance.update();
+            } else {
+                revenueChartInstance = new Chart(ctx, { type: 'line', data: chartData, options: { /* ... options ... */ } });
+            }
+        }
+
+        function updateTourChart(data) {
+            const ctx = document.getElementById('tourChart').getContext('2d');
+            const labels = data.map(t => t.tourName);
+            const bookings = data.map(t => t.bookingsCount);
+            const chartData = {
+                labels: labels,
+                datasets: [{
+                    data: bookings,
+                    backgroundColor: [
+                        'rgba(0, 123, 255, 0.8)',
+                        'rgba(40, 167, 69, 0.8)',
+                        'rgba(255, 193, 7, 0.8)',
+                        'rgba(23, 162, 184, 0.8)',
+                        'rgba(220, 53, 69, 0.8)'
+                    ]
+                }]
+            };
+            if (tourChartInstance) {
+                tourChartInstance.data = chartData;
+                tourChartInstance.update();
+            } else {
+                tourChartInstance = new Chart(ctx, { type: 'doughnut', data: chartData, options: { /* ... options ... */ } });
+            }
+        }
+
+        // === MAIN LOAD FUNCTION ===
+        async function loadDashboardData() {
+            const from = document.getElementById('fromDate').value;
+            const to = document.getElementById('toDate').value;
+            const reportType = document.getElementById('reportTypeSelect').value;
+            if (!from || !to) {
+                alert('Please select From Date and To Date'); 
+                return;
+            }
+            const year = new Date(from).getFullYear();
+            const headers = getAuthHeader();
+            const searchButton = document.getElementById('searchButton');
+            toggleReportBlocks(reportType);
+            try {
+                searchButton.disabled = true;
+                searchButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...'; 
+                let overviewPromise = null;
+                let topToursPromise = null;
+                let monthlyPromise = null;
+                let customerPromise = null;
+                overviewPromise = fetch(`${API_BASE_URL}/api/reports/overview?from=${from}&to=${to}&topN=5`, { headers }).then(res => res.json());
+                customerPromise = fetch(`${API_BASE_URL}/api/reports/customer-analysis?from=${from}&to=${to}`, { headers }).then(res => res.json());
+                if (reportType === 'all' || reportType === 'booking') {
+                    topToursPromise = fetch(`${API_BASE_URL}/api/reports/top-tours?from=${from}&to=${to}&topN=5`, { headers }).then(res => res.json());
+                }
+                if (reportType === 'all' || reportType === 'revenue') {
+                    monthlyPromise = fetch(`${API_BASE_URL}/api/reports/monthly?year=${year}`, { headers }).then(res => res.json());
+                }
+                const overviewData = await overviewPromise;
+                const customerData = await customerPromise;
+                updateOverviewCards(overviewData);
+                updateCustomerAnalysis(customerData);
+                if (topToursPromise) {
+                    const topToursData = await topToursPromise;
+                    updateTopToursTable(topToursData);
+                    updateTourChart(topToursData);
+                }
+                if (monthlyPromise) {
+                    const monthlyData = await monthlyPromise;
+                    updateMonthlyRevenueTable(monthlyData);
+                    updateRevenueChart(monthlyData);
+                }
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                alert(error.message || 'An unknown error occurred.'); 
+            } finally {
+                searchButton.disabled = false;
+                searchButton.innerHTML = '<i class="bi bi-search me-2"></i>Search'; 
+            }
+        }
+
+        // === EXPORT EXCEL FUNCTION ===
+        async function exportToExcel() {
+            const from = document.getElementById('fromDate').value;
+            const to = document.getElementById('toDate').value;
+            if (!from || !to) { alert('Please select From Date and To Date'); return; } 
+            const headers = getAuthHeader();
+            const button = document.getElementById('exportButton');
+            try {
+                button.disabled = true;
+                button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Exporting...'; 
+                const response = await fetch(`${API_BASE_URL}/api/reports/export?from=${from}&to=${to}`, { headers });
+                if (!response.ok) throw new Error('Error exporting Excel file.'); 
+                const blob = await response.blob();
+                const contentDisposition = response.headers.get('content-disposition');
+                let fileName = `Revenue_Overview_${from}_${to}.xlsx`;
+                if (contentDisposition) {
+                    const fileNameMatch = contentDisposition.match(/filename="(.+)"/);
+                    if (fileNameMatch && fileNameMatch.length === 2) fileName = fileNameMatch[1];
+                }
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none'; a.href = url; a.download = fileName;
+                document.body.appendChild(a); a.click();
+                window.URL.revokeObjectURL(url); a.remove();
+            } catch (error) {
+                console.error('Error exporting Excel:', error);
+                alert(error.message || 'An unknown error occurred.'); 
+            } finally {
+                button.disabled = false;
+                button.innerHTML = '<i class="bi bi-file-earmark-excel me-2"></i>Export Excel'; 
+            }
+        }
+
+        // === PRINT FUNCTION ===
+        function printReport() {
+            window.print();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date();
+            const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            document.getElementById('fromDate').value = firstDayOfMonth.toISOString().split('T')[0];
+            document.getElementById('toDate').value = today.toISOString().split('T')[0];
+
+            // Initialize Modal
+            bookingDetailModal = new bootstrap.Modal(document.getElementById('bookingDetailModal'));
+
+            // Attach events
+            document.getElementById('searchButton').addEventListener('click', loadDashboardData);
+            document.getElementById('exportButton').addEventListener('click', exportToExcel);
+            document.getElementById('printButton').addEventListener('click', printReport);
+
+            const reportTypeSelect = document.getElementById('reportTypeSelect');
+            reportTypeSelect.addEventListener('change', () => {
+                toggleReportBlocks(reportTypeSelect.value);
+            });
+
+            const monthlyTableBody = document.querySelector("#monthlyRevenueTable tbody");
+            monthlyTableBody.addEventListener('click', function (event) {
+                const row = event.target.closest('tr.clickable-row');
+                if (!row) return;
+
+                const year = row.dataset.year;
+                const month = row.dataset.month;
+
+                if (year && month) {
+
+                    const modalHeader = document.querySelector('#bookingDetailModal .modal-header');
+                    if (modalHeader) {
+                        modalHeader.style.setProperty('background-color', '#000000', 'important');
+                    }
+
+                    const modalTitleElement = document.getElementById('bookingDetailModalLabel');
+                    if (modalTitleElement) {
+                        modalTitleElement.style.setProperty('color', '#FFFFFF', 'important');
+
+                        const iconElement = modalTitleElement.querySelector('i');
+                        if (iconElement) {
+                            iconElement.style.setProperty('color', '#FFFFFF', 'important');
+                        }
+                    }
+
+                    const closeButton = document.querySelector('#bookingDetailModal .btn-close');
+                    if (closeButton) {
+                        closeButton.style.setProperty('filter', 'invert(1) grayscale(100%) brightness(200%)', 'important');
+                    }
+
+                    bookingDetailModal.show();
+                    loadBookingDetails(year, month);
+                }
+            });
+
+            toggleReportBlocks(reportTypeSelect.value);
+            loadDashboardData();
+        });
+
+    </script>
+}

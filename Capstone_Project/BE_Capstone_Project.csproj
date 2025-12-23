@@ -4,6 +4,9 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
+    <DisableBuildCompression>true</DisableBuildCompression>
+    <ValidateStaticWebAssetUniqueIds>false</ValidateStaticWebAssetUniqueIds>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,12 +15,14 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Facebook" Version="8.0.21" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.21" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.21" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.2.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.10" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.10">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.10" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>
@@ -27,6 +32,7 @@
 
   <ItemGroup>
     <Folder Include="Application\TourManagement\" />
+    <Folder Include="wwwroot\images\news\" />
   </ItemGroup>
 
 </Project>

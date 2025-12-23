@@ -176,6 +176,23 @@ namespace BE_Capstone_Project.DAO
             }
         }
 
+        public async Task<Tour?> GetTourByScheduleIdAsync(int tourScheduleId)
+        {
+            try
+            {
+                var tourSchedule = await _context.TourSchedules
+                    .Include(ts => ts.Tour)
+                    .ThenInclude(t => t.TourImages)
+                    .FirstOrDefaultAsync(ts => ts.Id == tourScheduleId);
+                return tourSchedule?.Tour;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while retrieving the tour for schedule ID {tourScheduleId}: {ex.Message}");
+                return null;
+            }
+        }
+
         public async Task<List<Tour>> SearchToursByNameAsync(string name)
         {
             try
@@ -211,6 +228,7 @@ namespace BE_Capstone_Project.DAO
             {
                 var paginatedTours = await _context.Tours
                     .Include(t => t.TourImages)
+                    .Include(t => t.EndLocation)
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
                     .ToListAsync();
@@ -228,7 +246,6 @@ namespace BE_Capstone_Project.DAO
         {
             try
             {
-                // 1) Booking counts per TourId via Bookings -> TourSchedules -> TourId
                 var bookingCountsDict = await _context.Bookings
                     .Join(_context.TourSchedules,
                           b => b.TourScheduleId,
@@ -238,19 +255,16 @@ namespace BE_Capstone_Project.DAO
                     .Select(g => new { TourId = g.Key, Count = g.Count() })
                     .ToDictionaryAsync(x => x.TourId, x => x.Count);
 
-                // 2) Average stars per TourId from Reviews
                 var avgStarsDict = await _context.Reviews
                     .GroupBy(r => r.TourId)
                     .Select(g => new { TourId = g.Key, AvgStars = g.Average(r => (double?)r.Stars) })
                     .ToDictionaryAsync(x => x.TourId, x => x.AvgStars ?? 0.0);
 
-                // 3) Load tours (include images if desired)
                 var tours = await _context.Tours
                     .Include(t => t.TourImages)
                     .Include(t => t.Category)
                     .ToListAsync();
 
-                // 4) Project with counts and avg stars (0 when missing)
                 var toursWithMetrics = tours
                     .Select(t => new
                     {
@@ -261,7 +275,6 @@ namespace BE_Capstone_Project.DAO
                     })
                     .ToList();
 
-                // 5) For each category pick the top tour (booking count desc, then avg stars desc, then id tie-breaker)
                 var topToursByCategory = toursWithMetrics
                     .GroupBy(x => x.CategoryId)
                     .Select(g => g
@@ -279,5 +292,169 @@ namespace BE_Capstone_Project.DAO
                 return new List<Tour>();
             }
         }
+
+        public async Task<List<Tour>> GetFilteredToursAsync(
+            int page = 1,
+            int pageSize = 10,
+            bool? status = null,  
+            int? startLocation = null,
+            int? endLocation = null,
+            int? category = null,
+            decimal? minPrice = null,
+            decimal? maxPrice = null,
+            string sort = null,
+            string search = null)
+        {
+            try
+            {
+                var query = _context.Tours
+                    .Include(t => t.TourImages)
+                    .Include(t => t.Reviews)
+                    .Include(t => t.StartLocation)
+                    .Include(t => t.EndLocation)
+                    .Include(t => t.Category)
+                    .AsQueryable();
+
+
+                if (status.HasValue)
+                {
+                    query = query.Where(t => t.TourStatus == status.Value);
+                }
+
+                if (startLocation.HasValue)
+                {
+                    query = query.Where(t => t.StartLocationId == startLocation.Value);
+                }
+
+                if (endLocation.HasValue)
+                {
+                    query = query.Where(t => t.EndLocationId == endLocation.Value);
+                }
+
+                if (category.HasValue)
+                {
+                    query = query.Where(t => t.CategoryId == category.Value);
+                }
+
+                if (minPrice.HasValue)
+                {
+                    query = query.Where(t => t.Price >= minPrice.Value);
+                }
+
+                if (maxPrice.HasValue)
+                {
+                    query = query.Where(t => t.Price <= maxPrice.Value);
+                }
+
+                if (!string.IsNullOrEmpty(search))
+                {
+                    query = query.Where(t => t.Name.Contains(search) || t.Description.Contains(search));
+                }
+
+                if (!string.IsNullOrEmpty(sort))
+                {
+                    if (sort.ToLower() == "asc")
+                        query = query.OrderBy(t => t.Price);
+                    else if (sort.ToLower() == "desc")
+                        query = query.OrderByDescending(t => t.Price);
+                    else if (sort.ToLower() == "newest")
+                        query = query.OrderByDescending(t => t.Id);
+                }
+                else
+                {
+                    query = query.OrderByDescending(t => t.Id);
+                }
+
+                var paginatedTours = await query
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                return paginatedTours;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while retrieving filtered tours: {ex.Message}");
+                return new List<Tour>();
+            }
+        }
+
+        public async Task<int> GetFilteredTourCountAsync(
+            bool? status = null,
+            int? startLocation = null,
+            int? endLocation = null,
+            int? category = null,
+            decimal? minPrice = null,
+            decimal? maxPrice = null,
+            string search = null)
+        {
+            try
+            {
+                var query = _context.Tours.AsQueryable();
+
+                if (status.HasValue)
+                {
+                    query = query.Where(t => t.TourStatus == status.Value);
+                }
+
+                if (startLocation.HasValue)
+                {
+                    query = query.Where(t => t.StartLocationId == startLocation.Value);
+                }
+
+                if (endLocation.HasValue)
+                {
+                    query = query.Where(t => t.EndLocationId == endLocation.Value);
+                }
+
+                if (category.HasValue)
+                {
+                    query = query.Where(t => t.CategoryId == category.Value);
+                }
+
+                if (minPrice.HasValue)
+                {
+                    query = query.Where(t => t.Price >= minPrice.Value);
+                }
+
+                if (maxPrice.HasValue)
+                {
+                    query = query.Where(t => t.Price <= maxPrice.Value);
+                }
+
+                if (!string.IsNullOrEmpty(search))
+                {
+                    query = query.Where(t => t.Name.Contains(search) || t.Description.Contains(search));
+                }
+
+                return await query.CountAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while counting filtered tours: {ex.Message}");
+                return 0;
+            }
+        }
+
+        public async Task<List<Tour>> GetActiveTours()
+        {
+            try
+            {
+                var query = _context.Tours
+                    .Where(t => t.TourStatus == true)
+                    .OrderByDescending(t => t.Id)
+                    .Include(t => t.StartLocation)
+                    .Include(t => t.EndLocation)
+                    .Include(t => t.Category);
+
+                return await query.ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in TourDAO.GetActiveTours: {ex.Message}");
+                return new List<Tour>();
+            }
+        }
+
     }
 }

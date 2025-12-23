@@ -1,11 +1,16 @@
 ﻿using BE_Capstone_Project.Application.Notifications.DTOs;
+using BE_Capstone_Project.Application.Notifications.Services.Interfaces;
 using BE_Capstone_Project.DAO;
 using BE_Capstone_Project.Domain.Enums;
 using BE_Capstone_Project.Domain.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace BE_Capstone_Project.Application.Notifications.Services
 {
-    public class NotificationService
+    public class NotificationService : INotificationService
     {
         private readonly NotificationDAO _notificationDAO;
 
@@ -14,26 +19,8 @@ namespace BE_Capstone_Project.Application.Notifications.Services
             _notificationDAO = notificationDAO;
         }
 
-        public async Task<IEnumerable<NotificationDTO>> GetAllAsync()
+        private NotificationDTO MapToDto(Notification n)
         {
-            var list = await _notificationDAO.GetAllNotificationsAsync();
-            return list.Select(n => new NotificationDTO
-            {
-                Id = n.Id,
-                UserId = n.UserId,
-                Title = n.Title,
-                Message = n.Message,
-                CreatedDate = n.CreatedDate,
-                NotificationType = n.NotificationType,
-                Username = n.User?.Username
-            });
-        }
-
-        public async Task<NotificationDTO?> GetByIdAsync(int id)
-        {
-            var n = await _notificationDAO.GetNotificationByIdAsync(id);
-            if (n == null) return null;
-
             return new NotificationDTO
             {
                 Id = n.Id,
@@ -42,8 +29,23 @@ namespace BE_Capstone_Project.Application.Notifications.Services
                 Message = n.Message,
                 CreatedDate = n.CreatedDate,
                 NotificationType = n.NotificationType,
-                Username = n.User?.Username
+                Username = n.User?.Username,
+                IsRead = n.IsRead
             };
+        }
+
+        public async Task<IEnumerable<NotificationDTO>> GetAllAsync()
+        {
+            var list = await _notificationDAO.GetAllNotificationsAsync();
+            return list.Select(MapToDto);
+        }
+
+        public async Task<NotificationDTO?> GetByIdAsync(int id)
+        {
+            var n = await _notificationDAO.GetNotificationByIdAsync(id);
+            if (n == null) return null;
+
+            return MapToDto(n);
         }
 
         public async Task<int> CreateAsync(CreateNotificationDTO dto)
@@ -54,7 +56,8 @@ namespace BE_Capstone_Project.Application.Notifications.Services
                 Title = dto.Title,
                 Message = dto.Message,
                 NotificationType = dto.NotificationType ?? NotificationType.System,
-                CreatedDate = DateTime.UtcNow
+                CreatedDate = DateTime.UtcNow,
+                IsRead = false
             };
 
             return await _notificationDAO.AddNotificationAsync(newNoti);
@@ -77,19 +80,36 @@ namespace BE_Capstone_Project.Application.Notifications.Services
             return await _notificationDAO.DeleteNotificationByIdAsync(id);
         }
 
-        public async Task<IEnumerable<NotificationDTO>> GetByUserIdAsync(int userId)
+        public async Task<IEnumerable<NotificationDTO>> GetByUserIdAsync(int userId, bool? isRead = null)
         {
-            var list = await _notificationDAO.GetNotificationsByUserIdAsync(userId);
-            return list.Select(n => new NotificationDTO
-            {
-                Id = n.Id,
-                UserId = n.UserId,
-                Title = n.Title,
-                Message = n.Message,
-                CreatedDate = n.CreatedDate,
-                NotificationType = n.NotificationType,
-                Username = n.User?.Username
-            });
+            var list = await _notificationDAO.GetNotificationsByUserIdAsync(userId, isRead);
+            return list.Select(MapToDto);
+        }
+
+        public async Task<int> GetUnreadCountAsync(int userId)
+        {
+            return await _notificationDAO.GetUnreadCountAsync(userId);
+        }
+
+        public async Task<bool> MarkAllAsReadAsync(int userId)
+        {
+            return await _notificationDAO.MarkAllAsReadAsync(userId);
+        }
+
+        public async Task<IEnumerable<NotificationDTO>> GetRecentAsync(int userId)
+        {
+            var list = await _notificationDAO.GetRecentNotificationsAsync(userId, 5);
+            return list.Select(MapToDto);
+        }
+
+        public async Task<bool> MarkAsReadAsync(int notificationId, int userId)
+        {
+            return await _notificationDAO.MarkAsReadAsync(notificationId, userId);
+        }
+
+        public async Task<bool> DeleteAllByUserIdAsync(int userId)
+        {
+            return await _notificationDAO.DeleteAllByUserIdAsync(userId);
         }
     }
 }
