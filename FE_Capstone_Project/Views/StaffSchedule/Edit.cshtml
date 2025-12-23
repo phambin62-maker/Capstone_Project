@@ -37,16 +37,15 @@
         <div class="card-body">
             <form method="post">
                 <!-- Tour Information Display -->
-                <div class="row mb-4">
-                    <div class="col-12">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Tour Information</label>
                         <div class="card bg-light">
-                            <div class="card-body py-3">
+                            <div class="card-body py-2">
                                 <div class="row align-items-center">
-                                    <div class="col-md-8">
-                                        <h6 class="card-title mb-1 text-primary">
-                                            <i class="bi bi-map me-2"></i>Tour Information
-                                        </h6>
-                                        <p class="mb-0 fw-bold">
+                                    <div class="col-12">
+                                        <p class="mb-0 fw-bold text-primary">
+                                            <i class="bi bi-map me-2"></i>
                                             @if (ViewData["TourName"] != null)
                                             {
                                                 @ViewData["TourName"]
@@ -55,13 +54,22 @@
                                             {
                                                 <span class="text-muted">No tour information</span>
                                             }
-                                        </p>
-                                    </div>
-                                    <div class="col-md-4 text-end">
-                                        <small class="text-muted">Schedule ID: @ViewContext.RouteData.Values["id"]</small>
+                                        </p>                                       
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="ScheduleStatus" class="form-label">Status <span class="text-danger">*</span></label>
+                            <select asp-for="ScheduleStatus" class="form-select">
+                                <option value="@ScheduleStatus.Scheduled">Scheduled</option>
+                                <option value="@ScheduleStatus.Ongoing">Ongoing</option>
+                                <option value="@ScheduleStatus.Completed">Completed</option>
+                                <option value="@ScheduleStatus.Cancelled">Cancelled</option>
+                            </select>
+                            <span asp-validation-for="ScheduleStatus" class="text-danger small"></span>
                         </div>
                     </div>
                 </div>
@@ -69,27 +77,16 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label asp-for="DepartureDate" class="form-label">Departure Date *</label>
+                            <label asp-for="DepartureDate" class="form-label">Departure Date <span class="text-danger">*</span></label>
                             <input asp-for="DepartureDate" type="date" class="form-control" />
-                            <span asp-validation-for="DepartureDate" class="text-danger"></span>
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="ArrivalDate" class="form-label">Arrival Date *</label>
-                            <input asp-for="ArrivalDate" type="date" class="form-control" />
-                            <span asp-validation-for="ArrivalDate" class="text-danger"></span>
+                            <span asp-validation-for="DepartureDate" class="text-danger small"></span>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label asp-for="ScheduleStatus" class="form-label">Status *</label>
-                            <select asp-for="ScheduleStatus" class="form-select">
-                                <option value="@ScheduleStatus.Scheduled">Scheduled</option>
-                                <option value="@ScheduleStatus.Ongoing">Ongoing</option>
-                                <option value="@ScheduleStatus.Completed">Completed</option>
-                                <option value="@ScheduleStatus.Cancelled">Cancelled</option>
-                            </select>
-                            <span asp-validation-for="ScheduleStatus" class="text-danger"></span>
+                            <label asp-for="ArrivalDate" class="form-label">Return Date <span class="text-danger">*</span></label>
+                            <input asp-for="ArrivalDate" type="date" class="form-control" />
+                            <span asp-validation-for="ArrivalDate" class="text-danger small"></span>
                         </div>
                     </div>
                 </div>

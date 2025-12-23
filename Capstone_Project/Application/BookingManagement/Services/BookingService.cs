@@ -516,6 +516,10 @@ namespace BE_Capstone_Project.Application.BookingManagement.Services
             {
                 booking.BookingStatus = BookingStatus.Confirmed;
             }
+            else if (request.PaymentStatus == PaymentStatus.Refunded)
+            {
+                booking.BookingStatus = BookingStatus.Cancelled;
+            }
 
             var updateSuccess = await _bookingDAO.UpdateBookingAsync(booking);
 
