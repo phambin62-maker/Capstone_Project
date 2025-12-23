@@ -157,7 +157,7 @@
                                                 <div class="mb-3">
                                                     <label asp-for="ChildDiscount" class="form-label">Child Discount</label>
                                                     <div class="input-group">
-                                                        <input asp-for="ChildDiscount" type="number" class="form-control" value="0" min="0" max="100" />
+                                                        <input asp-for="ChildDiscount" type="number" class="form-control" min="0" max="100" />
                                                         <span class="input-group-text">%</span>
                                                     </div>
                                                     <span asp-validation-for="ChildDiscount" class="text-danger small"></span>
@@ -167,7 +167,7 @@
                                                 <div class="mb-3">
                                                     <label asp-for="GroupDiscount" class="form-label">Group Discount</label>
                                                     <div class="input-group">
-                                                        <input asp-for="GroupDiscount" type="number" class="form-control" value="0" min="0" max="100" />
+                                                        <input asp-for="GroupDiscount" type="number" class="form-control" min="0" max="100" />
                                                         <span class="input-group-text">%</span>
                                                     </div>
                                                     <span asp-validation-for="GroupDiscount" class="text-danger small"></span>
@@ -176,7 +176,7 @@
                                             <div class="col-md-4">
                                                 <div class="mb-3">
                                                     <label asp-for="GroupNumber" class="form-label">Group Number</label>
-                                                    <input asp-for="GroupNumber" type="number" class="form-control" value="5" min="1" max="100" />
+                                                    <input asp-for="GroupNumber" type="number" class="form-control" min="1" max="100" />
                                                     <span asp-validation-for="GroupNumber" class="text-danger small"></span>
                                                 </div>
                                             </div>
@@ -186,7 +186,7 @@
                                              <div class="col-md-12">
                                                  <div class="mb-3">
                                                      <label asp-for="MaxSeats" class="form-label">Max Seats</label>
-                                                     <input asp-for="MaxSeats" type="number" class="form-control" value="30" min="1" max="1000" />
+                                                     <input asp-for="MaxSeats" type="number" class="form-control" min="1" max="1000" />
                                                      <span asp-validation-for="MaxSeats" class="text-danger small"></span>
                                                  </div>
                                              </div>
