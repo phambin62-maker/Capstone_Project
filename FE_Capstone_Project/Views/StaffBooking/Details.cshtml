@@ -42,9 +42,7 @@
                     <h6 class="m-0 font-weight-bold text-primary">
                         <i class="fas fa-info-circle me-2"></i>Booking Information
                     </h6>
-                    <span class="badge @GetBookingStatusBadge(Model.BookingStatus) fs-6">
-                        @GetBookingStatusText(Model.BookingStatus)
-                    </span>
+
                 </div>
                 <div class="card-body">
                     <div class="row">
@@ -103,6 +101,14 @@
                                     <td class="fw-bold text-muted">Total Amount:</td>
                                     <td class="h5 text-success fw-bold">
                                         @Model.TotalPrice?.ToString("N0") ₫
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold text-muted">Booking Status:</td>
+                                    <td>
+                                        <span class="badge @GetBookingStatusBadge(Model.BookingStatus) fs-6">
+                                            @GetBookingStatusText(Model.BookingStatus)
+                                        </span>
                                     </td>
                                 </tr>
                             </table>
