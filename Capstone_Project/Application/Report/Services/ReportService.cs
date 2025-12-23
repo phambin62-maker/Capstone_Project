@@ -238,6 +238,7 @@ namespace BE_Capstone_Project.Application.Report.Services
         {
             var toDateTime = to.ToDateTime(TimeOnly.MinValue);
             return _context.Bookings.Where(b => b.PaymentStatus == PaymentStatus.Completed &&
+                                                b.BookingStatus == BookingStatus.Completed &&
                   b.PaymentDate != null &&
                   b.PaymentDate >= from && 
                   b.PaymentDate < to

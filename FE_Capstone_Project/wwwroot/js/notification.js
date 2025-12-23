@@ -63,19 +63,15 @@ function initCustomerNotification() {
                     const iconHtml = noti.isRead ? '<i class="bi bi-check2-circle text-muted fs-4"></i>' : '<i class="bi bi-bell-fill text-primary fs-4"></i>';
                     const titleClass = noti.isRead ? '' : 'fw-bold';
 
-                    // --- [MỚI] Tách ID Booking từ tin nhắn ---
                     let bookingId = null;
                     const combinedText = (noti.title + " " + noti.message);
                     const match = combinedText.match(/Booking #(\d+)/i);
                     if (match && match[1]) bookingId = match[1];
 
-                    // --- [MỚI] Tạo Link đến trang My Bookings ---
-                    // Thay '/BookingWeb/MyBookings' bằng URL thật của bạn nếu khác
                     const linkUrl = bookingId ? `/Profile/MyBookings#booking-${bookingId}` : '#';
                     const linkClass = bookingId ? '' : 'text-decoration-none cursor-default';
 
                     const li = document.createElement('li');
-                    // Sử dụng thẻ <a> thay vì <div> để có thể click chuyển trang
                     li.innerHTML = `
                         <a class="dropdown-item ${linkClass}" href="${linkUrl}" 
                              data-notification-id="${noti.id}" 
@@ -102,7 +98,6 @@ function initCustomerNotification() {
     }
 
     LIST.addEventListener('click', async (e) => {
-        // [SỬA] Tìm thẻ 'a' thay vì 'div'
         const item = e.target.closest('a.dropdown-item');
         if (!item || !item.dataset.notificationId) return;
 
@@ -110,14 +105,12 @@ function initCustomerNotification() {
         const targetUrl = item.getAttribute('href');
         const shouldRedirect = (targetUrl && targetUrl !== '#' && targetUrl !== '');
 
-        // Chặn chuyển trang ngay để gọi API đánh dấu đã đọc trước
         if (shouldRedirect) e.preventDefault();
 
         try {
             if (item.dataset.isRead !== 'true') {
                 await fetch(`/api/notificationweb/mark-read-single/${notiId}`, { method: 'POST' });
 
-                // Cập nhật giao diện (bỏ in đậm)
                 item.querySelector('strong')?.classList.remove('fw-bold');
                 item.dataset.isRead = 'true';
                 item.querySelector('.col-auto').innerHTML = '<i class="bi bi-check2-circle text-muted fs-4"></i>';
@@ -128,7 +121,6 @@ function initCustomerNotification() {
             }
         } catch (e) { }
         finally {
-            // Chuyển trang sau khi xử lý xong
             if (shouldRedirect) window.location.href = targetUrl;
         }
     });
